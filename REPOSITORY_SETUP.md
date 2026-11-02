@@ -1,64 +1,31 @@
-# Creating the standalone GitHub repository
+# Maintaining the independent Jaal Topology Viewer repository
 
-This directory is the reusable Jaal topology viewer's **complete repository
-root**, not a subdirectory that requires another project's Python imports.
+## Source of truth
 
-## Verified source
+The independent repository is
+**[hun186/jaal-topology-viewer](https://github.com/hun186/jaal-topology-viewer)**.
+It is the **only maintained core implementation** of the reusable
+`jaal_topology` Python package and its Jaal browser assets. Do not copy
+these sources back into the `text-category-profiler` tree.
 
-The canonical source is `packages/jaal-topology/` in
-[hun186/text-category-profiler](https://github.com/hun186/text-category-profiler).
-Changes should be submitted there until an independent repository has been
-created and a source-of-truth/mirror policy has been agreed upon. Avoid
-maintaining unrelated copies of the visualizer's JS in several repos.
+The former `packages/jaal-topology/` directory, originally exported by the
+source text classification repository, is retired after integration PRs
+[#209](https://github.com/hun186/text-category-profiler/pull/209) and
+[#210](https://github.com/hun186/text-category-profiler/pull/210).
+The former artifact-export GitHub Action is also retired; it is not
+the current release or publication channel.
 
-The source project's **Jaal Standalone GitHub Repository Export** GitHub
-Actions workflow publishes `jaal-topology-viewer.zip`, its `.sha256`,
-and `source-commit.txt` together as a downloadable artifact. It creates the
-archive via `git archive HEAD:packages/jaal-topology`, checks its exact tracked
-file list, installs the extracted package in a clean folder, executes its own
-Python and Node tests, checks the real Jaal Dash HTTP routes and prefixed WSGI
-mount, and verifies the built wheel contains JS and CSS assets.
+The consumer app `text-category-profiler` retains project-owned
+`TopicTree.csv` and `ClassTable.csv`, its original searchable root picker,
+lazy bounded loading, same-port WSGI router, iframe autoheight, Jaal
+Search/Filter/Color/Size, Chinese labels toggle and sidebar UI. Those are
+**application-specific adapters**, not duplicated Jaal core libraries.
 
-Do not use an artifact from a failing job or an unreviewed branch as a
-release. The main-branch workflow artifact (if available) is preferred.
-
-## Publish using GitHub Desktop (requires your own GitHub access)
-
-1. From the source repository's **Actions → Jaal Standalone GitHub
-   Repository Export**, select a successful **main** run. Download the
-   `jaal-topology-viewer-repository-...` artifact and unzip it.
-2. Verify the SHA-256 of the nested `jaal-topology-viewer.zip` against the
-   accompanying `.sha256`; unpack the nested ZIP. Its
-   `jaal-topology-viewer/` folder is the actual new project root.
-3. In GitHub Desktop choose **File → Add local repository**, select that
-   folder and accept the prompt to initialize a Git repository if shown.
-   Alternatively create the initial local Git commit using the shell commands
-   below.
-4. In GitHub Desktop use **Publish repository** to create a repository named
-   `jaal-topology-viewer` in your selected account. Review the **Keep this
-   code private** choice deliberately; do not expose it publicly by mistake.
-5. Confirm that README, LICENSE, Python package, original Jaal JavaScript and
-   `.github/workflows/ci.yml` are all in the new repository root. Check the
-   new repository's own **Portable Jaal Viewer CI** result.
-
-Or, after creating an **empty** GitHub repository without starter files:
+## Developer setup and CI
 
 ```sh
+git clone https://github.com/hun186/jaal-topology-viewer.git
 cd jaal-topology-viewer
-git init -b main
-git add .
-git commit -m "Import standalone Jaal topology viewer"
-git remote add origin https://github.com/hun186/jaal-topology-viewer.git
-git push -u origin main
-```
-
-Both routes require a human account operation to create the repository;
-the source project's CI does **not** create a GitHub repository or use a
-cross-repository personal access token.
-
-## Verify a standalone checkout
-
-```sh
 python -m pip install -e .
 python -m unittest discover -s tests -p "test_*.py" -v
 node --test tests/*.test.cjs
@@ -66,7 +33,65 @@ jaal-topology --edges examples/relationships.csv \
   --metadata examples/metadata.csv --root Root
 ```
 
-Windows visual acceptance, Dash/visdcc dependency variants, and a strategy
-for keeping the main source project and the separate GitHub repository in sync
-remain independent release checks. No PyPI publication, public web service,
-or unsupported global secret was created by this export pipeline.
+The built-in `Portable Jaal Viewer CI` workflow validates Python and
+Node tests plus real Dash HTTP/JS/CSS assets. All changes should use a
+reviewed PR, latest-head Hosted CI PASS and formal Codex Review with
+zero unresolved findings before Merge.
+
+## How a downstream Python project consumes a reviewed version
+
+Example fixed Git commit already verified in the source integration:
+
+```text
+jaal-topology-viewer @ git+https://github.com/hun186/jaal-topology-viewer.git@7a7d8ba1f847b2f95a620c61a0c5a94f0523e255
+```
+
+Install with `python -m pip install -r requirements.txt` from the consumer
+repository. This Git requirement is resolved during installation, **not at
+runtime**. For an offline target environment, build and transfer a Wheel
+from that exact source commit and record its version and hash. Never
+silently fall back to `main` or download updates dynamically when the
+viewer is launched.
+
+Python usage:
+
+```python
+from jaal_topology import ASSETS_DIR, load_graph, select_subgraph
+from jaal_topology.modes import layout_options
+from jaal_topology.integration import mount_flask
+```
+
+`ASSETS_DIR` is the installed distribution's resource directory. The
+independent `mount_flask` is an optional bounded viewer; the original
+text-category-profiler retains its customized WSGI integration to
+preserve project UI behavior.
+
+## Safe update from the independent repo into text-category-profiler
+
+1. Make and review the core change in **this repository**; keep Python,
+   Node, HTTP asset and WSGI checks green. Where applicable, confirm
+   Windows browser behavior.
+2. Record the exact new commit SHA; update the fixed Git dependency in
+   `hun186/text-category-profiler/requirements.txt`, not a floating branch.
+3. Update any applicable dependency provenance tests, then run the
+   consumer's `Portable Jaal Topology Package`,
+   `Stage 4 Original Jaal Same-Port Compatibility` and complete Hosted
+   CI workflows. Verify the original root selection, Chinese fallback,
+   Search/Filter/Color/Size, 4 graph modes, collapse animation, sidebar
+   and same-port iframe.
+4. Merge the downstream dependency bump **only** after the exact-head
+   formal review and CI acceptance criteria pass. Do not use publishing a
+   new upstream commit to automatically change an existing consumer.
+
+There is no cross-repository auto-sync or PyPI release obligation at
+present. An upstream GitHub merge alone does not update the consumer;
+it remains pinned to the previously reviewed commit.
+
+## Compatibility boundaries
+
+Python >=3.10 and matching Jaal/Dash/visdcc versions are required.
+Hosted testing is not equivalent to visual acceptance on the user's Windows
+machine. Do not imply that all Dash 2/3/4 combinations, external browser
+environments or publicly accessible deployments have been certified.
+This package starts a loopback-only server by default; exposing the viewer
+to the public Internet requires a separate security and deployment review.
