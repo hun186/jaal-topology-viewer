@@ -87,12 +87,14 @@ test("community activation and restoration preserve original DataSets and camera
     };
   };
   let moved = 0, click;
+  const positions = Object.fromEntries(source.nodes.map((n,i) =>
+    [n.id,{x:i*10,y:0}]));
   const instance = {
     props: {data: source},
     nn: dataset(source.nodes), ee: dataset(source.edges),
     net: {
       on: (type, fn) => {if (type === "click") click = fn;},
-      getPositions: () => Object.fromEntries(source.nodes.map((n,i) => [n.id,{x:i*10,y:0}])),
+      getPositions: () => ({...positions}),
       getViewPosition: () => ({x: 10, y: 10}),
       getScale: () => 0.9,
       moveTo: () => {moved++;},
@@ -105,9 +107,16 @@ test("community activation and restoration preserve original DataSets and camera
   community.activate.call(instance);
   assert.equal(instance.nn.getIds().length, 2);
   assert.ok(moved > 0);
-  const firstCluster = instance.nn.getIds()[0];
+  const firstCluster = Object.keys(instance.__jaalCommunity.view.clusterToGroup)
+    .find(id => instance.__jaalCommunity.view.clusterToGroup[id] === "community-0");
+  const secondCluster = Object.keys(instance.__jaalCommunity.view.clusterToGroup)
+    .find(id => instance.__jaalCommunity.view.clusterToGroup[id] === "community-1");
+  positions[secondCluster] = {x:800, y:800}; // User drags this cluster
   click({nodes:[firstCluster]});
   assert.equal(instance.nn.getIds().length, 4);
+  const stable = instance.nn.get().find(node => node.id === secondCluster);
+  assert.equal(stable.x, 800);
+  assert.equal(stable.y, 800);
   community.restore.call(instance);
   // Display x/y are intentionally retained for camera stability; identity,
   // label, hidden state and exact directed edges must be restored.

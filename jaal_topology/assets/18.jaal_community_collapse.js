@@ -183,6 +183,16 @@
       for (const node of view.nodes) {
         const group = view.clusterToGroup[String(node.id)];
         if (!group) continue;
+        // Preserve the CURRENT drawn position of an already present cluster.
+        // Recomputing its member centroid would undo the user's drag.
+        if (oldIdSet.has(String(node.id))) {
+          const current = oldPos[String(node.id)];
+          if (current && Number.isFinite(current.x) && Number.isFinite(current.y)) {
+            node.x = current.x;
+            node.y = current.y;
+          }
+          continue;
+        }
         const positions = view.members.get(group).map(id => nodePositions[id])
           .filter(p => p && Number.isFinite(p.x) && Number.isFinite(p.y));
         if (positions.length) {
