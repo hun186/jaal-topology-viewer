@@ -127,15 +127,17 @@ descendants, *not* communities. The community partition is an analytical
 grouping, **not** an organization chart. The renderer preserves independent
 directional totals; edge count labels are unique source pairs, not emails.
 Search/Filter temporarily restores uncollapsed source visualization while
-active. Browser visual acceptance and downstream Stage 4 compatibility are
-still pending.
+active. The Hosted Windows Chromium headless browser smoke verifies a real
+same-port iframe, canvas, mode selectors, language toggle and Search, and
+uploads screenshots as evidence. Drag/camera/Color/Size and the Windows
+Stage 4 consumer remain separately unverified.
 
 The auditable one-to-one taxonomy→fictional-role mapping is in
 [`examples/company_communications_source_mapping.csv`](examples/company_communications_source_mapping.csv).
 See [general graph community-collapse design](docs/general_graph_community_collapse.md)
-for the proposed Louvain/Leiden-based community abstraction, directed
-aggregation, restore rules and testing gate. **This is a proposal, not a
-shipped community-clustering feature.**
+for the implemented experimental directed Louvain mode, alternative Leiden
+research proposals, directed aggregation, restore rules and testing gate.
+**Leiden remains a proposal; the separate Louvain mode is implemented.**
 
 ## Known difference from the Stage 4 customized Jaal viewer
 
