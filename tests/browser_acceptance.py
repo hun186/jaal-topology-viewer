@@ -92,45 +92,122 @@ def check(port: int, evidence: Path) -> None:
                 assert size and size["width"] > 100 and size["height"] > 100, size
                 page.screenshot(path=str(evidence / "01-network.png"), full_page=True)
 
+                # Observe the actual visdcc Network instance, never a simulated graph.
+                # The existing community clientside callback calls api.activate
+                # with "this" bound to the mounted Network; capture that reference
+                # only in this automated browser, without changing shipped JS.
+                frame.locator("body").evaluate("""(element) => {
+                    const api = window.dash_clientside?.jaal_community_collapse;
+                    if (!api || typeof api.activate !== "function") {
+                        throw new Error("Community runtime was not loaded");
+                    }
+                    const original = api.activate;
+                    api.activate = function(...args) {
+                        window.__acceptanceNetwork = this;
+                        return original.apply(this, args);
+                    };
+                }""")
+
+                def snapshot():
+                    return frame.locator("body").evaluate("""(element) => {
+                        const component = window.__acceptanceNetwork;
+                        if (!component || !component.nn || !component.ee) return null;
+                        return {
+                            nodes: component.nn.get(),
+                            edges: component.ee.get(),
+                            originalCount: component.props.data.nodes.length,
+                            active: !!component.__jaalCommunity?.active,
+                            filtered: !!component.__jaalCommunity?.filtered,
+                        };
+                    }""")
+
+                def require_state(description, predicate):
+                    latest = None
+                    deadline = time.monotonic() + 25
+                    while time.monotonic() < deadline:
+                        latest = snapshot()
+                        if latest is not None and predicate(latest):
+                            return latest
+                        page.wait_for_timeout(200)
+                    raise AssertionError(f"{description} never reached: {latest!r}")
+
+                labels = {
+                    "network": "網狀（全展開）",
+                    "network-community-collapsed": "網狀（社群收攏・Louvain）",
+                    "hierarchical-collapsed": "階層（收攏）",
+                }
+
                 def choose(mode: str) -> None:
-                    radio = frame.locator(
-                        f'#jaal-original-layout-mode input[type=radio][value="{mode}"]'
-                    )
+                    # Accessible Dash labels are portable across dcc.RadioItems
+                    # versions, including versions lacking input[value].
+                    radio = frame.get_by_label(labels[mode], exact=True)
                     radio.check(timeout=20000)
                     assert radio.is_checked()
-                    page.wait_for_timeout(900)
 
                 choose("network-community-collapsed")
+                collapsed = require_state(
+                    "synthetic community quotient appears in actual browser DataSet",
+                    lambda s: s["active"] and not s["filtered"]
+                    and len(s["nodes"]) < s["originalCount"]
+                    and any(str(n["id"]).startswith("__jaal_internal_community__")
+                            for n in s["nodes"]),
+                )
                 checkbox = frame.locator(
                     "#jaal-original-chinese-labels input[type=checkbox]"
                 )
                 checkbox.check()
                 assert checkbox.is_checked()
-                page.wait_for_timeout(900)
-                assert frame.locator(".vis-network canvas").first.is_visible()
+                # Community-only nodes need not have a Chinese translation; the
+                # Search projection below must use CT on original members.
                 page.screenshot(path=str(evidence / "02-community-chinese.png"), full_page=True)
 
-                # Real user Search interaction, not a mocked callback or HTTP-only smoke.
                 search = frame.locator("#search_graph")
                 search.fill("Finance")
-                page.wait_for_timeout(1200)
+                filtered = require_state(
+                    "real Search projects original IDs, matched hidden flags and CT",
+                    lambda s: s["active"] and s["filtered"]
+                    and len(s["nodes"]) == s["originalCount"]
+                    and any(n.get("hidden") for n in s["nodes"])
+                    and any(not n.get("hidden") for n in s["nodes"])
+                    and all(bool(n.get("hidden")) ==
+                            ("finance" not in str(n["id"]).casefold())
+                            for n in s["nodes"])
+                    and any(n.get("label") != n["id"] for n in s["nodes"]
+                            if not n.get("hidden")),
+                )
+                assert filtered["originalCount"] == 77
                 assert frame.locator(".vis-network canvas").first.is_visible()
                 page.screenshot(path=str(evidence / "03-search-chinese.png"), full_page=True)
                 search.fill("")
-                page.wait_for_timeout(800)
+                require_state(
+                    "cleared Search restores community quotient",
+                    lambda s: s["active"] and not s["filtered"]
+                    and len(s["nodes"]) < s["originalCount"]
+                    and any(str(n["id"]).startswith("__jaal_internal_community__")
+                            for n in s["nodes"]),
+                )
                 checkbox.uncheck()
                 choose("hierarchical-collapsed")
                 page.screenshot(path=str(evidence / "04-hierarchy-collapsed.png"), full_page=True)
                 choose("network")
+                restored = require_state(
+                    "mode restoration rehydrates 77 unmodified English IDs",
+                    lambda s: not s["active"] and len(s["nodes"]) == 77
+                    and len(s["edges"]) == 169
+                    and all(n["label"] == n["id"] and not n.get("hidden")
+                            for n in s["nodes"])
+                    and not any(str(n["id"]).startswith("__jaal_internal_community__")
+                                for n in s["nodes"]),
+                )
                 assert frame.locator(".vis-network canvas").first.is_visible()
                 if errors:
                     raise AssertionError("Browser JavaScript errors: " + " | ".join(errors))
                 (evidence / "acceptance-summary.txt").write_text(
-                    "PASS: Windows Chromium hosted real Dash canvas, same-port iframe, "
-                    "five radios, Chinese checkbox, live Search, mode switching and "
-                    "all packaged assets. Screenshots are inspection evidence; "
-                    "manual Windows Stage 4/drag/camera/Color/Size acceptance is "
-                    "NOT asserted.\n",
+                    "PASS: Hosted Windows Chromium same-port iframe, five radio modes, "
+                    "real visdcc DataSet cluster quotient, Search hidden flags, "
+                    "Chinese CT labels and 77-node/169-edge restoration. Screenshots "
+                    "are inspection evidence; manual Stage 4 drag/camera/Color/Size "
+                    "acceptance is NOT asserted.\n",
                     encoding="utf-8",
                 )
                 browser.close()
