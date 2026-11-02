@@ -1,62 +1,43 @@
 # Interface Contracts
 
-> 類型：Current state。記錄需要相容、可被其他模組或系統依賴的介面；不限於 HTTP API。
+> Current state；維持已被外部 consumer 使用的 Python、CSV、CLI、WSGI 與 JS 模式界面。
 
-## 契約範圍
+## Index
+| ID | 契約 | 權威 |
+| --- | --- | --- |
+| CONTRACT-001 | 關係與 metadata CSV | `data.py`, `test_graph.py` |
+| CONTRACT-002 | Graph／Python API | `__init__.py`, `data.py` |
+| CONTRACT-003 | CLI | `pyproject.toml`, `cli.py` |
+| CONTRACT-004 | Flask WSGI 同埠 | `integration.py`, `viewer.py` |
+| CONTRACT-005 | 四種模式／browser assets | `modes.py`, `viewer.py`, `assets/` |
 
-依專案實況保留適用項目：
+## CONTRACT-001 — CSV
+- 一個以上關係 CSV，UTF-8/BOM；可無 header，或 `parent,child`、`from,to`、`source,target`、`母類別,子類別`、`#母類別,子類別`；前兩欄定有向邊，額外欄位忽略。
+- Node ID 使用 trim 後的字面字串；空值、缺欄、空圖或不合法 CSV 拒絕；重複邊去重，保留方向、多父／環／cross-links。
+- Metadata 預設 `ClassLabel,CT`，可指定欄名；缺少或空白翻譯沿用 ID；已有節點的重複 metadata ID 拒絕。
 
-- HTTP／RPC API
-- CLI command、argument、exit code 與 stdout／stderr 格式
-- Python／library public API
-- Database schema、migration 與 query boundary
-- File、dataset、model artifact 或 export format
-- Event、queue message、batch handoff 與 webhook
-- 跨 repository 的輸入／輸出成果
+## CONTRACT-002 — Python
+- `Graph(edges, nodes, translations)` 是 frozen dataclass，內部 dict 不保證深度 immutable。
+- `load_graph(edge_files, metadata_file=None, *, metadata_id_column="ClassLabel", metadata_label_column="CT") -> Graph`。
+- `select_subgraph(graph, root=None, *, max_nodes=250, max_edges=5000) -> Graph`；root 沿有向 child 可達，保留子圖內原始邊；root=None 為有界全圖。
+- 100,000 unique input edges；max_nodes 1..3000，max_edges 1..5000；非法值／超限丟 `GraphInputError`。
+- `ASSETS_DIR` 由 package export；`build_app` 位於 `viewer.py`。
 
-若目前沒有需穩定維持的對外或跨模組介面，明確寫「目前無已確認的穩定契約」，不要為填表捏造 API。
+## CONTRACT-003 — CLI
+- `jaal-topology`／`python -m jaal_topology`；`--edges` 必填可重複，另有 metadata/欄位 mapping、root、max-nodes、max-edges、port/-p。
+- Port 預設 8059，只 bind `127.0.0.1`；無 visible edge 不建 app。輸入錯誤 stderr + exit 2；成功進入持續運行 server。
+- stdout 為人類可讀文字，不保證機器解析的 JSON 契約。
 
-## 契約索引
+## CONTRACT-004 — Flask
+- `mount_flask(flask_server, graph, *, mount_path="/jaal-topology", root=None)`，於伺服器開始服務前掛載並回傳 child Dash。
+- path 要以 `/` 開頭、不可為 `/`、不可尾隨 `/` 或含 `//`；重複掛載拒絕。
+- `DispatcherMiddleware` 同來源同 port；Dash callback／資產 URL 包含 mount prefix。
 
-| ID | 類型 | 名稱 | Producer／Owner | Consumer | 權威定義 | 穩定性 |
-| --- | --- | --- | --- | --- | --- | --- |
-| 待初始化 | 待初始化 | 待初始化 | 待初始化 | 待確認 | `待初始化` | 待確認 |
+## CONTRACT-005 — Browser
+- 支援 `network`、`network-collapsed`、`hierarchical`、`hierarchical-collapsed`。
+- `layout_options` deep-copy base options，切回 network 需顯式還原 hierarchy／physics／edge smooth／node styles。
+- 中文翻譯預設關閉；搜尋及 tooltip 用原 ID。JS `16.jaal_visible_labels.js`、`17.jaal_structural_collapse.js` 由本套件提供。
+- 正確 Node/unit/HTTP behavior 不等於 Windows 實機視覺已驗收。
 
-## 通用相容性規則
-
-- `待初始化：例如欄位新增可向後相容、刪除／改名需版本化。`
-- 錯誤表示與重試語意：`待初始化`
-- 時間、timezone、encoding、locale 與 identifier 規則：`待初始化`
-- 敏感欄位與遮蔽規則：`待初始化`
-
-## 契約詳細內容
-
-每個重要契約使用穩定 ID，並依實際類型保留必要欄位。
-
-### `待初始化：CONTRACT-001 名稱`
-
-- 類型：`待初始化`
-- 狀態：`Draft | Stable | Deprecated | Removed`
-- 權威定義：`待初始化，例如 schema / code / OpenAPI / parser / test`
-- Producer／Owner：`待初始化`
-- Consumer：`待確認`
-- 輸入：`待初始化`
-- 輸出：`待初始化`
-- 驗證與約束：`待初始化`
-- 錯誤／exit code／失敗語意：`待初始化`
-- 版本與相容性：`待初始化`
-- 安全與敏感資訊：`待初始化`
-- 契約測試：`待初始化`
-
-## Deprecated／Migration
-
-| 舊契約 | 替代契約 | 過渡方式 | 移除條件／日期 |
-| --- | --- | --- | --- |
-| 目前沒有已確認項目 | — | — | — |
-
-## 維護規則
-
-- 介面實作改變時同步更新 current contract 與 contract test。
-- 不以 README 範例取代 schema、parser 或測試等權威定義。
-- 若需要破壞性變更，先記錄 consumer、遷移路徑與相容性決策；必要時新增 `decisions.md` 紀錄。
-- 過時細節不追加日期流水帳；原地更新，並透過 Git 或 decision 追溯原因。
+## Cross-repo
+- 消費端固定 reviewed Git SHA；上游 merge 不自動改 consumer。更動接口需同步測試，breaking change 要記錄版本與遷移方案。

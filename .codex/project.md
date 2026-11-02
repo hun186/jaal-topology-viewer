@@ -1,86 +1,53 @@
 # Project Profile
 
-> 類型：Current state。只描述目前有效的專案身份與範圍，不保存工作流水帳。
+> Current state；以程式碼、設定與 CI 為權威，無日期流水帳。
 
 ## Metadata
-
-- 初始化狀態：`UNINITIALIZED`
-- 最後查證日期：`待初始化`
-- 查證基準：`待初始化，例如 commit / branch / workspace 狀態`
-- 維護責任：`待確認`
+- 初始化狀態：`INITIALIZED`
+- 最後查證日期：2026-11-03（台灣）
+- 查證基準：`main` `fc49c0d2559c71df79f438e070ef3610e7093e5a`
+- 維護 repository：`hun186/jaal-topology-viewer`
 
 ## 一句話目的
+以獨立 Python 套件將關係 CSV（與可選名稱 metadata）轉為唯讀、大小有界的 Jaal 有向圖檢視器，可用 localhost CLI 啟動或於 Flask 同埠掛載。
 
-`待初始化：用一個可觀察、可驗證的句子說明此專案解決什麼問題。`
+## 使用者、輸入、輸出
+- 使用者：檢視分類樹或其他有向關係的 Python 開發者，以及下游 `text-category-profiler`。
+- 輸入：一個以上 parent/child CSV、可選 `ClassLabel,CT` metadata、root 與渲染上限。
+- 輸出：Dash/Jaal 互動圖（四種模式，中文名稱預設關閉）；**不回寫**任一 CSV。
+- 非目標：BertScript／TCFMain／WorkPool／模型訓練，consumer 的 root 搜尋下拉、sidebar 與 iframe autoheight，公網部署、自動同步下游。
 
-## 使用者與使用情境
-
-- 主要使用者：`待初始化`
-- 主要使用情境：`待初始化`
-- 主要輸入：`待初始化`
-- 主要輸出：`待初始化`
-
-## 目標
-
-- `待初始化`
-
-## 非目標
-
-- `待初始化；若沒有已證實的非目標，寫「目前未明確定義」。`
-
-## 技術與執行環境
-
-| 面向 | 目前狀態 | 證據位置 |
+## 技術與執行
+| 項目 | 已確認 | 證據 |
 | --- | --- | --- |
-| 主要語言 | 待初始化 | 待初始化 |
-| Framework / runtime | 待初始化 | 待初始化 |
-| 套件與 lockfile | 待初始化 | 待初始化 |
-| 儲存與外部服務 | 待初始化 | 待初始化 |
-| 支援平台 | 待初始化 | 待初始化 |
+| Python | >=3.10；CI 用 3.11 | `pyproject.toml`、`ci.yml` |
+| 套件 | `jaal-topology-viewer` 0.1.0；`jaal>=0.1.9`、`pandas>=1.5`；未見 lockfile | `pyproject.toml` |
+| UI | Jaal / Dash；可選 Flask / Werkzeug WSGI mount | `viewer.py`、`integration.py` |
+| Browser | 內含 JS 與 Bootstrap CSS；Node.js 測試 | `assets/`、`tests/` |
+| OS | CI `ubuntu-latest`；Windows 視覺未正式驗收 | `ci.yml`、`README.md` |
+| 遠端依賴 | 執行時無必需遠端服務；安裝可能需要取得套件 | `README.md` |
 
-## Repository 地圖
+## 入口與 Repository 地圖
+| 路徑 | 作用 |
+| --- | --- |
+| `jaal_topology/__init__.py`, `data.py` | `Graph`、`GraphInputError`、`load_graph`、`select_subgraph` |
+| `cli.py`, `__main__.py` | `jaal-topology` 與 `python -m jaal_topology` |
+| `viewer.py`, `modes.py` | `build_app`、四模式、Jaal 原有 Search/Filter/Color/Size |
+| `assets/` | Browser JS、Bootstrap CSS，從套件直接提供 |
+| `integration.py` | `mount_flask`；Flask 同來源、同 port |
+| `tests/`, `examples/` | Python/Node 測試、最小 CSV fixture |
+| `.github/workflows/ci.yml` | Hosted CI；安裝、unittest、Node、CLI、Dash HTTP/asset smoke |
+| `REPOSITORY_SETUP.md` | 唯一原始碼來源、下游 exact SHA 升級 |
+| `AGENTS.md`, `.codex/` | Codex 路由、現況與記憶 |
 
-只列會影響任務路由的主要位置，不完整列出整棵目錄樹。
+## 核心資料／信任／相容性邊界
+- CSV ID 是字面字串，允許多父節點、跨連結、環；中文僅用於顯示，缺失翻譯沿用 ID。
+- 最多匯入 100,000 不重複有向邊；選擇圖預設 node/edge 限額 250/5000，絕對限額 3000/5000。
+- 無邊、未知 root、壞格式或超上限拒絕；CLI 預設只綁定 `127.0.0.1:8059`。
+- `text-category-profiler` 透過固定 Git commit 消費套件；本 repo 是 portable Python/JS 核心唯一來源，不複製 runtime 回下游。
+- 测試資料可使用 `examples/*.csv`；`.gitignore` 排除本機 cache、venv、build。
+- 待確認：Windows browser 實機、乾淨 consumer 安裝與 Dash 2/3/4 組合。**未驗證不等於失敗。**
 
-| 路徑 | 責任 | 何時優先查看 |
-| --- | --- | --- |
-| `待初始化` | 待初始化 | 待初始化 |
-
-## 主要入口
-
-| 入口類型 | 路徑／命令 | 用途 | 狀態 |
-| --- | --- | --- | --- |
-| 待初始化 | 待初始化 | 待初始化 | 待確認 |
-
-## 事實來源
-
-按此專案的實際情況排列，例如 schema、migration、OpenAPI、測試、設定、資料字典或產物 manifest。
-
-1. `待初始化`
-
-## 資料、模型與產物邊界
-
-- 應提交 Git：`待初始化`
-- 不應提交 Git：`待初始化`
-- 可供測試的最小 fixture：`待初始化`
-- 大型／敏感資料位置：只描述規則，不記錄秘密或個資；`待初始化`
-
-## 外部系統與相鄰專案
-
-| 系統／專案 | 本專案依賴方式 | 交接契約 | 可用性／限制 |
-| --- | --- | --- | --- |
-| 目前未確認 | — | — | — |
-
-## 重要限制與不變條件
-
-- `待初始化`
-
-## 待確認事項
-
-- [ ] `初始化時無法由 repository 證實、且可能影響後續工作的問題。`
-
-## 維護規則
-
-- 專案目的、範圍、主要技術、入口或 repository 地圖改變時原地更新。
-- 不追加日期型變更紀錄；變更結果寫入 `memory.md`，重大取捨寫入 `decisions.md`。
-- 任何「待確認」在取得證據後應改成事實或刪除，不要永久保留模糊占位符。
+## README 閘門
+- `ADEQUATE`：既有 README 已有正確用途、安裝、CLI、整合、測試及限制，保留不重寫。
+- 目的／技術／入口／地圖如有變動，更新本檔；成果放 `memory.md`、取捨放 `decisions.md`。

@@ -1,49 +1,16 @@
 # Backlog
 
-> 類型：Accepted deferred work。這不是 Agent 自動產生的願望清單。
+> Accepted/documented deferred validation。以下是 README/REPOSITORY_SETUP 既有的未完成**驗證閘門**，不是可重現 bug，也沒有承諾交付日期。
 
 ## Accepted Items
-
-| ID | 優先度 | 狀態 | 項目 | 為何延後 | 完成條件 | 相依／阻擋 |
-| --- | --- | --- | --- | --- | --- | --- |
-| 目前無已接受項目 | — | — | — | — | — | — |
+| ID | 優先度 | 狀態 | 項目 | 完成條件 |
+| --- | --- | --- | --- | --- |
+| BL-001 | High | Accepted | Windows 實機 Jaal／Stage 4 browser 視覺相容驗收 | root picker、Search/Filter/Color/Size、四模式、中文 fallback、收攏動畫／focus、same-port iframe 有可追溯的實測結果 |
+| BL-002 | Medium | Accepted | 乾淨外部 consumer 安裝與 Dash/Jaal 版本組合驗證 | 在明確列出的環境完成可重現 install、HTTP/JS/CSS、互動驗證，未涵蓋的組合明示 |
 
 ## Candidate Ideas
+- 目前無已採納的額外構想。PyPI、Docker、公網服務部署都是另需授權與安全 review 的議題，不能自動當成待實作事項。
 
-只有使用者希望先保存、但尚未承諾實作的構想放這裡；Agent 在一般任務中不得自行累積建議。
-
-| ID | 構想 | 需要先回答的問題 | 提出來源 |
-| --- | --- | --- | --- |
-| 目前無項目 | — | — | — |
-
-## Backlog Item 格式
-
-- 穩定 ID：`BL-001` 起，不重用。
-- 優先度：`P0 | P1 | P2 | P3`，需反映專案實際定義；若未定義，使用 `High | Medium | Low`。
-- 狀態：`Accepted | Ready | In Progress | Blocked | Done | Dropped`。
-- 範圍：指出相關模組或 contract。
-- 原因：說明為何不是目前任務的一部分。
-- 完成條件：必須可驗證，不只寫「優化」或「改善」。
-- 關聯：可連到 `KI-*`、`ADR-*`、issue tracker 或文件。
-
-## 收錄規則
-
-可以加入：
-
-- 使用者明確接受的延後工作。
-- 目前變更無法安全完成、但為正確性或相容性所必需的後續。
-- 已存在且能以證據說明的技術債。
-- 明確標記的暫時 stub，其完成條件已知。
-
-不要加入：
-
-- Agent 隨手想到的所有改善可能。
-- 沒有問題敘述、價值或完成條件的項目。
-- 已在外部 issue tracker 管理、且本檔不需作為工作路由的完整副本。
-- 當前任務範圍內本應完成、卻只為提早結束而延後的工作。
-
-## 維護規則
-
-- 任務開始時只有在使用者要求規劃、排程或處理 backlog 時才全面閱讀。
-- Done／Dropped 項目保留近期摘要；累積超過約 20 筆時移到 `.codex/archive/backlog-YYYY.md`。
-- 狀態變更要保留完成驗證或 dropped 原因，避免項目無聲消失。
+## 維護
+- BL-001／BL-002 的原始追蹤依據：`README.md`、`REPOSITORY_SETUP.md`；未執行不代表失敗。
+- 新增需要採納來源與驗證完成條件；Done/Dropped 保留簡短驗證或理由，不悄悄刪除。

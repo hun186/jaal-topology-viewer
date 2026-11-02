@@ -1,67 +1,35 @@
 # Development Workflows
 
-> 類型：Current state。保存可重現的安裝、執行與驗證方式。Codex 不得執行尚未查證的占位命令。
+> Current state；所有命令由 `pyproject.toml`、README、tests 或 `.github/workflows/ci.yml` 提供證據。
 
-## 環境前提
+## 環境
+- Python >=3.10（Hosted CI 3.11），`python -m pip`；Node.js 用於 `node --test`，CI 沒指定固定 Node 版本。
+- 測試 runner 為 `ubuntu-latest`；Windows 實機及 Dash 2/3/4 組合尚未完全驗收。
+- 無證實的必備 API key、外部服務或環境變數；CLI 在 `127.0.0.1` 開 HTTP server。
 
-| 項目 | 要求 | 查證來源 |
+## Canonical Commands（repo root）
+| 用途 | 命令 | 來源／邊界 |
 | --- | --- | --- |
-| 作業系統 | 待初始化 | 待初始化 |
-| Runtime 版本 | 待初始化 | 待初始化 |
-| 套件管理器 | 待初始化 | 待初始化 |
-| 必要本機服務 | 待初始化 | 待初始化 |
-| 必要環境變數 | 只列變數名稱與用途，不列值；待初始化 | 待初始化 |
-
-## Canonical Commands
-
-初始化時應從 manifest、CI、Makefile、task runner、官方 README 或實際測試取得命令。無法證實時保留「待確認」，不要憑生態慣例猜測。
-
-| 用途 | 命令 | 工作目錄 | 狀態／最後查證 |
-| --- | --- | --- | --- |
-| 安裝／同步依賴 | 待確認，禁止執行 | repository root | Unverified |
-| 啟動開發環境 | 待確認，禁止執行 | repository root | Unverified |
-| Build | 待確認，禁止執行 | repository root | Unverified |
-| Format | 待確認，禁止執行 | repository root | Unverified |
-| Lint | 待確認，禁止執行 | repository root | Unverified |
-| Type check | 待確認，禁止執行 | repository root | Unverified |
-| 最小 smoke test | 待確認，禁止執行 | repository root | Unverified |
-| 完整 test suite | 待確認，禁止執行 | repository root | Unverified |
+| 安裝 | `python -m pip install -e .` | CI／README |
+| Python test | `python -m unittest discover -s tests -p "test_*.py" -v` | CI |
+| JS test | `node --test tests/*.test.cjs` | CI |
+| CLI help smoke | `python -m jaal_topology --help` | CI |
+| 手動啟動 viewer | `jaal-topology --edges examples/relationships.csv --metadata examples/metadata.csv --root Root` | README；會持續提供 localhost server，非快速測試 |
+| 替代啟動 | `python -m jaal_topology --edges examples/relationships.csv --root Root -p 8059` | README |
+| Dash HTTP/asset smoke | `build_app` + Flask test_client，驗證 `/_dash-layout`、`16.jaal_visible_labels.js`、`17.jaal_structural_collapse.js`、`bootstrap.min.css` 皆回傳 200 | `.github/workflows/ci.yml` 有完整可複製程式 |
+| Lint、format、typecheck、build | 沒有已確認 canonical 指令 | 不擅自捏造 |
 
 ## 驗證矩陣
-
-| 變更類型 | 最小必要檢查 | 需要擴大驗證的條件 |
+| 變更 | 必要檢查 | 額外確認 |
 | --- | --- | --- |
-| 純文件 | 連結／格式／範例一致性；待初始化 | 文件含可執行命令或契約 |
-| 小型單模組邏輯 | 相關單元測試；待初始化 | 影響共用介面或資料流 |
-| API／CLI／schema／檔案格式 | 契約測試＋相容性檢查；待初始化 | 對外 consumer 不在此 repo |
-| 資料轉換／migration | fixture 驗證＋失敗／回復路徑；待初始化 | 可能改寫正式資料 |
-| UI | 靜態／component／E2E／視覺檢查；待初始化 | layout、互動或 browser 相容性改變 |
-| 部署／基礎設施 | config validation＋安全的 smoke test；待初始化 | 會觸及外部環境或不可逆資源 |
+| 記憶／README 文件 | 交叉核對程式碼、命令、連結、敏感資訊、diff | 若改契約／命令，適度擴增 smoke |
+| CSV、root、bounds | Python test | BOM、無效列、多父、環、超限 |
+| Mode、JS、label | Python + Node tests | 實際 browser、動畫與焦點 |
+| WSGI／Dash／assets | Python + Node + Hosted CI HTTP smoke | consumer same-port 及版本相容 |
+| 下游 Git SHA 升級 | Upstream CI、Review | consumer pin/provenance/Stage 4 CI、Windows 視覺驗收 |
+| 對外部署／release | 先安全與發布審核 | localhost PASS 不是公網可部署證據 |
 
-## 測試資料與外部服務
-
-- 最小 fixture：`待初始化`
-- 測試是否允許網路：`待確認`
-- 外部服務替代方式：`待確認；mock 必須明確揭露，不得冒充正式成功`
-- 測試產物位置與清理方式：`待初始化`
-
-## 常見失敗與替代驗證
-
-若是可重現且尚未解決的限制，詳細記在 `known_issues.md`；本節只保留驗證時該怎麼做。
-
-| 限制 | 首選驗證 | 安全替代 | 不足之處 |
-| --- | --- | --- | --- |
-| 目前未確認 | 待初始化 | 待初始化 | 待初始化 |
-
-## 完成前檢查
-
-- 使用的是此 repo 已確認的 runtime 與 package manager。
-- 先跑最相關檢查，再依風險擴大；不為小改動無條件重裝全部依賴。
-- 不把資料庫、雲端、寄信、發布、刪除或 migration 當成無副作用測試。
-- 所有未執行或失敗的檢查都在最終回報中明確區分。
-
-## 維護規則
-
-- 命令變更時原地更新表格，附上可查證來源與最後驗證時間。
-- 臨時 debug 命令、完整 log 與一次性 workaround 不留在本檔。
-- 真正成為長期限制的問題移到 `known_issues.md`；有長期取捨的流程改變移到 `decisions.md`。
+## 已知測試基準與限制
+- Fixture：`examples/relationships.csv`、`examples/metadata.csv`；測試使用 `tempfile` 不改寫來源。
+- 2026-11-02 主線 `fc49c0d2559c71df79f438e070ef3610e7093e5a` [Hosted CI PASS](https://github.com/hun186/jaal-topology-viewer/actions/runs/41480969808)。本次初始化只有遠端程式／CI 證據，**沒有聲稱本機執行上述命令**。
+- 每個 PR 依 `REPOSITORY_SETUP.md` 執行最新 HEAD Hosted CI 與正式 Codex Review，0 unresolved findings 才能 Merge；不得以自己撰寫的備註冒充獨立 review。
