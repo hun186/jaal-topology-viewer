@@ -33,4 +33,9 @@ jobs:
           assert a.server.test_client().get("/_dash-layout").status_code == 200
           for name in ("16.jaal_visible_labels.js", "17.jaal_structural_collapse.js", "bootstrap.min.css"):
               assert a.server.test_client().get("/assets/" + name).status_code == 200
+          company = build_app(select_subgraph(load_graph(
+              Path("examples/company_communications.csv"),
+              Path("examples/company_people.csv")
+          )))
+          assert company.server.test_client().get("/_dash-layout").status_code == 200
           PY

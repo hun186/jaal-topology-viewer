@@ -94,6 +94,70 @@ class CSVInterfaceTests(unittest.TestCase):
             mount_flask(host, graph, mount_path="/topology")
         self.assertIsNotNone(child)
 
+
+    def test_company_communications_example_is_directed_non_tree(self):
+        examples = Path(__file__).resolve().parents[1] / "examples"
+        graph = load_graph(
+            examples / "company_communications.csv",
+            examples / "company_people.csv",
+        )
+        self.assertEqual(len(graph.nodes), 77)
+        self.assertEqual(len(graph.edges), 169)
+        self.assertEqual(len(set(graph.edges)), len(graph.edges))
+        self.assertIn("CEO / Executive Office", graph.nodes)
+        self.assertEqual(
+            graph.translations["CEO / Executive Office"], "執行長／總經理室"
+        )
+        self.assertTrue(
+            any((b, a) in set(graph.edges) for a, b in graph.edges),
+            "Realistic emails include reciprocal directed pairs",
+        )
+        self.assertEqual(len(select_subgraph(graph).edges), 169)
+        mapping_file = examples / "company_communications_source_mapping.csv"
+        import csv
+        with mapping_file.open(encoding="utf-8", newline="") as stream:
+            mapping = list(csv.DictReader(stream))
+        self.assertEqual(len(mapping), 77)
+        self.assertEqual(
+            {row["synthetic_sender_id"] for row in mapping}, set(graph.nodes)
+        )
+
+    def test_company_demo_serves_full_real_jaal_layout(self):
+        """No mock renderer: load the shipped CSV and inspect the Dash app."""
+        from jaal_topology.viewer import build_app
+        examples = Path(__file__).resolve().parents[1] / "examples"
+        graph = select_subgraph(load_graph(
+            examples / "company_communications.csv",
+            examples / "company_people.csv",
+        ))
+        app = build_app(graph)
+        client = app.server.test_client()
+        layout = client.get("/_dash-layout")
+        self.assertEqual(layout.status_code, 200)
+        self.assertEqual(client.get("/assets/17.jaal_structural_collapse.js").status_code, 200)
+        def find(item, node_id):
+            if isinstance(item, dict):
+                if item.get("props", {}).get("id") == node_id:
+                    return item["props"]
+                for value in item.values():
+                    match = find(value, node_id)
+                    if match is not None:
+                        return match
+            if isinstance(item, list):
+                for value in item:
+                    match = find(value, node_id)
+                    if match is not None:
+                        return match
+            return None
+        graph_data = find(layout.get_json(), "graph")["data"]
+        self.assertEqual(len(graph_data["nodes"]), 77)
+        self.assertEqual(len(graph_data["edges"]), 169)
+        self.assertEqual(
+            find(layout.get_json(), "jaal-original-layout-mode")["value"],
+            "network",
+        )
+
+
     def test_all_four_options_have_bounded_reversible_styles(self):
         base = {"nodes": {"shape": "dot"},
                 "physics": {"enabled": True},

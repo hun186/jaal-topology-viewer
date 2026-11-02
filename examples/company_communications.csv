@@ -1,0 +1,170 @@
+from,to,relation
+Client Partnerships / Manager 01,Client Partnerships / Team Lead 01,management-briefing
+CEO / Executive Office,Client Partnerships / VP 01,management-briefing
+Client Partnerships / VP 01,Client Partnerships / Director 01,management-briefing
+Client Partnerships / VP 01,Client Partnerships / Director 02,management-briefing
+Client Partnerships / VP 01,Client Partnerships / Director 03,management-briefing
+Client Partnerships / Director 02,Client Partnerships / Senior Manager 07,management-briefing
+Client Partnerships / Senior Manager 07,Client Partnerships / Manager 19,management-briefing
+International Sales / VP 01,International Sales / Director 01,management-briefing
+International Sales / VP 01,International Sales / Director 02,management-briefing
+CEO / Executive Office,Corporate Operations / VP 01,management-briefing
+Corporate Operations / VP 01,Corporate Operations / Director 01,management-briefing
+CEO / Executive Office,International Sales / VP 01,management-briefing
+CEO / Executive Office,Finance & Analytics / VP 01,management-briefing
+Finance & Analytics / VP 01,Finance & Analytics / Director 01,management-briefing
+Finance & Analytics / VP 01,Finance & Analytics / Director 02,management-briefing
+Finance & Analytics / VP 01,Finance & Analytics / Director 03,management-briefing
+Finance & Analytics / Director 02,Finance & Analytics / Senior Manager 02,management-briefing
+Finance & Analytics / Director 01,Finance & Analytics / Senior Manager 01,management-briefing
+Finance & Analytics / Director 03,Finance & Analytics / Senior Manager 03,management-briefing
+Finance & Analytics / Director 03,Finance & Analytics / Senior Manager 04,management-briefing
+Finance & Analytics / Director 03,Finance & Analytics / Senior Manager 05,management-briefing
+Finance & Analytics / Senior Manager 05,Finance & Analytics / Manager 04,management-briefing
+Finance & Analytics / Senior Manager 04,Finance & Analytics / Manager 03,management-briefing
+Finance & Analytics / Manager 03,Finance & Analytics / Team Lead 02,management-briefing
+Finance & Analytics / Manager 03,Finance & Analytics / Team Lead 03,management-briefing
+Finance & Analytics / Manager 03,Finance & Analytics / Team Lead 04,management-briefing
+Finance & Analytics / Team Lead 04,Finance & Analytics / Specialist 05,management-briefing
+International Sales / VP 01,International Sales / Director 03,management-briefing
+International Sales / VP 01,International Sales / Director 04,management-briefing
+CEO / Executive Office,Legal & Facilities / VP 01,management-briefing
+International Sales / VP 01,International Sales / Director 05,management-briefing
+International Sales / Director 05,International Sales / Senior Manager 01,management-briefing
+Client Partnerships / Director 03,Client Partnerships / Senior Manager 08,management-briefing
+Client Partnerships / Senior Manager 02,Client Partnerships / Manager 02,management-briefing
+Client Partnerships / Senior Manager 02,Client Partnerships / Manager 03,management-briefing
+Client Partnerships / Director 01,Client Partnerships / Senior Manager 01,management-briefing
+Client Partnerships / Senior Manager 01,Client Partnerships / Manager 01,management-briefing
+Client Partnerships / Director 01,Client Partnerships / Senior Manager 02,management-briefing
+Client Partnerships / Senior Manager 02,Client Partnerships / Manager 04,management-briefing
+Client Partnerships / Manager 04,Client Partnerships / Team Lead 02,management-briefing
+Client Partnerships / Senior Manager 02,Client Partnerships / Manager 05,management-briefing
+Client Partnerships / Manager 05,Client Partnerships / Team Lead 03,management-briefing
+Client Partnerships / Manager 05,Client Partnerships / Team Lead 04,management-briefing
+Client Partnerships / Senior Manager 02,Client Partnerships / Manager 06,management-briefing
+Client Partnerships / Manager 06,Client Partnerships / Team Lead 05,management-briefing
+Client Partnerships / Manager 06,Client Partnerships / Team Lead 06,management-briefing
+Client Partnerships / Team Lead 05,Client Partnerships / Specialist 01,management-briefing
+Client Partnerships / Team Lead 06,Finance & Analytics / Manager 02,management-briefing
+Finance & Analytics / Senior Manager 03,Finance & Analytics / Manager 02,management-briefing
+Client Partnerships / Senior Manager 02,Client Partnerships / Manager 07,management-briefing
+Finance & Analytics / Senior Manager 01,Finance & Analytics / Manager 01,management-briefing
+Finance & Analytics / Manager 01,Finance & Analytics / Team Lead 01,management-briefing
+Finance & Analytics / Team Lead 01,Finance & Analytics / Specialist 01,management-briefing
+Finance & Analytics / Team Lead 01,Finance & Analytics / Specialist 02,management-briefing
+Finance & Analytics / Team Lead 01,Finance & Analytics / Specialist 03,management-briefing
+Finance & Analytics / Team Lead 01,Finance & Analytics / Specialist 04,management-briefing
+Finance & Analytics / Manager 03,Finance & Analytics / Team Lead 05,management-briefing
+Finance & Analytics / Team Lead 05,Finance & Analytics / Manager 01,management-briefing
+Corporate Operations / Director 01,Client Partnerships / Senior Manager 03,management-briefing
+Client Partnerships / Director 01,Client Partnerships / Senior Manager 03,management-briefing
+Client Partnerships / Senior Manager 03,Client Partnerships / Manager 09,management-briefing
+Client Partnerships / Senior Manager 03,Client Partnerships / Manager 08,management-briefing
+Client Partnerships / Senior Manager 03,Client Partnerships / Manager 10,management-briefing
+Client Partnerships / Manager 03,Client Partnerships / Manager 09,management-briefing
+Client Partnerships / Senior Manager 02,Client Partnerships / Manager 08,management-briefing
+Client Partnerships / Senior Manager 04,Client Partnerships / Manager 11,management-briefing
+Client Partnerships / Senior Manager 04,Client Partnerships / Manager 12,management-briefing
+Client Partnerships / Senior Manager 04,Client Partnerships / Manager 13,management-briefing
+Client Partnerships / Director 01,Client Partnerships / Senior Manager 04,management-briefing
+Client Partnerships / Senior Manager 05,Client Partnerships / Manager 14,management-briefing
+Client Partnerships / Senior Manager 05,Client Partnerships / Manager 15,management-briefing
+Client Partnerships / Senior Manager 05,Client Partnerships / Manager 16,management-briefing
+Client Partnerships / Director 01,Client Partnerships / Senior Manager 05,management-briefing
+Client Partnerships / Senior Manager 06,Client Partnerships / Manager 17,management-briefing
+Client Partnerships / Senior Manager 06,Client Partnerships / Manager 18,management-briefing
+Client Partnerships / Manager 17,Client Partnerships / Team Lead 07,management-briefing
+Client Partnerships / Manager 17,Client Partnerships / Team Lead 08,management-briefing
+Client Partnerships / Manager 17,Client Partnerships / Team Lead 09,management-briefing
+Client Partnerships / Manager 18,Client Partnerships / Team Lead 10,management-briefing
+Client Partnerships / Manager 18,Client Partnerships / Team Lead 11,management-briefing
+Client Partnerships / Director 01,Client Partnerships / Senior Manager 06,management-briefing
+Client Partnerships / Team Lead 01,Client Partnerships / Manager 01,reply
+Client Partnerships / Director 02,Client Partnerships / VP 01,reply
+Client Partnerships / Manager 19,Client Partnerships / Senior Manager 07,reply
+Corporate Operations / VP 01,CEO / Executive Office,reply
+Finance & Analytics / VP 01,CEO / Executive Office,reply
+Finance & Analytics / Director 03,Finance & Analytics / VP 01,reply
+Finance & Analytics / Senior Manager 03,Finance & Analytics / Director 03,reply
+Finance & Analytics / Manager 04,Finance & Analytics / Senior Manager 05,reply
+Finance & Analytics / Team Lead 03,Finance & Analytics / Manager 03,reply
+International Sales / Director 03,International Sales / VP 01,reply
+International Sales / Director 05,International Sales / VP 01,reply
+Client Partnerships / Manager 02,Client Partnerships / Senior Manager 02,reply
+Client Partnerships / Manager 01,Client Partnerships / Senior Manager 01,reply
+Client Partnerships / Team Lead 02,Client Partnerships / Manager 04,reply
+Client Partnerships / Team Lead 04,Client Partnerships / Manager 05,reply
+Client Partnerships / Team Lead 06,Client Partnerships / Manager 06,reply
+Finance & Analytics / Manager 02,Finance & Analytics / Senior Manager 03,reply
+Finance & Analytics / Team Lead 01,Finance & Analytics / Manager 01,reply
+Finance & Analytics / Specialist 03,Finance & Analytics / Team Lead 01,reply
+Finance & Analytics / Manager 01,Finance & Analytics / Team Lead 05,reply
+Client Partnerships / Senior Manager 03,Client Partnerships / Director 01,reply
+Client Partnerships / Manager 10,Client Partnerships / Senior Manager 03,reply
+Client Partnerships / Manager 11,Client Partnerships / Senior Manager 04,reply
+Client Partnerships / Senior Manager 04,Client Partnerships / Director 01,reply
+Client Partnerships / Manager 16,Client Partnerships / Senior Manager 05,reply
+Client Partnerships / Manager 18,Client Partnerships / Senior Manager 06,reply
+Client Partnerships / Team Lead 09,Client Partnerships / Manager 17,reply
+Client Partnerships / Senior Manager 06,Client Partnerships / Director 01,reply
+Client Partnerships / Director 02,Client Partnerships / Director 03,peer-coordination
+Client Partnerships / Senior Manager 01,Client Partnerships / Senior Manager 02,peer-coordination
+Client Partnerships / Senior Manager 03,Client Partnerships / Senior Manager 04,peer-coordination
+Client Partnerships / Senior Manager 05,Client Partnerships / Senior Manager 06,peer-coordination
+Client Partnerships / Senior Manager 07,Client Partnerships / Senior Manager 08,peer-coordination
+Client Partnerships / Manager 01,Client Partnerships / Manager 02,peer-coordination
+Client Partnerships / Manager 03,Client Partnerships / Manager 04,peer-coordination
+Client Partnerships / Manager 05,Client Partnerships / Manager 06,peer-coordination
+Client Partnerships / Manager 07,Client Partnerships / Manager 08,peer-coordination
+Client Partnerships / Manager 09,Client Partnerships / Manager 10,peer-coordination
+Client Partnerships / Manager 11,Client Partnerships / Manager 12,peer-coordination
+Client Partnerships / Manager 13,Client Partnerships / Manager 14,peer-coordination
+Client Partnerships / Manager 15,Client Partnerships / Manager 16,peer-coordination
+Client Partnerships / Manager 17,Client Partnerships / Manager 18,peer-coordination
+Client Partnerships / Manager 19,Client Partnerships / Team Lead 01,peer-coordination
+Client Partnerships / Team Lead 02,Client Partnerships / Team Lead 03,peer-coordination
+Client Partnerships / Team Lead 04,Client Partnerships / Team Lead 05,peer-coordination
+Client Partnerships / Team Lead 06,Client Partnerships / Team Lead 07,peer-coordination
+Client Partnerships / Team Lead 08,Client Partnerships / Team Lead 09,peer-coordination
+Client Partnerships / Team Lead 10,Client Partnerships / Team Lead 11,peer-coordination
+Client Partnerships / Senior Manager 03,Client Partnerships / Senior Manager 01,peer-coordination
+Client Partnerships / Senior Manager 07,Client Partnerships / Senior Manager 05,peer-coordination
+Client Partnerships / Manager 03,Client Partnerships / Manager 01,peer-coordination
+Client Partnerships / Manager 07,Client Partnerships / Manager 05,peer-coordination
+Client Partnerships / Manager 11,Client Partnerships / Manager 09,peer-coordination
+Client Partnerships / Manager 15,Client Partnerships / Manager 13,peer-coordination
+Client Partnerships / Manager 19,Client Partnerships / Manager 17,peer-coordination
+Client Partnerships / Team Lead 04,Client Partnerships / Team Lead 02,peer-coordination
+Client Partnerships / Team Lead 08,Client Partnerships / Team Lead 06,peer-coordination
+Client Partnerships / Specialist 01,Client Partnerships / Team Lead 10,peer-coordination
+International Sales / Director 02,International Sales / Director 03,peer-coordination
+International Sales / Director 04,International Sales / Director 05,peer-coordination
+International Sales / Director 02,International Sales / VP 01,peer-coordination
+International Sales / Senior Manager 01,International Sales / Director 04,peer-coordination
+Finance & Analytics / Director 02,Finance & Analytics / Director 03,peer-coordination
+Finance & Analytics / Senior Manager 01,Finance & Analytics / Senior Manager 02,peer-coordination
+Finance & Analytics / Senior Manager 03,Finance & Analytics / Senior Manager 04,peer-coordination
+Finance & Analytics / Senior Manager 05,Finance & Analytics / Manager 01,peer-coordination
+Finance & Analytics / Manager 02,Finance & Analytics / Manager 03,peer-coordination
+Finance & Analytics / Manager 04,Finance & Analytics / Team Lead 01,peer-coordination
+Finance & Analytics / Team Lead 02,Finance & Analytics / Team Lead 03,peer-coordination
+Finance & Analytics / Team Lead 04,Finance & Analytics / Team Lead 05,peer-coordination
+Finance & Analytics / Specialist 01,Finance & Analytics / Specialist 02,peer-coordination
+Finance & Analytics / Specialist 03,Finance & Analytics / Specialist 04,peer-coordination
+Finance & Analytics / Director 02,Finance & Analytics / VP 01,peer-coordination
+Finance & Analytics / Senior Manager 03,Finance & Analytics / Senior Manager 01,peer-coordination
+Finance & Analytics / Manager 02,Finance & Analytics / Senior Manager 05,peer-coordination
+Finance & Analytics / Team Lead 02,Finance & Analytics / Manager 04,peer-coordination
+Finance & Analytics / Specialist 01,Finance & Analytics / Team Lead 04,peer-coordination
+Finance & Analytics / Specialist 05,Finance & Analytics / Specialist 03,peer-coordination
+Client Partnerships / Director 01,Corporate Operations / Director 01,cross-team
+Corporate Operations / VP 01,Client Partnerships / VP 01,cross-team
+Corporate Operations / Director 01,International Sales / Director 01,cross-team
+International Sales / VP 01,Corporate Operations / VP 01,cross-team
+International Sales / Director 01,Finance & Analytics / Director 01,cross-team
+Finance & Analytics / VP 01,International Sales / VP 01,cross-team
+Finance & Analytics / Director 01,Legal & Facilities / VP 01,cross-team
+Legal & Facilities / VP 01,Finance & Analytics / VP 01,cross-team
+Legal & Facilities / VP 01,Client Partnerships / Director 01,cross-team
+Client Partnerships / VP 01,Legal & Facilities / VP 01,cross-team
