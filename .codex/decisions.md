@@ -1,36 +1,28 @@
 # Technical Decisions
 
-> 類型：Durable rationale。只記錄存在實質取捨、會約束後續維護的決策；一般程式修改放 `memory.md` 即可。
+> 只記錄已由實作及維護說明證實的長期取捨；日期為記錄日，不偽稱首次決策日期。
 
 ## Active Decision Index
+| ID | 決策 | 狀態 | 記錄日 |
+| --- | --- | --- | --- |
+| ADR-0001 | 可攜核心獨立 repository 單一來源 | Accepted | 2026-11-03 |
+| ADR-0002 | 下游 exact Git SHA pin 與分開驗收 | Accepted | 2026-11-03 |
+| ADR-0003 | 唯讀、有界圖、loopback-only 預設 | Accepted | 2026-11-03 |
 
-| ID | 決策 | 狀態 | 日期 | 影響範圍 | 被取代／取代者 |
-| --- | --- | --- | --- | --- | --- |
-| 目前無已確認決策 | — | — | — | — | — |
+## ADR-0001 — 單一來源
+- 背景：portable 核心曾位於 `text-category-profiler/packages/jaal-topology`，下游整合 PR [#209](https://github.com/hun186/text-category-profiler/pull/209)、[#210](https://github.com/hun186/text-category-profiler/pull/210) 後搬離。
+- 決策：本 repo 負責 Python/JS 通用核心，consumer 保留 Stage 4 特定 root、sidebar、iframe 等 UI。
+- 取捨：減少重複核心，但跨 repository 需升級協調。證據：`REPOSITORY_SETUP.md`、merged [PR #1](https://github.com/hun186/jaal-topology-viewer/pull/1)。
 
-## 何時建立 Decision Record
+## ADR-0002 — Pin exact SHA
+- 背景：上游版本變化可能影響下游 Stage 4。
+- 決策：consumer 使用經 review 的 Git SHA 而非浮動 `main`；更新 pin 需獨立 PR、provenance 與 CI。
+- 取捨：較慢獲取新功能，換取重現性與相容控制；offline 可以 exact SHA wheel + hash。
+- 證據：`README.md`、`REPOSITORY_SETUP.md`。
 
-符合多數下列條件時才建立：
+## ADR-0003 — 安全／效能有界
+- 決策：CSV 不回寫；匯入 max 100,000 unique edges；render max 3000 nodes/5000 edges；CLI 只監聽 loopback；空可視邊拒絕。
+- 取捨：過大圖需選 root，公網部署需另做安全 review。證據：`data.py`、`cli.py`、`viewer.py`。
 
-- 有兩個以上合理方案與明確取捨。
-- 會影響模組邊界、資料模型、契約、安全、相容性、部署或營運成本。
-- 未來維護者只看程式碼不容易理解「為什麼」。
-- 回復或改變成本不低。
-
-不要為重新命名、單純 bug fix、格式調整、每次拆檔或理所當然的最佳實務建立決策紀錄，除非其中真的存在專案特有取捨。
-
-## Decision Records
-
-目前尚無已確認紀錄。新增時：
-
-1. 從 `.codex/templates/decision-entry.template.md` 複製格式。
-2. 使用遞增且不重用的 ID，例如 `ADR-0001`。
-3. 將索引更新到本檔頂端。
-4. 決策被新決策取代時，不刪除舊紀錄；將狀態改為 `Superseded`，雙向連結 ID。
-
-## 維護規則
-
-- 狀態使用 `Proposed`、`Accepted`、`Superseded`、`Rejected` 或 `Deprecated`。
-- 只有 `Accepted` 決策可視為目前設計約束；仍需與實際程式碼交叉查證。
-- 大量舊的 Superseded／Rejected 紀錄可移到 `.codex/archive/decisions-YYYY.md`，但 Active Decision Index 應保留必要替代鏈。
-- 不記錄秘密、內部帳密或可識別個人的審批資訊。
+## 維護
+新決策使用遞增不重用 ID；被取代時標記 Superseded 與新決策連結；不把一般 bugfix、猜測或秘密放入。

@@ -1,54 +1,29 @@
 # Project Memory
 
-> 類型：Recent durable context。不是聊天紀錄或完整 changelog；只保存能讓後續任務少走彎路的近期成果。
+> Recent durable context；不保存聊天逐字稿、完整 log 或可由 diff 直接看出的瑣碎變更。
 
 ## Current Focus
-
-- 初始化狀態：`UNINITIALIZED`
-- 目前工作焦點：`待初始化`
-- 最近確認可工作的路徑：`待初始化`
-- 需要延續的相容性／限制：`待初始化`
-
-Current Focus 最多保留 5～8 個短項目。專案長期身份放 `project.md`，完整架構放 `architecture.md`，不得在此重複整份內容。
+- `INITIALIZED`（2026-11-03）；啟動任務固定讀 `project.md` 和本檔 Current Focus／Recent Outcomes。
+- 本 repo 是通用 `jaal_topology` Python/JS 核心**唯一來源**；不得回複製到 `text-category-profiler`。
+- 維持唯讀 CSV、原始有向圖 IDs、匯入／顯示上限、四模式與同 port Flask mount。
+- 下游使用 reviewed exact Git SHA，更新必須另行修訂 consumer pin、執行 consumer CI/Review。
+- Windows 實機視覺、Dash 2/3/4 及乾淨外部 consumer 尚不能視為已驗收。
+- 本 repo 的通用圖 viewer 與 consumer Stage 4 專屬 root picker、sidebar、iframe autoheight 分工不同。
 
 ## Recent Outcomes
-
-目前尚無已記錄成果。初始化完成後，用 `.codex/templates/memory-entry.template.md` 的格式新增；最多保留最近 10 筆有持久參考價值的項目。
+| 日期 | 事件 | 持久結果 |
+| --- | --- | --- |
+| 2026-11-03 | Codex memory bootstrap | 由 `main` `fc49c0d2559c71df79f438e070ef3610e7093e5a` 的程式、manifest、CI、README 建立 project/workflows/architecture/contracts/decisions/backlog 與 Quickstart；此次僅文件，不修改產品程式碼或測試。 |
+| 2026-11-02 | 獨立核心歸屬文件 | [PR #1](https://github.com/hun186/jaal-topology-viewer/pull/1) 已 merged；README／REPOSITORY_SETUP 明確說明 source of truth、下游 exact SHA 更新。 |
+| 2026-11-02 | 主線 CI 基準 | `main` `fc49c0d2559c71df79f438e070ef3610e7093e5a` [Hosted CI success](https://github.com/hun186/jaal-topology-viewer/actions/runs/41480969808)；未宣稱本次本機重跑或 Windows 視覺驗收。 |
 
 ## Open Handoffs
-
-只列已開始但尚未完成、或下一個任務必須知道的交接。單純構想放 `backlog.md`，未證實問題放「待確認」而非假裝已知。
-
-- 目前無已確認項目。
+- Windows browser：root selector、Jaal Search/Filter/Color/Size、四模式、中文 fallback、收攏動畫、focus、same-port iframe 的 consumer 驗證。
+- 下游依賴更新：provenance、Stage 4 相容測試、最新 HEAD CI 與正式 Review；上游 merge 不自動影響下游。
+- 本次文件 PR 合併狀態以 GitHub 為準；不能在此預先宣告正式 review 或 merge 已完成。
 
 ## Archive Index
+- `.codex/archive/README.md`；日常任務不主動讀 archive。
 
-- 詳細索引見 `.codex/archive/README.md`。
-- 一般任務不讀 archive，除非 Current Focus／Recent Outcomes 明確引用或使用者要求追溯。
-
-## 記錄準則
-
-值得記錄：
-
-- 任務的可觀察結果與重要範圍。
-- 實際通過的驗證，或具體未驗證原因。
-- 後續修改會用到的相容性、不變條件或教訓。
-- 尚未完成但已存在的交接。
-
-不要記錄：
-
-- 完整命令輸出、聊天逐字稿與每一步操作。
-- 可直接從 Git diff 得知的瑣碎檔名清單。
-- 已失效的猜測、一次性 typo、無後續價值的失敗命令。
-- 尚未接受的改善靈感。
-- 秘密、個資、真實連線資料或敏感 payload。
-
-## 濃縮規則
-
-符合任一條件時濃縮：超過 10 筆 Recent Outcomes、約 200 行、24 KB，或內容出現明顯重複／失效。
-
-1. 更新 Current Focus 為目前仍有效的摘要。
-2. 近期 5～10 筆留在 active memory。
-3. 將仍有追溯價值的較舊條目移到 `.codex/archive/memory-YYYY-MM.md`；不要複製整份 active memory。
-4. 更新 `.codex/archive/README.md`。
-5. 可由 Git 歷史充分回答且沒有持久價值的細節直接移除。
+## 維護
+Current Focus 簡短；Recent Outcomes 上限 10，超過約 200 行／24 KB 濃縮。只保留持久可驗證成果，不保存秘密、敏感 payload、完整輸出或臨時猜測。
