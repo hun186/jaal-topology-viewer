@@ -31,7 +31,7 @@ A directed message `A → B` means A sent a communication to B, **not** B report
 
 ## Prototype dataset provenance
 - [Source: `text-category-profiler/ClassesTree/data/TopicTree.csv`](https://github.com/hun186/text-category-profiler/blob/6cc3855ec5d726d5e207e866ca61b165f30ded88/ClassesTree/data/TopicTree.csv) at commit `6cc3855ec5d726d5e207e866ca61b165f30ded88`.
-- Select exactly the directed descendant closure of `TW Affairs`: **77 taxonomy nodes, 82 internal edges**. Rename each original class to a **fictional organizational role** using shortest first-discovery depth and first top-level branch, preserving all original edges as `management-briefing`.
+- Select exactly the directed descendant closure of `TW Affairs`: **77 taxonomy nodes, 82 internal edge rows (81 unique directed pairs)**. Rename each original class to a **fictional organizational role** using shortest first-discovery depth and first top-level branch, preserving all original edges as `management-briefing`.
 - Add deterministic synthetic directed `reply`, `peer-coordination`, `cross-team` communications to create non-tree cycles and lateral connectivity; these are **fictional illustration**, not extracted emails or actual corporate hierarchy. Mapping file exists solely to audit the conversion; it is not required for use.
 - Final generated sample: **77 people/roles, 169 unique directed pairs**; breakout: management-briefing=81, reply=28, peer-coordination=50, cross-team=10.
 - The `relation` column is documentation only for current reader. Edges `from→to` mean sender→recipient. Multiple messages by the same pair, dates, real persons and email contents are **not modeled**.

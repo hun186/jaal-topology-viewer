@@ -96,7 +96,7 @@ into fictional organizational role IDs, then adds synthetic replies, lateral
 messages and cross-team correspondence. **Every directed arrow is
 sender → recipient**, never a reporting relationship.
 
-The original selected subtree has **77 nodes and 82 directed edges**; the
+The original selected subtree has **77 nodes and 82 edge records (81 unique directed pairs)**; the
 example has **77 roles and 169 unique directed links**.
 The `relation` column distinguishes invented message types for documentation;
 the current viewer uses just the first two columns, and does not interpret
