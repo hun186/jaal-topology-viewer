@@ -7,12 +7,21 @@ training, or WorkPool. It **never writes** either source CSV.
 
 ## Install and use in another Python project
 
-Copy **only** the `packages/jaal-topology/` directory into your new repository.
-With Python 3.10+ and an environment compatible with `jaal`/`dash`/`visdcc`:
+This repository **is the standalone package root**. With Python 3.10+
+and an environment compatible with `jaal`/`dash`/`visdcc`, install a
+fixed reviewed Git commit rather than a floating `main` dependency:
 
 ```sh
-python -m pip install -e ./jaal-topology
+python -m pip install "jaal-topology-viewer @ git+https://github.com/hun186/jaal-topology-viewer.git@7a7d8ba1f847b2f95a620c61a0c5a94f0523e255"
 jaal-topology --edges ./relationships.csv --metadata ./labels.csv --root Root
+```
+
+When contributing to this repository, clone it and use an editable install:
+
+```sh
+git clone https://github.com/hun186/jaal-topology-viewer.git
+cd jaal-topology-viewer
+python -m pip install -e .
 ```
 
 Alternatively, without modifying global PATH:
@@ -119,15 +128,14 @@ reload: rebuild the selected view by restarting or constructing another
 bounded app. This is a same-origin embedded app, not a live cross-origin
 embedding or a public Internet deployment service.
 
-## Standalone repository export
+## Independent repository testing and integration
 
-`packages/jaal-topology/` includes its own `pyproject.toml`, `LICENSE`,
+This repository includes its own `pyproject.toml`, `LICENSE`,
 `THIRD_PARTY_NOTICES.md`, `examples/`, `tests/`, and
-`.github/workflows/ci.yml`. When moving this directory to a new
-repository root, install and check it without importing the original
-text-category-profiler project. For the verified GitHub Actions ZIP export,
-integrity check, GitHub Desktop publish process, and ownership caveats,
-see [REPOSITORY_SETUP.md](REPOSITORY_SETUP.md):
+`.github/workflows/ci.yml`. It has no import dependency on
+`hun186/text-category-profiler`. See [REPOSITORY_SETUP.md](REPOSITORY_SETUP.md)
+for authoritative ownership, downstream consumer updates and compatibility
+checks:
 
 ```sh
 python -m pip install -e .
@@ -136,9 +144,9 @@ node --test tests/*.test.cjs
 jaal-topology --edges examples/relationships.csv --metadata examples/metadata.csv --root Root
 ```
 
-The contained workflow verifies this clean-root configuration. The parent
-project's `Jaal Standalone GitHub Repository Export` workflow also verifies
-and attaches a GitHub-ready ZIP with SHA-256 checksums. Do not
-publish a release until PR review, root-project CI and external browser
-acceptance all pass; publishing to PyPI, Docker or a public web server are
+The local workflow verifies this clean-root package configuration.
+`text-category-profiler` now installs this package from an exact Git commit
+and verifies its own Stage 4 WSGI and browser compatibility. Do not
+publish a new release until independent PR review, hosted CI and appropriate
+browser acceptance pass; publishing to PyPI, Docker or a public web server are
 separate security/release decisions.
