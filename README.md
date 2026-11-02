@@ -87,6 +87,40 @@ render on import. Source parsing itself rejects more than 100,000 distinct
 edges. CSVs remain read-only. The renderer imports heavy dependencies only
 on `build_app()`, not `import jaal_topology`.
 
+## Larger example: fictional corporate communications
+
+This medium-size example is deliberately **not a strict tree**. It transforms the
+directed `TW Affairs` taxonomy subtree from
+[`text-category-profiler`](https://github.com/hun186/text-category-profiler)
+into fictional organizational role IDs, then adds synthetic replies, lateral
+messages and cross-team correspondence. **Every directed arrow is
+sender → recipient**, never a reporting relationship.
+
+The original selected subtree has **77 nodes and 82 directed edges**; the
+example has **77 roles and 169 unique directed links**.
+The `relation` column distinguishes invented message types for documentation;
+the current viewer uses just the first two columns, and does not interpret
+relation types as line styles or email counts. All names and communications
+are synthetic, not actual company or email records.
+
+```sh
+jaal-topology --edges examples/company_communications.csv --metadata examples/company_people.csv
+# Or, without a PATH script:
+python -m jaal_topology --edges examples/company_communications.csv --metadata examples/company_people.csv -p 8059
+```
+
+Choose **網狀（全展開） / network** for this general directed graph. The current
+`網狀（收攏）` mode implements **taxonomy descendant collapse**, not
+social-network clustering, and is unsuitable as a meaningful collapse for
+emails. Hierarchical positioning likewise does not assert an organization chart.
+
+The auditable one-to-one taxonomy→fictional-role mapping is in
+[`examples/company_communications_source_mapping.csv`](examples/company_communications_source_mapping.csv).
+See [general graph community-collapse design](docs/general_graph_community_collapse.md)
+for the proposed Louvain/Leiden-based community abstraction, directed
+aggregation, restore rules and testing gate. **This is a proposal, not a
+shipped community-clustering feature.**
+
 ## Known difference from the Stage 4 customized Jaal viewer
 
 This standalone package now bundles the complete four-mode visdcc browser

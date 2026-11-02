@@ -94,6 +94,34 @@ class CSVInterfaceTests(unittest.TestCase):
             mount_flask(host, graph, mount_path="/topology")
         self.assertIsNotNone(child)
 
+
+    def test_company_communications_example_is_directed_non_tree(self):
+        examples = Path(__file__).resolve().parents[1] / "examples"
+        graph = load_graph(
+            examples / "company_communications.csv",
+            examples / "company_people.csv",
+        )
+        self.assertEqual(len(graph.nodes), 77)
+        self.assertEqual(len(graph.edges), 169)
+        self.assertEqual(len(set(graph.edges)), len(graph.edges))
+        self.assertIn("CEO / Executive Office", graph.nodes)
+        self.assertEqual(
+            graph.translations["CEO / Executive Office"], "執行長／總經理室"
+        )
+        self.assertTrue(
+            any((b, a) in set(graph.edges) for a, b in graph.edges),
+            "Realistic emails include reciprocal directed pairs",
+        )
+        self.assertEqual(len(select_subgraph(graph).edges), 169)
+        mapping_file = examples / "company_communications_source_mapping.csv"
+        import csv
+        with mapping_file.open(encoding="utf-8", newline="") as stream:
+            mapping = list(csv.DictReader(stream))
+        self.assertEqual(len(mapping), 77)
+        self.assertEqual(
+            {row["synthetic_sender_id"] for row in mapping}, set(graph.nodes)
+        )
+
     def test_all_four_options_have_bounded_reversible_styles(self):
         base = {"nodes": {"shape": "dot"},
                 "physics": {"enabled": True},
