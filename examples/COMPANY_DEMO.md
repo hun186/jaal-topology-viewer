@@ -18,7 +18,7 @@ These are commands to run at repository root, not live online preview links. Bot
 2. Turn on **優先顯示中文名稱** to view the fictional bilingual role labels, then turn it off. Original English IDs remain the authority for search and relations.
 3. Try the original Jaal Search / Filter / Color / Size tools. Search for `CEO / Executive Office`, `International Sales`, and `Finance & Analytics`.
 4. Observe replies (two-way arrows), peer connections, cross-team links and directed cycles. The optional third CSV column (`relation`) is illustrative and **not read** by the current renderer.
-5. **Do not interpret** the current **網狀（收攏）** mode as communication communities. It still collapses outgoing descendants. The distinct community-based mode is designed in [the RFC](../docs/general_graph_community_collapse.md), not yet implemented.
+5. Try **網狀（社群收攏・Louvain）**, a separate experimental communication-community view: click a cluster to expand its members, click a member to re-collapse. Edges between communities retain sender→recipient direction and show counts of unique distinct directed pairs. The older **網狀（收攏）** still means descendant collapse and is **not** appropriate for emails. The community mode uses directed Louvain seed 42 / resolution 1 on unweighted topology, not message frequencies; see [design and limitations](../docs/general_graph_community_collapse.md).
 
 ## Exact assets / reproducibility
 

@@ -31,7 +31,7 @@ jobs:
           m = Path("examples/metadata.csv")
           a = build_app(select_subgraph(load_graph(e, m), "Root"), root="Root")
           assert a.server.test_client().get("/_dash-layout").status_code == 200
-          for name in ("16.jaal_visible_labels.js", "17.jaal_structural_collapse.js", "bootstrap.min.css"):
+          for name in ("16.jaal_visible_labels.js", "17.jaal_structural_collapse.js", "18.jaal_community_collapse.js", "bootstrap.min.css"):
               assert a.server.test_client().get("/assets/" + name).status_code == 200
           company = build_app(select_subgraph(load_graph(
               Path("examples/company_communications.csv"),

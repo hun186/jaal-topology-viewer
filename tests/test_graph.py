@@ -172,3 +172,6 @@ class CSVInterfaceTests(unittest.TestCase):
         self.assertTrue(hierarchical["layout"]["hierarchical"]["enabled"])
         network = layout_options(base, "network")
         self.assertFalse(network["layout"]["hierarchical"]["enabled"])
+        community_options = layout_options(base, "network-community-collapsed")
+        self.assertFalse(community_options["layout"]["hierarchical"]["enabled"])
+        self.assertEqual(base["nodes"]["shape"], "dot")

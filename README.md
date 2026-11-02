@@ -70,8 +70,9 @@ jaal-topology --edges links.csv --metadata names.csv \
 
 The web UI provides a live, **off-by-default** Chinese label checkbox;
 English IDs remain authoritative in Search and node tooltips. It also retains
-the original Jaal Search/Filter/Color/Size controls plus **four**
+the original Jaal Search/Filter/Color/Size controls plus **four legacy**
 layout modes (network/hierarchy, fully shown/structurally collapsed),
+and an independent experimental **網狀（社群收攏・Louvain）** mode,
 click-to-expand/collapse and the existing smooth hierarchy expansion animation.
 Changing display labels never rewrites graph data.
 
@@ -117,10 +118,17 @@ port and resolve data paths relative to the repository root. The detailed
 [interactive demonstration guide](examples/COMPANY_DEMO.md) includes suggested
 Search, Chinese labels and cross-team exploration steps.
 
-Choose **網狀（全展開） / network** for this general directed graph. The current
-`網狀（收攏）` mode implements **taxonomy descendant collapse**, not
-social-network clustering, and is unsuitable as a meaningful collapse for
-emails. Hierarchical positioning likewise does not assert an organization chart.
+Start with **網狀（全展開） / network** for this general directed graph.
+Try **網狀（社群收攏・Louvain）** for experimental topology-based
+communities (seed 42, resolution 1; unweighted distinct directed pairs).
+Click a community to open it; click one of its members to collapse it.
+The four legacy modes stay unchanged: **網狀（收攏）** still uses taxonomy
+descendants, *not* communities. The community partition is an analytical
+grouping, **not** an organization chart. The renderer preserves independent
+directional totals; edge count labels are unique source pairs, not emails.
+Search/Filter temporarily restores uncollapsed source visualization while
+active. Browser visual acceptance and downstream Stage 4 compatibility are
+still pending.
 
 The auditable one-to-one taxonomy→fictional-role mapping is in
 [`examples/company_communications_source_mapping.csv`](examples/company_communications_source_mapping.csv).

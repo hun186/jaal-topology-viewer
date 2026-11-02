@@ -1,6 +1,6 @@
 # General directed graphs — community-collapse design proposal
 
-> **Design only: not yet an implemented clustering mode.** The current `network-collapsed` / `hierarchical-collapsed` engine in `17.jaal_structural_collapse.js` still uses directed descendants from taxonomy-style roots. The new company-email example is intended for **network (fully expanded)** until a separate community mode is implemented and verified.
+> **Partial implementation, experimental; browser validation pending.** The independent `network-community-collapsed` mode uses NetworkX directed Louvain (seed 42, resolution 1, `weight=None`) to detect communities. It projects a directed quotient graph in `18.jaal_community_collapse.js`. The older `network-collapsed` / `hierarchical-collapsed` modes still use taxonomy descendant collapse. These are **not** interchangeable. The feature is not production browser-certified.
 
 ## Why tree collapse does not generalize
 A directed message `A → B` means A sent a communication to B, **not** B reports to A. Cycles, replies, multi-parent nodes, disconnected components and high-degree bridges make the notion of an entire descendant subtree ambiguous. In a connected communication graph, root-based traversal could cover most nodes and make "collapse" misleading.
@@ -8,7 +8,7 @@ A directed message `A → B` means A sent a communication to B, **not** B report
 ## Proposed independent controls
 - **Layout:** Network / Hierarchical. This only changes visual positioning. A hierarchy layout on an arbitrary email network is not evidence of reporting lines.
 - **Abstraction:** All nodes / Structural descendants / Community clusters. Structural descendants should only be offered with an explicit hierarchical-data contract. Preserve the existing four mode codes and behavior for downstream Stage 4 compatibility; introduce a distinct **network-community-collapsed** (or similarly unambiguous) option, not a silent replacement of `network-collapsed`.
-- **Algorithm:** start with weighted Louvain as an explicit experimental choice; evaluate Leiden for connected community quality. Partition reproducibly by recording algorithm version, seed, resolution, treatment of edge weights and graph fingerprint. Algorithm choice cannot be inferred from sender-recipient direction alone.
+- **Algorithm:** implemented first pass: NetworkX directed, topology-only Louvain; deterministic seed 42, resolution 1, no message count weights. Future: expose parameters, support typed weights, benchmark Leiden and log algorithm + graph fingerprint. Do not infer hierarchy from sender→recipient relationships.
 
 ## Directed graph semantics
 - Store original directed edges untouched. For clustering, select **directed modularity** when supported. Alternatively construct a clearly disclosed undirected affinity projection where `w(u,v)=messages(u→v)+messages(v→u)`; never claim that projection preserves message direction.
@@ -17,10 +17,10 @@ A directed message `A → B` means A sent a communication to B, **not** B report
 - No original IDs are altered or discarded. Cluster IDs belong to a namespaced **ephemeral display layer**; reopening a cluster restores exact original nodes, directed edges and filters. Cross-group bridges must remain visible and inspectable. High-betweenness bridge nodes and very small communities may be left uncollapsed with explicit reason.
 
 ## Proposed UI / safe interaction
-- Optional `社群（收攏）` mode with visible `Louvain (experimental)` algorithm, resolution, seed and minimum community size. Allow "expand this community", "collapse", "restore all" and "recalculate"; show count of people, internal directed edges, outgoing and incoming message counts.
+- Implemented `網狀（社群收攏・Louvain）` fixed-parameter first pass; communities of at least 3 members are represented as compact nodes. Click cluster to expand; click member to re-collapse. User-adjustable resolution, seed, live recalculation, fully surfaced in/out totals and a distinct restore-all button are future UI work.
 - Preserve camera center and nearby node positions when expanding: avoid unconditional `fit()`. Honor reduced-motion preferences and provide a deterministic fallback.
 - Fail closed if algorithm unavailable, graph too large, invalid weight or no meaningful partition: show normal network graph and explain, **never silently switch to descendant collapse**.
-- Do not mix clusters with Jaal Search/Filter/Color/Size until preservation and restore invariants are tested. Avoid interpolating CSV names into executable browser scripts.
+- During upstream Jaal Search/Filter where hidden flags are active, temporarily restore the original filtered DataSets; switching out of community mode restores original IDs/edges. Browser E2E Search/Filter/Color/Size combinations are still an acceptance gate. Never interpolate CSV names into executable browser scripts.
 
 ## Validation gate for implementation
 1. Test chain, multi-parent DAG, directed cycle, bidirectional pair, hub/star, disconnected components, mixed cluster sizes, duplicate messages and labels with HTML-like text.

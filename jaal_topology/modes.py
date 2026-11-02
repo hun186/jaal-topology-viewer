@@ -1,4 +1,4 @@
-"""Shared four-mode Jaal network layout contract.
+"""Jaal network layout contract, including optional community abstraction.
 
 This module has no dependency on the TextClassification application.
 Network and hierarchy, full and structural collapse, preserve edge direction.
@@ -12,9 +12,9 @@ def layout_options(base_options, mode):
     layout is a directed *view* of those same edges, not a rewritten tree.
     """
     if mode not in ("network", "hierarchical", "network-collapsed",
-                    "hierarchical-collapsed"):
+                    "hierarchical-collapsed", "network-community-collapsed"):
         raise ValueError("Unsupported Jaal layout mode")
-    collapsed = mode.endswith("-collapsed")
+    collapsed = mode in ("network-collapsed", "hierarchical-collapsed")
     hierarchical = mode.startswith("hierarchical")
     options = deepcopy(base_options)
     if hierarchical:
