@@ -134,7 +134,11 @@
     const filtered = source.nodes.some(n => n.hidden) ||
       source.edges.some(e => e.hidden);
     const view = filtered ? {
-      nodes: source.nodes.map(node => ({...node, hidden: Boolean(node.hidden)})),
+      nodes: source.nodes.map(node => ({
+        ...node,
+        label: nameFor(node.id, state.zh),
+        hidden: Boolean(node.hidden),
+      })),
       edges: source.edges.map(edge => ({...edge, hidden: Boolean(edge.hidden)})),
       clusterToGroup: {},
     } : makeView(source, state.partition, state.opened, state.zh);

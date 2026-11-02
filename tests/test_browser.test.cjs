@@ -167,3 +167,67 @@ test("real self-loops survive and prototype-like node IDs stay literal", () => {
   assert.ok(uncollapsed.edges.some(edge => edge.id === "self"));
   assert.ok(uncollapsed.edges.some(edge => edge.id === "internal"));
 });
+
+
+test("filtered community views keep Chinese labels through Search/Filter and language toggles", () => {
+  const source = {
+    nodes: ["A", "B", "C"].map(id => ({id, label: id})),
+    edges: [{id:"eAB", from:"A", to:"B", arrows:"to"}],
+  };
+  const dataset = rows => {
+    const cache = new Map(rows.map(row => [row.id, {...row}]));
+    return {
+      getIds: () => [...cache.keys()],
+      get: () => [...cache.values()],
+      remove: ids => ids.forEach(id => cache.delete(id)),
+      update: rows => rows.forEach(row =>
+        cache.set(row.id, {...cache.get(row.id), ...row})),
+    };
+  };
+  const instance = {
+    props: {data: source}, nn: dataset(source.nodes), ee: dataset(source.edges),
+    net: {
+      on: () => {},
+      getPositions: () => ({}),
+      getViewPosition: () => ({x:0, y:0}),
+      getScale: () => 1,
+      moveTo: () => {},
+    },
+  };
+  const membership = {A:"group-0", B:"group-0", C:"group-0"};
+  const translated = {A:"甲", B:"乙", C:"丙"};
+  function render(mode, languages) {
+    const command = apply(mode, source, languages, translated, membership);
+    // Exercise the actual static visdcc command created by apply().
+    Function(command).call(instance);
+  }
+  // Search/Filter flags originate from the upstream graph and must be kept.
+  source.nodes[0].hidden = true;
+  source.edges[0].hidden = true;
+  render("network-community-collapsed", ["zh"]);
+  assert.equal(instance.__jaalCommunity.filtered, true);
+  assert.deepEqual(instance.nn.get().map(n => [n.id, n.label, n.hidden]), [
+    ["A", "甲", true], ["B", "乙", false], ["C", "丙", false],
+  ]);
+  assert.equal(instance.ee.get()[0].hidden, true);
+  render("network-community-collapsed", []);
+  assert.deepEqual(instance.nn.get().map(n => n.label), ["A", "B", "C"]);
+  render("network-community-collapsed", ["zh"]);
+  assert.deepEqual(instance.nn.get().map(n => n.label), ["甲", "乙", "丙"]);
+  // Clearing the filter should restore the community quotient (not stale nodes).
+  source.nodes[0].hidden = false;
+  source.edges[0].hidden = false;
+  render("network-community-collapsed", ["zh"]);
+  assert.equal(instance.__jaalCommunity.filtered, false);
+  assert.equal(instance.nn.getIds().length, 1);
+  // Filtering again must restore original IDs with Chinese display labels.
+  source.nodes[1].hidden = true;
+  render("network-community-collapsed", ["zh"]);
+  assert.equal(instance.nn.getIds().length, 3);
+  assert.equal(instance.nn.get().find(n => n.id === "B").label, "乙");
+  assert.equal(instance.nn.get().find(n => n.id === "B").hidden, true);
+  render("network", ["zh"]);
+  assert.deepEqual(instance.nn.get().map(n => n.label), ["甲", "乙", "丙"]);
+  assert.equal(instance.__jaalCommunity.active, false);
+  assert.deepEqual(source.nodes.map(n => n.label), ["A", "B", "C"]);
+});
