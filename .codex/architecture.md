@@ -13,14 +13,15 @@
 | `data.py` | CSV BOM/header/ID parsing，去重，metadata，root directed traversal，hard caps |
 | `cli.py`／`__main__.py` | argparse、stderr/exit code、loopback run |
 | `viewer.py` | Graph→Jaal DataFrame、原版 Jaal 控制、Dash clientside callbacks、safe tooltip |
-| `modes.py` | 四模式 options；由 hierarchy 切回 network 時明確復原 physics／smooth |
-| `assets/` | JS 中文 label／structural collapse、local Bootstrap CSS |
+| `modes.py` | 四種 legacy 模式與實驗 Louvain 模式 options；由 hierarchy 切回 network 時明確復原 physics／smooth |
+| `community.py` | NetworkX 有向 Louvain 分群、固定種子、direction-preserving aggregates |
+| `assets/` | JS 中文 label／structural collapse／Louvain community projection、local Bootstrap CSS |
 | `integration.py` | `DispatcherMiddleware` 在既有 Flask WSGI 同 port 掛載 child Dash |
 
 1. `load_graph` 逐份讀關係 CSV；保留有向邊與多父／環，去除相同的邊。
 2. 以可選 `ClassLabel,CT` metadata 附加顯示名稱，不改原始 ID。
 3. `select_subgraph` 依 root 沿 child 遍歷，保留所有兩端在子圖的原始邊並執行 limits。
-4. `build_app` 準備 DataFrame、Jaal 原有回呼、四模式控制與套件內資產。
+4. `build_app` 準備 DataFrame、Jaal 原有回呼、四種 legacy 模式＋實驗社群控制、Louvain membership 與套件內資產。
 5. CLI `127.0.0.1:8059` 或 Flask WSGI prefix 提供互動圖。
 
 ## 不變條件
@@ -38,6 +39,6 @@
 
 ## 修改路由
 - CSV/schema/limits → `data.py`, `cli.py`, `tests/test_graph.py`。
-- 四模式／翻譯／動畫 → `modes.py`, `viewer.py`, `assets/`, `test_browser.test.cjs`。
+- 四種 legacy 模式＋Louvain／翻譯／動畫 → `community.py`, `modes.py`, `viewer.py`, `assets/`, `test_browser.test.cjs`、`browser_acceptance.py`。
 - Flask same-port → `integration.py`、Python WSGI test、Hosted CI。
 - 下游升級 → `REPOSITORY_SETUP.md`、consumer exact pin 與其 CI。

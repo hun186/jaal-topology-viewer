@@ -13,13 +13,13 @@
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
-| 2026-11-03 | PR #5 browser acceptance automation (pending Hosted CI) | 新增 Windows Chromium + same-port iframe 實際互動 smoke、截圖保留；尚待 Hosted CI、正式 Review 與 Stage 4 Windows/consumer pin 驗收，不得提前宣稱 PASS。 |
+| 2026-11-03 | PR #5 hosted browser acceptance 部分完成 | 上游 HEAD `8d9beddd1be75cb4219952cc20dbc69fe411532a` Hosted run [41494602192](https://github.com/hun186/jaal-topology-viewer/actions/runs/41494602192) Ubuntu／Windows Chromium PASS，正式 Codex Review completed/0 findings；真實 visdcc DataSet 驗證 Louvain quotient、Search hidden flags、中文 CT、77/169 還原。Stage 4/consumer 仍 pending，未 Merge。 |
 | 2026-11-03 | Codex memory bootstrap | 由 `main` `fc49c0d2559c71df79f438e070ef3610e7093e5a` 的程式、manifest、CI、README 建立 project/workflows/architecture/contracts/decisions/backlog 與 Quickstart；此次僅文件，不修改產品程式碼或測試。 |
 | 2026-11-02 | 獨立核心歸屬文件 | [PR #1](https://github.com/hun186/jaal-topology-viewer/pull/1) 已 merged；README／REPOSITORY_SETUP 明確說明 source of truth、下游 exact SHA 更新。 |
 | 2026-11-02 | 主線 CI 基準 | `main` `fc49c0d2559c71df79f438e070ef3610e7093e5a` [Hosted CI success](https://github.com/hun186/jaal-topology-viewer/actions/runs/41480969808)；未宣稱本次本機重跑或 Windows 視覺驗收。 |
 
 ## Open Handoffs
-- Windows browser：PR #5 新增 upstream Windows Chromium headless smoke（Hosted CI 待驗）；Stage 4 consumer root selector、Filter/Color/Size、收攏動畫／drag／focus 等實機驗收仍待完成。
+- Windows browser：PR #5 upstream Windows Hosted Chromium headless smoke PASS；Stage 4 consumer root selector、Filter/Color/Size、收攏動畫／drag／focus 等實機驗收仍待完成。
 - 下游依賴更新：consumer 現釘 `7a7d8ba1f847b2f95a620c61a0c5a94f0523e255`；其 `test_jaal_topology_portable.py` 仍嚴格斷言四個 mode，升級五模式需先更新 consumer contract/test 再驗證完整 Stage 4，不能靜默改 pin。
 - 本次文件 PR 合併狀態以 GitHub 為準；不能在此預先宣告正式 review 或 merge 已完成。
 

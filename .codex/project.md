@@ -5,7 +5,7 @@
 ## Metadata
 - 初始化狀態：`INITIALIZED`
 - 最後查證日期：2026-11-03（台灣）
-- 查證基準：`main` `fc49c0d2559c71df79f438e070ef3610e7093e5a`
+- 查證基準：PR #5 HEAD `8d9beddd1be75cb4219952cc20dbc69fe411532a`（尚未 Merge；`main` 的狀態仍另行查證）
 - 維護 repository：`hun186/jaal-topology-viewer`
 
 ## 一句話目的
@@ -14,17 +14,17 @@
 ## 使用者、輸入、輸出
 - 使用者：檢視分類樹或其他有向關係的 Python 開發者，以及下游 `text-category-profiler`。
 - 輸入：一個以上 parent/child CSV、可選 `ClassLabel,CT` metadata、root 與渲染上限。
-- 輸出：Dash/Jaal 互動圖（四種模式，中文名稱預設關閉）；**不回寫**任一 CSV。
+- 輸出：Dash/Jaal 互動圖（四種 legacy 模式加一個實驗 Louvain 社群收攏模式；中文名稱預設關閉）；**不回寫**任一 CSV。
 - 非目標：BertScript／TCFMain／WorkPool／模型訓練，consumer 的 root 搜尋下拉、sidebar 與 iframe autoheight，公網部署、自動同步下游。
 
 ## 技術與執行
 | 項目 | 已確認 | 證據 |
 | --- | --- | --- |
 | Python | >=3.10；CI 用 3.11 | `pyproject.toml`、`ci.yml` |
-| 套件 | `jaal-topology-viewer` 0.1.0；`jaal>=0.1.9`、`pandas>=1.5`；未見 lockfile | `pyproject.toml` |
+| 套件 | `jaal-topology-viewer` 0.1.0；`jaal>=0.1.9`、`pandas>=1.5`、`networkx>=3.2,<4`；未見 lockfile | `pyproject.toml` |
 | UI | Jaal / Dash；可選 Flask / Werkzeug WSGI mount | `viewer.py`、`integration.py` |
-| Browser | 內含 JS 與 Bootstrap CSS；Node.js 測試 | `assets/`、`tests/` |
-| OS | CI `ubuntu-latest`；Windows 視覺未正式驗收 | `ci.yml`、`README.md` |
+| Browser | 內含 JS 與 Bootstrap CSS；Node.js 測試、Windows Hosted Chromium 真實 iframe smoke（非 Stage 4 實機驗收） | `assets/`、`tests/browser_acceptance.py`、`ci.yml` |
+| OS | CI `ubuntu-latest` + `windows-latest` headless Chromium；使用者 Windows/Stage 4 實機仍待驗 | `ci.yml`、`README.md` |
 | 遠端依賴 | 執行時無必需遠端服務；安裝可能需要取得套件 | `README.md` |
 
 ## 入口與 Repository 地圖
@@ -32,11 +32,12 @@
 | --- | --- |
 | `jaal_topology/__init__.py`, `data.py` | `Graph`、`GraphInputError`、`load_graph`、`select_subgraph` |
 | `cli.py`, `__main__.py` | `jaal-topology` 與 `python -m jaal_topology` |
-| `viewer.py`, `modes.py` | `build_app`、四模式、Jaal 原有 Search/Filter/Color/Size |
-| `assets/` | Browser JS、Bootstrap CSS，從套件直接提供 |
+| `viewer.py`, `modes.py` | `build_app`、四種既有模式＋Louvain 社群收攏、Jaal Search/Filter/Color/Size |
+| `community.py` | 定種子、保留方向的 Louvain 拓樸分群與方向計數 |
+| `assets/` | Browser JS（包含社群投影／收攏）、Bootstrap CSS，從套件直接提供 |
 | `integration.py` | `mount_flask`；Flask 同來源、同 port |
 | `tests/`, `examples/` | Python/Node 測試、最小 CSV fixture |
-| `.github/workflows/ci.yml` | Hosted CI；安裝、unittest、Node、CLI、Dash HTTP/asset smoke |
+| `.github/workflows/ci.yml` | Hosted CI；Ubuntu Python／Node／Dash 與 Windows Chromium 互動／iframe smoke，留存瀏覽器截圖 |
 | `REPOSITORY_SETUP.md` | 唯一原始碼來源、下游 exact SHA 升級 |
 | `AGENTS.md`, `.codex/` | Codex 路由、現況與記憶 |
 
