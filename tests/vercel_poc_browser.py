@@ -69,7 +69,10 @@ def main():
             assert page.locator("svg .graph-node.cluster:not(.faded)").count() >= 1
             assert page.locator("svg .graph-node.cluster.faded").count() >= 1
             page.locator("#search").fill("")
-            cluster = page.locator("svg .graph-node.cluster").first
+            # CEO is a singleton and expanding it does not change the count.
+            # Assert a multi-member department expands instead.
+            cluster = page.locator('svg .graph-node.cluster[data-id="team:Client Partnerships"]')
+            assert int(cluster.locator(".cluster-count").inner_text()) > 1
             cluster.locator("circle").click()
             assert int(page.locator("#visibleNodes").inner_text()) > collapsed
             assert page.locator("#edgeTotal").inner_text() == "169"
