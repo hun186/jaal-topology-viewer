@@ -10,6 +10,7 @@
 | ADR-0003 | 唯讀、有界圖、loopback-only 預設 | Accepted | 2026-11-03 |
 | ADR-0004 | Vercel 靜態 PoC 與 Merge-only 釋出 | Superseded by ADR-0005 (static only) | 2026-11-03 |
 | ADR-0005 | 公開 PoC 共用真正 Jaal/Dash，維持 Merge-only | Accepted | 2026-11-03 |
+| ADR-0006 | 有界 Gallery 多 Dash route 取代同頁直接換 Graph | Accepted | 2026-11-03 |
 
 ## ADR-0001 — 單一來源
 - 背景：portable 核心曾位於 `text-category-profiler/packages/jaal-topology`，下游整合 PR [#209](https://github.com/hun186/text-category-profiler/pull/209)、[#210](https://github.com/hun186/text-category-profiler/pull/210) 後搬離。
@@ -41,6 +42,14 @@
 - 僅允許公網展示 `examples/company_communications.csv` 與 `company_people.csv`，固定 77/169；不支援外部 CSV 上傳、不暴露私人 Stage 4 或模型資料。
 - 保留 ADR-0004 的部署預算控制：Vercel Git 自動部署永遠關閉、僅相關 PR Merge + 明確 enable；每次部署還需真實 READY/HTTP 驗證。
 - 代價：Flask/Dash serverless 需處理冷啟動、Python 套件體積、資源消耗，不能等同靜態站；未驗證前不得宣稱在 Vercel 與 Windows CLI 完全相同。
+
+## ADR-0006 — Independent Dash apps per gallery case
+
+- 使用者希望獨立 Viewer 可選單快速切換寄收件網、階層樹、其他網路案例，而非手動重啟程式。
+- 原版 Jaal Search／Filter／Color／Size 回呼在建立時綁定 Python Graph/Network；同一個 Dash app 直接替換 `graph.data` 會保留舊圖 closure，造成錯誤搜尋／收攏／配色。
+- 決策：採取 `GalleryCase` registry，最多 20 個明確、可驗證案例，一個 Flask/Port 下為每案建獨立 Dash app／子路徑，下拉以同來源 URL 導頁；切換需要重新載入 Dash 頁面，但每案 callbacks、模式合法性、Louvain membership 隔離，且只在開機建圖一次。
+- 單案例 `build_app`／`mount_flask` 仍原樣相容；Gallery API 可供任何 Python consumer 可選使用。公網案例均為固定虛構資料，無 CSV 上傳／外部 URL。
+- 此改動不代表 Vercel 已部署：Git auto/Preview 仍禁用，只可在 reviewed Merge 後依額度發布，完整上線需 HTTP/browser 證據。
 
 ## 維護
 新決策使用遞增不重用 ID；被取代時標記 Superseded 與新決策連結；不把一般 bugfix、猜測或秘密放入。
