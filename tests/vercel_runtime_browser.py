@@ -238,12 +238,13 @@ def check(port):
                 # Select by visible text inside this specific control rather
                 # than coupling the browser test to an internal CSS class.
                 page.locator("#jaal-temporal-window").get_by_text(
-                    "1 天", exact=True
+                    "1 單位", exact=True
                 ).last.click(timeout=15000)
                 page.wait_for_function(
                     "() => window.dash_clientside?.jaal_temporal?.frame?.mode === 'rolling' && " +
-                    "window.dash_clientside?.jaal_temporal?.frame?.from === " +
-                    "window.dash_clientside?.jaal_temporal?.frame?.to",
+                    "window.dash_clientside?.jaal_temporal?.frame?.window_minutes === 1440 && " +
+                    "window.dash_clientside?.jaal_temporal?.frame?.from !== " +
+                    "window.dash_clientside?.jaal_temporal?.frame?.to_exclusive",
                     timeout=30000,
                 )
                 day = page.evaluate(
@@ -257,6 +258,11 @@ def check(port):
                     "() => ({...window.dash_clientside.jaal_temporal.lastRendered})"
                 )
                 assert actual["sourceEdges"] == day["links"]
+                assert day["window_minutes"] == 1440
+                assert "互斥分段" in page.locator("#jaal-temporal-status").inner_text()
+                bar_before = page.locator("#jaal-temporal-window-highlight").evaluate(
+                    "(el) => el.style.left"
+                )
                 assert day["messages"] > 0
                 assert day["messages"] < 2000
                 assert actual["sourceEdges"] < full["sourceEdges"], (actual, full)
@@ -270,6 +276,10 @@ def check(port):
                     "window.dash_clientside?.jaal_temporal?.frame?.date",
                     timeout=30000,
                 )
+                bar_after = page.locator("#jaal-temporal-window-highlight").evaluate(
+                    "(el) => el.style.left"
+                )
+                assert bar_after != bar_before, "current-window blue bar must move with playback"
                 before_play = page.evaluate(
                     "() => window.dash_clientside.jaal_temporal.frame.date"
                 )
