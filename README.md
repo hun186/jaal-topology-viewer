@@ -13,6 +13,13 @@ Filter/Color/Size and Louvain/community logic as this portable viewer.
 It is driven by the fictional 77-node/169-edge company example; cyclic
 graphs correctly disable the two DAG-only collapse modes.
 
+The common Jaal/Dash viewer has a **collapsible Search/Filter/Color/Size
+sidebar**; collapsing it releases the full graph width without unmounting
+its controls. The graph-type/cycle explanation is available from the
+**圖形說明** disclosure in the compact top toolbar instead of permanently
+occupying drawing height. The graph-type badge remains visible so cycle
+restrictions are not silently hidden. The Jaal logo is compact.
+
 The root `app.py` is a Vercel Flask WSGI entrypoint for the demo only.
 No private data or user file upload is exposed. This does not change
 the localhost CLI or the downstream `text-category-profiler` pin.
