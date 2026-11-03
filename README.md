@@ -122,6 +122,14 @@ Start with **網狀（全展開） / network** for this general directed graph.
 Try **網狀（社群收攏・Louvain）** for experimental topology-based
 communities (seed 42, resolution 1; unweighted distinct directed pairs).
 Click a community to open it; click one of its members to collapse it.
+The viewer labels the selected directed graph as **tree** (one root and no
+shared children), **forest** (multiple disconnected rooted trees), **DAG**
+(acyclic shared descendants/multiple parents), or **cyclic network** (at least
+one directed cycle, including self-loops or cycles in disconnected components).
+Classification is structural only: an email arrow never becomes an org chart.
+The classification and descendant-mode safety gate use the same selected
+graph without changing nodes, edges, or their identifiers.
+
 The four legacy mode codes stay supported: **網狀（收攏）** still uses taxonomy
 descendants, *not* communities. For **directed cyclic graphs**, the two
 structural-descendant collapsed radio choices are **disabled with an explanation**,

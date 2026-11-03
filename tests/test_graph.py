@@ -139,6 +139,11 @@ class CSVInterfaceTests(unittest.TestCase):
         )
         for graph in (tree, forest, diamond):
             self.assertFalse(assess_structural_collapse(graph).has_cycle)
+        self.assertEqual(
+            [assess_structural_collapse(x).graph_kind
+             for x in (tree, forest, diamond, cycle, self_loop, mixed)],
+            ["tree", "forest", "dag", "cyclic", "cyclic", "cyclic"],
+        )
         self.assertEqual(assess_structural_collapse(tree).multi_parent_nodes, 0)
         self.assertEqual(assess_structural_collapse(forest).root_count, 2)
         self.assertEqual(assess_structural_collapse(diamond).multi_parent_nodes, 1)
@@ -194,6 +199,10 @@ class CSVInterfaceTests(unittest.TestCase):
         self.assertIn(
             "已檢測到有向迴路",
             find(layout.get_json(), "jaal-original-structural-hint")["children"],
+        )
+        self.assertIn(
+            "一般有環網路",
+            find(layout.get_json(), "jaal-original-graph-profile")["children"],
         )
 
 

@@ -91,6 +91,9 @@ def check(port: int, evidence: Path) -> None:
                 assert "已檢測到有向迴路" in frame.locator(
                     "#jaal-original-structural-hint"
                 ).inner_text()
+                assert "一般有環網路" in frame.locator(
+                    "#jaal-original-graph-profile"
+                ).inner_text()
                 assert frame.locator("#jaal-original-chinese-labels input[type=checkbox]").count() == 1
                 assert frame.locator("#search_graph").count() == 1
                 # Vis.js really created a nonzero-size canvas inside the embedded Dash app.

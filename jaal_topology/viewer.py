@@ -186,7 +186,17 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
     graph_network.options = deepcopy(base)
     _normalize_upstream_layout(original_app.layout)
 
+    type_labels = {
+        "tree": "樹狀階層（單一起點）",
+        "forest": "樹狀森林（多個起點）",
+        "dag": "無環 DAG（共享後代／多父節點）",
+        "cyclic": "一般有環網路（不適合子樹收攏）",
+    }
     controls = html.Div([
+        html.Span("圖形類型：" + type_labels[structure.graph_kind],
+                  id="jaal-original-graph-profile",
+                  style={"fontSize": "12px", "fontWeight": 600,
+                         "color": "#9A3412" if structure.has_cycle else "#334155"}),
         html.Span("顯示模式："),
         dcc.RadioItems(
             id="jaal-original-layout-mode",

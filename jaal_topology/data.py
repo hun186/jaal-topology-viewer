@@ -111,6 +111,15 @@ class StructuralCollapseProfile:
     multi_parent_nodes: int
     root_count: int
 
+    @property
+    def graph_kind(self) -> str:
+        """Four explicit types: rooted tree, forest, shared-parent DAG, cycle."""
+        if self.has_cycle:
+            return "cyclic"
+        if self.multi_parent_nodes:
+            return "dag"
+        return "tree" if self.root_count == 1 else "forest"
+
 
 def assess_structural_collapse(graph: Graph) -> StructuralCollapseProfile:
     """Inspect the selected directed graph in O(nodes + distinct edges).
