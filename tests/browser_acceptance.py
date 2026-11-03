@@ -323,10 +323,14 @@ def check(port: int, evidence: Path) -> None:
                         n => String(n.id).includes("Executive"))?.id ||
                     window.__acceptanceNetwork.props.data.nodes[0].id
                 """)
-                search_root = frame.locator("#jaal-local-root input")
-                search_root.fill(candidate)
-                search_root.press("ArrowDown")
-                search_root.press("Enter")
+                # The searchable Dash Dropdown does not always mount its
+                # internal input until the control is focused. Exercise its
+                # actual keyboard UI instead of depending on an input child.
+                root_picker = frame.locator("#jaal-local-root")
+                root_picker.click()
+                page.keyboard.insert_text(candidate)
+                page.keyboard.press("ArrowDown")
+                page.keyboard.press("Enter")
                 expect(frame.locator("#jaal-local-status")).to_contain_text(
                     "局部子圖", timeout=15000
                 )
