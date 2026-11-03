@@ -91,6 +91,9 @@
     const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
     if (temporal && typeof temporal.setFrame === "function") {
       temporal.setFrame(temporalFrame);
+      if (typeof temporal.setLabelUniverse === "function") {
+        temporal.setLabelUniverse(graphData);
+      }
       if (typeof temporal.setDisplayOptions === "function") {
         temporal.setDisplayOptions(labelOptions);
       }
