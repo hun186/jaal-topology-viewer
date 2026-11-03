@@ -210,7 +210,9 @@ def check(port):
 
                 page.get_by_label("滑動時間窗", exact=True).check()
                 page.locator("#jaal-temporal-window").click()
-                page.get_by_text("1 天", exact=True).last.click()
+                page.locator(
+                    "#jaal-temporal-window .Select-menu-outer .Select-option"
+                ).filter(has_text="1 天").first.click(timeout=15000)
                 page.wait_for_function(
                     "() => window.dash_clientside?.jaal_temporal?.frame?.mode === 'rolling' && " +
                     "window.dash_clientside?.jaal_temporal?.frame?.from === " +
