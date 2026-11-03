@@ -1,9 +1,10 @@
 name: Vercel Jaal PoC - merged PR only
 
-# Neither PR updates, direct push nor manual dispatch can trigger this.
+# Fork-safe trusted base workflow: only merged PRs can deploy; never execute
+# unmerged fork code with environment credentials.
 # Vercel Git auto-deploy is also disabled in vercel.json.
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
     paths:
       - "vercel-poc/**"
@@ -38,6 +39,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -46,6 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$MERGE_SHA"
+          git merge-base --is-ancestor "$MERGE_SHA" origin/main
           node vercel-poc/build.mjs
           node --test tests/test_vercel_poc.test.cjs
           if [ -z "${VERCEL_ORG_ID:-}" ] || [ -z "${VERCEL_PROJECT_ID:-}" ]; then
