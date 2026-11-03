@@ -199,7 +199,10 @@
     const lo = Number(selection.start_index);
     const hi = Number(selection.end_index);
     const cur = Number.isInteger(index) ? Math.max(lo, Math.min(index, hi)) : hi;
-    const advance = [1, 2, 5, 7].includes(step) ? step : 1;
+    // Precise interval packets already encode the requested stride; each
+    // playback tick advances one complete frame, never one arbitrary day.
+    const advance = selection.unit_minutes ? 1 :
+      ([1, 2, 5, 7].includes(step) ? step : 1);
     const loop = Array.isArray(doLoop) && doLoop.includes("loop");
     const trigger = triggerName();
     if (trigger === "jaal-temporal-frames" || !trigger) {
@@ -229,18 +232,47 @@
 
   function choose(index, packet) {
     if (!packet || !Array.isArray(packet.frames) || !packet.frames.length) {
-      return [null, "沒有符合條件的時間片"];
+      return [
+        {edges: [], partition: {}, date: "", from: "", to: ""},
+        packet && packet.error
+          ? "時間設定無法產生畫格：" + packet.error + "。請縮短分析範圍或增大步長。"
+          : "沒有符合條件的時間片",
+        {left: "0%", width: "0%"},
+      ];
     }
     const lo = packet.start_index, hi = packet.end_index;
     const selected = Number.isInteger(index) ?
       Math.max(lo, Math.min(index, hi)) : hi;
     const frame = packet.frames[selected - lo];
-    if (!frame) return [null, "時間片不存在"];
-    const period = frame.mode === "rolling" ? "滑動時間窗" : "累積至目前";
-    const summary = period + "｜" + frame.from + " ～ " + frame.to + "　" +
+    if (!frame) return [null, "時間片不存在", {left:"0%", width:"0%"}];
+    const period = frame.mode === "cumulative" ? "累積至目前" :
+      packet.overlap === "disjoint" ? "互斥分段" : "重疊滑動窗";
+    const halfOpen = frame.to_exclusive
+      ? "[" + frame.from + ", " + frame.to_exclusive + ")"
+      : frame.from + " ～ " + frame.to;
+    const summary = period + "｜" + halfOpen + "　" +
       frame.messages + " 封信、" + frame.nodes + " 位參與者、" +
       frame.links + " 條有向關係";
-    return [frame, summary];
+    const start = Math.min(1, Math.max(0, Number(frame.axis_start) || 0));
+    const end = Math.min(1, Math.max(start, Number(frame.axis_end) || 0));
+    return [frame, summary, {
+      left: (100 * start) + "%",
+      width: (100 * (end - start)) + "%",
+    }];
+  }
+
+  function axis(packet) {
+    const rows = packet && Array.isArray(packet.frames) ? packet.frames : [];
+    const last = Math.max(0, rows.length - 1);
+    const stride = Math.max(1, Math.ceil(rows.length / 6));
+    const marks = {};
+    for (let i = 0; i < rows.length; i += stride) {
+      marks[i] = String(rows[i].from || "").replace("T", " ").slice(5, 16);
+    }
+    if (rows.length) {
+      marks[last] = String(rows[last].from || "").replace("T", " ").slice(5, 16);
+    }
+    return [last, marks];
   }
 
   function speed(value) {
@@ -252,7 +284,7 @@
   Object.assign(state, {
     setFrame, setLabelUniverse, setDisplayOptions, displayLabel,
     projectSource, stableSource, freezePhysics,
-    apply, noteRender, playback, choose, speed,
+    apply, noteRender, playback, choose, axis, speed,
   });
   root.dash_clientside.jaal_temporal = state;
   if (typeof module !== "undefined" && module.exports) {
