@@ -26,7 +26,7 @@ Vercel's automatic Git-based deployments for all branches, even if someone links
 the project to the GitHub repository later. Do not enable Git auto-deploy in UI.
 
 The only release automation is .github/workflows/vercel-poc-merge-only.yml.
-It has only a pull_request closed trigger, then strictly requires merged=true
+It has only a trusted pull_request_target closed trigger, then strictly requires merged=true
 and base=main, a relevant changed-file path, and an explicit deployment switch.
 Ordinary pushes, new or updated PRs, CI/Review reruns, unrelated merges and
 workflow_dispatch never create a Vercel deployment. Concurrency serializes
