@@ -103,6 +103,34 @@ not trigger a new Vercel deployment**. The production Vercel URL remains
 on its previously deployed version until an authorized, quota-available
 post-Merge release is separately verified.
 
+## Interactive root-neighborhood focus (all graph cases)
+
+The compact toolbar includes **局部子圖／根節點**. Its searchable dropdown
+accepts literal English node IDs and Chinese aliases (ClassTable metadata);
+clearing the selection restores the entire loaded graph. Choose a shortest
+path radius **0–5 steps, 10 steps or 全部可達**, and a traversal direction:
+
+- **向外 →** follows directed edges from the selected root. For category
+  DAGs this is the root's descendants; in email graphs it is outgoing mail.
+- **向內 ←** follows incoming edges; for DAGs it finds ancestors.
+- **雙向 ↔** treats links as undirected *only for reachability*. Displayed
+  edges still retain their real original direction and weights.
+
+The selected display is an **induced subgraph**: every original directed
+edge whose endpoints both lie within the k-hop neighborhood is retained,
+even if that particular edge was not on the shortest path. Cycles and
+shared descendants are counted once. Single isolated roots (0 edges) are
+valid views. Search, legends, and original source CSV are not rewritten.
+All modes use the same selected original IDs, while the animated email
+graph still applies its actual per-window activity on top of that stable
+selection. Clearing the root restores the full bounded source without
+changing URL, rebuilding Jaal, or calling Vercel per animation frame.
+
+For huge raw datasets, the original 3000-node/5000-edge **load cap still
+applies**: first select a bounded graph at the Python/CLI layer; the
+interactive focus reduces an already loaded bounded graph. It is not
+a server-side bypass of graph size limits.
+
 ## Temporal Network Analysis — optional event-backed animation
 
 The fictional business-email case has an opt-in **時間演化**
