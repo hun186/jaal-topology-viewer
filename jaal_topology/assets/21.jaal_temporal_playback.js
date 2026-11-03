@@ -14,12 +14,17 @@
 
   function setFrame(frame) {
     state.frame = frame && Array.isArray(frame.edges) ? frame : null;
-    // A dense email network remains readable with only key participants
-    // labelled. Identity and hover titles are never removed.
+  }
+
+  function setLabelUniverse(source) {
+    // Pick leaders from the immutable full-period graph, not the current
+    // rolling slice. Otherwise label identities flicker every animation tick.
+    if (!source || !Array.isArray(source.edges)) return;
     const totals = new Map();
-    if (state.frame) for (const [sender, recipient, count] of state.frame.edges) {
-      if (!Number.isSafeInteger(count) || count <= 0) continue;
-      for (const id of [String(sender), String(recipient)]) {
+    for (const edge of source.edges) {
+      const count = Number.isSafeInteger(edge.mailCount) && edge.mailCount > 0
+        ? edge.mailCount : 1;
+      for (const id of [String(edge.from), String(edge.to)]) {
         totals.set(id, (totals.get(id) || 0) + count);
       }
     }
@@ -245,7 +250,7 @@
 
   root.dash_clientside = root.dash_clientside || {};
   Object.assign(state, {
-    setFrame, setDisplayOptions, displayLabel,
+    setFrame, setLabelUniverse, setDisplayOptions, displayLabel,
     projectSource, stableSource, freezePhysics,
     apply, noteRender, playback, choose, speed,
   });
