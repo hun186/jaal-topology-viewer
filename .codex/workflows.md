@@ -23,7 +23,7 @@
 | 企業郵件業務情境模擬 | `python -m unittest discover -s tests -p "test_email_simulation.py" -v`，加上 `test_vercel_runtime.py` 與 Windows Chromium | 檢驗種子可重現、回信時間與 thread、夜間事件、月結、部門內高互動、頻次加權 Louvain、唯讀 CSV 下載 |
 | 時間演化事件／播放 | `python -m unittest discover -s tests -p "test_temporal.py" -v` 與 `node --test tests/temporal_playback.test.cjs`；Windows Chromium `tests/vercel_runtime_browser.py` | PR #15 新增的可選事件型時間片、前端播放、節點/有向邊可見性與同一畫布驗證；此列為 PR HEAD 行為，未 Merge 前非 main 穩定契約 |
 | Vercel 真正 Jaal Flask PoC | `python -m pip install -r requirements.txt`，`python -m unittest discover -s tests -p 'test_vercel_runtime.py' -v`，`python tests/vercel_runtime_browser.py`（需 Playwright Chromium） | Hosted Python 3.12／Windows 實體 Chromium；`app.py` 直接重用 build_app()；CI 不部署，僅相關已 Merge 的 PR 有部署資格。舊 node vercel-poc/build.mjs 只作歷史 SVG 對照 |
-| Windows Chromium smoke | `python -m pip install playwright`, `python -m playwright install chromium`, `python tests/browser_acceptance.py --evidence browser-evidence` | `ci.yml` browser-windows job；使用虛構資料、同埠 iframe、截圖；**不是** Stage 4 完整手動驗收 |
+| Windows Chromium smoke | `ci.yml` 先安裝 `dash==4.5.0` 執行 `python tests/browser_acceptance.py --evidence browser-evidence`，再由 `requirements.txt` 切換至 `dash==3.4.0`、執行 `python tests/browser_acceptance.py --port 8098 --evidence browser-evidence/dash3`；需 Playwright Chromium | 兩版皆以虛構資料實測同埠 iframe、根節點選取／還原、模式與實際 vis DataSet；只在 Hosted CI 對應工作 PASS 時成立，不代表 Dash 2 的 Windows Chromium 或 Stage 4 人工驗收 |
 | Lint、format、typecheck、build | 沒有已確認 canonical 指令 | 不擅自捏造 |
 
 ## 驗證矩陣
@@ -38,5 +38,5 @@
 
 ## 已知測試基準與限制
 - Fixture：`examples/relationships.csv`、`examples/metadata.csv`；測試使用 `tempfile` 不改寫來源。
-- 2026-11-02 主線 `fc49c0d2559c71df79f438e070ef3610e7093e5a` [Hosted CI PASS](https://github.com/hun186/jaal-topology-viewer/actions/runs/41480969808)。本次初始化只有遠端程式／CI 證據，**沒有聲稱本機執行上述命令**。
+- 2026-11-04 主線 PR #20 merge `fcb980d3c68465321987bc082dfca1f1943eb421`：其 HEAD `0a8c724` [Hosted CI 41741363056](https://github.com/hun186/jaal-topology-viewer/actions/runs/41741363056) 8/8 PASS，Windows Chromium 覆蓋當次預設 Dash 4 的 root scope/reset；本工作新增釘版本 3.4/4.5 的雙版本 browser 以**本 PR 的最新 CI** 為準，不視為已執行。
 - 每個 PR 依 `REPOSITORY_SETUP.md` 執行最新 HEAD Hosted CI 與正式 Codex Review，0 unresolved findings 才能 Merge；不得以自己撰寫的備註冒充獨立 review。

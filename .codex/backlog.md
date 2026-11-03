@@ -16,5 +16,6 @@
 - BL-001／BL-002 的原始追蹤依據：`README.md`、`REPOSITORY_SETUP.md`；未執行不代表失敗。
 - PR #5 的 standalone Hosted Windows Chromium run 41494602192 PASS；下游 [PR #227](https://github.com/hun186/text-category-profiler/pull/227) 已 Merge，九項 Hosted workflow PASS，使用者 Stage 4 Louvain 候選 Windows 9 項實機 PASS。此結果不涵蓋所有 Dash／Windows 組合或完整模型工作負載，BL-001 保留 Partial PASS。
 - 下游 `text-category-profiler` 已經由 PR #227 將 exact pin 升到 `47942ac3bd08d8cbcc615fa215c5e5eef286f486`，第五模式預設啟用並保留四模式 rollback；不得重做此升級。BL-002 仍須獨立完成乾淨外部 consumer 和 Dash 多版本矩陣。
+- 本次新增的 Windows Chromium 雙版本 smoke 將在 `dash==4.5.0` 與 `dash==3.4.0` 分別實測本機 Jaal iframe、原始 vis DataSet 與可搜尋根節點局部顯示／還原；**僅於本 PR 最新 Hosted CI 兩段皆完成才算驗證**，不外推 Dash 2 或 Stage 4 完整 ML 實機。
 - [上游 PR #7](https://github.com/hun186/jaal-topology-viewer/pull/7) 已 Merge；Hosted CI run 41591382206 四項工作 PASS，證明 Ubuntu/Windows 乾淨 venv 由 Wheel 安裝及同埠 HTTP 資產可用，但不能推論完整外部 consumer 相容。Dash 固定版本矩陣另需最新 HEAD CI 實證。
 - 新增需要採納來源與驗證完成條件；Done/Dropped 保留簡短驗證或理由，不悄悄刪除。

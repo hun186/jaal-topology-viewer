@@ -398,7 +398,8 @@ def check(port: int, evidence: Path) -> None:
                 (evidence / "acceptance-summary.txt").write_text(
                     "PASS: Hosted Windows Chromium same-port iframe, five radio modes, "
                     "real visdcc DataSet cluster quotient and source edge inspection, cycle-protected structural modes, Search hidden flags, "
-                    "Chinese CT labels and 77-node/169-edge restoration. Screenshots "
+                    "Chinese CT labels, searchable root 0-hop narrowing to one visible node "
+                    "and clearing to restore 77 nodes / 169 source edges. Screenshots "
                     "are inspection evidence; manual Stage 4 drag/camera/Color/Size "
                     "acceptance is NOT asserted.\n",
                     encoding="utf-8",
