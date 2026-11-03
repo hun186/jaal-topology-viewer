@@ -148,6 +148,36 @@ def check(port):
                 page.get_by_label("階層（全展開）", exact=True).check()
                 page.get_by_label("網狀（全展開）", exact=True).check()
                 assert page.locator(".vis-network canvas").first.is_visible()
+                # Switching cases reloads a fully independent Jaal app on the
+                # same origin: original Search/Filter/Color callbacks, mode
+                # eligibility and translated labels must be recomputed.
+                picker = page.locator("#jaal-case-picker")
+                assert picker.is_visible()
+
+                def choose_case(text, url_suffix):
+                    page.locator("#jaal-case-picker").click()
+                    page.get_by_text(text, exact=True).last.click(timeout=20000)
+                    page.wait_for_url("**" + url_suffix, timeout=60000)
+                    page.locator(".vis-network canvas").first.wait_for(
+                        state="visible", timeout=90000
+                    )
+                    assert page.locator("#search_graph").count() == 1
+
+                choose_case("公司組織階層樹（無環）", "/cases/org-tree/")
+                expect(page.locator("#jaal-original-layout-mode input[value='hierarchical-collapsed']")).to_be_checked()
+                assert page.get_by_label("階層（收攏）", exact=True).is_enabled()
+                assert page.get_by_label("網狀（收攏）", exact=True).is_enabled()
+                assert page.locator("#jaal-original-graph-profile").inner_text().find("樹狀階層") >= 0
+                # Restores from the old mail-network without leaking its modes.
+                choose_case("專案相依網路（多父 DAG）", "/cases/project-dag/")
+                expect(page.locator("#jaal-original-layout-mode input[value='hierarchical']")).to_be_checked()
+                assert "無環 DAG" in page.locator("#jaal-original-graph-profile").inner_text()
+                assert page.get_by_label("階層（收攏）", exact=True).is_enabled()
+                choose_case("公司寄收件網路（一般有環）", "/")
+                assert page.get_by_label("階層（收攏）", exact=True).is_disabled()
+                assert page.get_by_label("網狀（社群收攏・Louvain）", exact=True).is_enabled()
+                assert page.locator("#jaal-case-picker").is_visible()
+
                 if errors:
                     raise AssertionError("Dash browser errors: " + repr(errors))
                 print("VERCEL_REAL_JAAL_BROWSER_PASS")
