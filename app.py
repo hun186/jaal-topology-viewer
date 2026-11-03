@@ -17,6 +17,7 @@ from jaal_topology.email_simulation import (
     SEED, WORK_DAYS, WORKFLOW_LABELS, simulate_company_email,
 )
 from jaal_topology.gallery import GalleryCase, create_gallery_app
+from jaal_topology.temporal import TemporalTimeline
 
 _ROOT = Path(__file__).resolve().parent
 _SOURCE = _ROOT / "examples"
@@ -42,6 +43,7 @@ _dag = _sample("project_dag.csv", "project_dag_labels.csv", 19, 31)
 # (rather than randomly joining fictional roles by position in a taxonomy).
 _simulation = simulate_company_email()
 _email = select_subgraph(_simulation.graph, max_nodes=250, max_edges=5000)
+_timeline = TemporalTimeline(_email, _simulation.events)
 if not 1 <= len(_email.edges) <= 5000 or not _email.edge_counts:
     raise RuntimeError("Email workflow demo must have bounded message volumes")
 
@@ -49,6 +51,7 @@ _CASES = (
     GalleryCase(
         "mail-workflow", "企業郵件實務模擬（業務與事件）", _email,
         initial_mode="network-community-collapsed",
+        temporal_timeline=_timeline,
         description=(
             "完全虛構、固定種子的 20 個工作日電子郵件事件：以部門內頻繁協作、"
             "主管回報、業務提案、客戶問題、跨部門交付、月底對帳、HR 新人作業及"
