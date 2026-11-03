@@ -161,6 +161,33 @@ def check(port: int, evidence: Path) -> None:
                     and any(str(n["id"]).startswith("__jaal_internal_community__")
                             for n in s["nodes"]),
                 )
+                # Use the real visdcc Network event emitter; no mocked graph,
+                # static fabricated provenance or source mutations.
+                inspected = frame.locator("body").evaluate("""() => {
+                    const component = window.__acceptanceNetwork;
+                    const edge = component.ee.get().find(item =>
+                        String(item.id).startsWith("__jaal_internal_link__"));
+                    if (!edge) throw Error("Missing aggregated community edge");
+                    const evidence = window.dash_clientside.jaal_community_collapse
+                        .explainEdge(component.__jaalCommunity.view, edge.id);
+                    if (!evidence.length) throw Error("No original provenance");
+                    // Dispatch real vis Network's registered click callback.
+                    component.net.body.emitter.emit('click', {nodes: [], edges: [edge.id]});
+                    return {id: edge.id, count: evidence.length,
+                            from: evidence[0].from, to: evidence[0].to};
+                }""")
+                details = frame.locator("#jaal-community-edge-inspector")
+                details.wait_for(state="visible", timeout=12000)
+                assert details.locator("li").count() == min(100, inspected["count"])
+                assert "原始有向關係" in details.inner_text()
+                assert inspected["from"] in details.locator("li").first.get_attribute("title")
+                assert inspected["to"] in details.locator("li").first.get_attribute("title")
+                page.screenshot(
+                    path=str(evidence / "02a-community-edge-provenance.png"),
+                    full_page=True,
+                )
+                details.get_by_role("button", name="關閉").click()
+                details.wait_for(state="detached", timeout=10000)
                 checkbox = frame.locator(
                     "#jaal-original-chinese-labels input[type=checkbox]"
                 )
@@ -213,7 +240,7 @@ def check(port: int, evidence: Path) -> None:
                     raise AssertionError("Browser JavaScript errors: " + " | ".join(errors))
                 (evidence / "acceptance-summary.txt").write_text(
                     "PASS: Hosted Windows Chromium same-port iframe, five radio modes, "
-                    "real visdcc DataSet cluster quotient, cycle-protected structural modes, Search hidden flags, "
+                    "real visdcc DataSet cluster quotient and source edge inspection, cycle-protected structural modes, Search hidden flags, "
                     "Chinese CT labels and 77-node/169-edge restoration. Screenshots "
                     "are inspection evidence; manual Stage 4 drag/camera/Color/Size "
                     "acceptance is NOT asserted.\n",
