@@ -144,7 +144,16 @@ function render() {
     state.view.y + ") scale(" + state.view.z + ")"});
   const links = svgEl("g", {"class": "edges"}), points = svgEl("g", {"class": "nodes"});
   const term = state.term.trim().toLocaleLowerCase();
-  const matches = n => !term || [n.id, n.label, n.team].some(x => String(x).toLocaleLowerCase().includes(term));
+  const memberMatches = n =>
+    [n.id, n.label, n.team].some(x => String(x).toLocaleLowerCase().includes(term));
+  const matches = n => {
+    if (!term || memberMatches(n)) return true;
+    // A collapsed group must remain searchable by ANY original member ID or
+    // translated label, not only by its synthetic department name.
+    return n.kind === "team" &&
+      state.graph.nodes.some(original =>
+        original.team === n.team && memberMatches(original));
+  };
   for (const edge of p.edges) {
     const from = m.get(edge.from), to = m.get(edge.to);
     if (!from || !to) continue;
