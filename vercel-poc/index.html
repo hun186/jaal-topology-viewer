@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Read-only synthetic directed topology visualization. A static Vercel proof of concept, not the Python Jaal runtime.">
+  <title>Jaal Topology · Public PoC</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <span class="eyebrow">JAAL TOPOLOGY VIEWER <span class="dot">·</span> STATIC POC</span>
+        <h1>有向關係圖 <span class="muted">實驗檢視器</span></h1>
+        <p>77 個虛構職務節點與 169 條有向關係。可檢視方向、搜尋、切換中文標籤及收攏部門。</p>
+      </div>
+      <div class="read-only"><span aria-hidden="true">●</span> PUBLIC / READ ONLY</div>
+    </header>
+    <main>
+      <section class="toolbar" aria-label="Graph settings">
+        <div class="mode-group" role="group" aria-label="Visual mode">
+          <button type="button" class="mode active" data-mode="network" aria-pressed="true">網狀全展開</button>
+          <button type="button" class="mode" data-mode="hierarchy" aria-pressed="false">階層視圖</button>
+          <button type="button" class="mode" data-mode="teams" aria-pressed="false">部門收攏示意</button>
+        </div>
+        <label class="toggle"><input type="checkbox" id="chinese" checked> 中文標籤</label>
+        <label class="search"><span class="search-icon" aria-hidden="true">⌕</span><span class="sr-only">搜尋節點</span><input type="search" id="search" placeholder="搜尋英文 ID 或中文名稱" autocomplete="off"></label>
+        <button type="button" id="reset" class="secondary">重設視野</button>
+      </section>
+      <section class="content">
+        <article class="graph-panel">
+          <div class="graph-top">
+            <div class="stats">
+              <div><strong id="nodeTotal">—</strong><span>原始節點</span></div>
+              <div><strong id="edgeTotal">—</strong><span>有向關係</span></div>
+              <div><strong id="visibleNodes">—</strong><span>目前圖節點</span></div>
+            </div>
+            <span class="graph-hint">拖曳空白處移動 · 滾輪縮放 · 點選節點查看方向</span>
+          </div>
+          <svg id="graph" viewBox="0 0 1200 760" role="img" aria-label="Interactive directed graph"></svg>
+          <div class="legend">
+            <span><i class="line"></i> 箭頭 = 寄件者 → 收件者</span>
+            <span><i class="circle"></i> 節點／部門</span>
+            <span>例示資料，不代表真實郵件、組織或部門隸屬</span>
+          </div>
+        </article>
+        <aside class="detail">
+          <div class="panel-label">INSPECTOR</div>
+          <h2 id="detailTitle">選取節點</h2>
+          <p id="detailBody">點選圖中的節點，即可檢視原始 ID 與方向性關係數。選擇「部門收攏示意」後，點選部門圓點即可展開或收合。</p>
+          <div class="rule"></div>
+          <dl id="detailStats" class="metrics"></dl>
+          <div class="rule"></div>
+          <h3>示範範圍</h3>
+          <p>此 PoC 是瀏覽器端的<strong>靜態 SVG 演示</strong>，從儲存庫虛構 CSV 產生。部門收攏按職務名稱分組，<strong>不是 Louvain 運算</strong>，也不是正式 Dash / Jaal Runtime。</p>
+          <p>正式五種 Jaal 模式、Louvain、CSV API 與 Flask 同埠功能仍由原 Python 套件提供；PoC 不連結資料庫，不上傳檔案。</p>
+          <p class="small"><a href="https://github.com/hun186/jaal-topology-viewer" rel="noopener noreferrer" target="_blank">查看原始碼與正式套件</a></p>
+        </aside>
+      </section>
+      <p class="foot">© Experimental demo · No login · No telemetry · No live data · No source CSV mutation</p>
+    </main>
+  </div>
+  <div id="liveStatus" class="sr-only" role="status" aria-live="polite"></div>
+</body>
+</html>
