@@ -10,17 +10,19 @@
 - Windows 實機視覺、Dash 2/3/4 及乾淨外部 consumer 尚不能視為已驗收。
 - 本 repo 的通用圖 viewer 與 consumer Stage 4 專屬 root picker、sidebar、iframe autoheight 分工不同。
 
+- Issue #4 的 3000-node／5000-edge 邊界與 Louvain resolution/seed 回歸測試已列入本次測試 PR；尚待最新 HEAD Hosted CI 與正式 Review，不能宣稱完成驗收。
+
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
-| 2026-11-03 | PR #5 hosted browser acceptance 部分完成 | 上游 HEAD `8d9beddd1be75cb4219952cc20dbc69fe411532a` Hosted run [41494602192](https://github.com/hun186/jaal-topology-viewer/actions/runs/41494602192) Ubuntu／Windows Chromium PASS，正式 Codex Review completed/0 findings；真實 visdcc DataSet 驗證 Louvain quotient、Search hidden flags、中文 CT、77/169 還原。Stage 4/consumer 仍 pending，未 Merge。 |
+| 2026-11-03 | [PR #5](https://github.com/hun186/jaal-topology-viewer/pull/5) 已 Merge | GitHub 確認 merge commit `47942ac3bd08d8cbcc615fa215c5e5eef286f486`；既有 Hosted [41494602192](https://github.com/hun186/jaal-topology-viewer/actions/runs/41494602192) Ubuntu／Windows Chromium PASS，已驗證 real visdcc quotient、Search hidden、中文 CT、77/169 還原；不代表 Stage 4/consumer 完整驗收。 |
 | 2026-11-03 | Codex memory bootstrap | 由 `main` `fc49c0d2559c71df79f438e070ef3610e7093e5a` 的程式、manifest、CI、README 建立 project/workflows/architecture/contracts/decisions/backlog 與 Quickstart；此次僅文件，不修改產品程式碼或測試。 |
 | 2026-11-02 | 獨立核心歸屬文件 | [PR #1](https://github.com/hun186/jaal-topology-viewer/pull/1) 已 merged；README／REPOSITORY_SETUP 明確說明 source of truth、下游 exact SHA 更新。 |
 | 2026-11-02 | 主線 CI 基準 | `main` `fc49c0d2559c71df79f438e070ef3610e7093e5a` [Hosted CI success](https://github.com/hun186/jaal-topology-viewer/actions/runs/41480969808)；未宣稱本次本機重跑或 Windows 視覺驗收。 |
 
 ## Open Handoffs
 - Windows browser：PR #5 upstream Windows Hosted Chromium headless smoke PASS；Stage 4 consumer root selector、Filter/Color/Size、收攏動畫／drag／focus 等實機驗收仍待完成。
-- 下游依賴更新：consumer 現釘 `7a7d8ba1f847b2f95a620c61a0c5a94f0523e255`；其 `test_jaal_topology_portable.py` 仍嚴格斷言四個 mode，升級五模式需先更新 consumer contract/test 再驗證完整 Stage 4，不能靜默改 pin。
+- 下游依賴更新：前次 consumer 查證所釘 SHA 為 `7a7d8ba1f847b2f95a620c61a0c5a94f0523e255`，升級前須重新確認最新 consumer pin；原 `test_jaal_topology_portable.py` 嚴格斷言四種 mode，若採用第五模式需同步 contract/test 與 Stage 4 驗證，不能靜默改 pin。
 - 本次文件 PR 合併狀態以 GitHub 為準；不能在此預先宣告正式 review 或 merge 已完成。
 
 ## Archive Index
