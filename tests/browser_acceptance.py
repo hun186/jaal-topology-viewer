@@ -111,6 +111,35 @@ def check(port: int, evidence: Path) -> None:
                 sidebar_toggle.click()
                 expect(sidebar_toggle).to_have_attribute("aria-expanded", "true", timeout=15000)
                 expect(panel).to_be_visible(timeout=15000)
+                # No sticky top controls; focus mode fills the same-port
+                # iframe viewport without remounting the visdcc Network.
+                toolbar = frame.locator("#jaal-compact-toolbar")
+                assert toolbar.evaluate(
+                    "(el) => getComputedStyle(el).position"
+                ) not in ("fixed", "sticky")
+                normal_canvas_height = frame.locator(
+                    ".vis-network canvas"
+                ).first.bounding_box()["height"]
+                assert normal_canvas_height > 700, normal_canvas_height
+                focus_toggle = frame.locator("#jaal-focus-toggle")
+                focus_toggle.click()
+                expect(frame.locator("#jaal-viewer-root")).to_have_class(
+                    "jaal-viewer-shell jaal-focus-mode", timeout=15000
+                )
+                expect(focus_toggle).to_have_attribute("aria-pressed", "true")
+                expect(frame.locator(".jaal-settings-col")).to_be_hidden()
+                focused_canvas_height = frame.locator(
+                    ".vis-network canvas"
+                ).first.bounding_box()["height"]
+                assert focused_canvas_height > 940, focused_canvas_height
+                page.screenshot(path=str(evidence / "05-full-viewport.png"),
+                                full_page=True)
+                focus_toggle.press("Escape")
+                expect(frame.locator("#jaal-viewer-root")).to_have_class(
+                    "jaal-viewer-shell", timeout=15000
+                )
+                expect(focus_toggle).to_have_attribute("aria-pressed", "false")
+                expect(frame.locator(".jaal-settings-col")).to_be_visible()
                 help_details.locator("summary").click()
                 assert help_details.evaluate("(el) => el.open")
                 assert frame.locator("#jaal-original-structural-hint").is_visible()
