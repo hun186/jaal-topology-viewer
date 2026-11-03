@@ -84,6 +84,38 @@ def check(port: int, evidence: Path) -> None:
                 frame.locator(".vis-network canvas").first.wait_for(
                     state="visible", timeout=90000
                 )
+                # The original Jaal settings are independently collapsible;
+                # graph/canvas must expand to the released width and restore.
+                sidebar_toggle = frame.locator("#jaal-sidebar-toggle")
+                panel = frame.locator(".jaal-settings-col")
+                graph_column = frame.locator(".jaal-graph-col")
+                help_details = frame.locator("#jaal-original-help-details")
+                assert sidebar_toggle.is_visible()
+                assert sidebar_toggle.get_attribute("aria-expanded") == "true"
+                assert panel.is_visible()
+                assert not help_details.evaluate("(el) => el.open")
+                before_width = graph_column.bounding_box()["width"]
+                before_canvas = frame.locator(".vis-network canvas").first.bounding_box()["width"]
+                before_height = frame.locator("#jaal-compact-toolbar").bounding_box()["height"]
+                assert before_height < 105, before_height
+                sidebar_toggle.click()
+                assert sidebar_toggle.get_attribute("aria-expanded") == "false"
+                assert not panel.is_visible()
+                page.wait_for_timeout(700)
+                grown_width = graph_column.bounding_box()["width"]
+                grown_canvas = frame.locator(".vis-network canvas").first.bounding_box()["width"]
+                assert grown_width > before_width + 180, (before_width, grown_width)
+                assert grown_canvas > before_canvas + 150, (before_canvas, grown_canvas)
+                # Settings were never unmounted; restore all existing inputs.
+                assert frame.locator("#search_graph").count() == 1
+                sidebar_toggle.click()
+                assert sidebar_toggle.get_attribute("aria-expanded") == "true"
+                assert panel.is_visible()
+                help_details.locator("summary").click()
+                assert help_details.evaluate("(el) => el.open")
+                assert frame.locator("#jaal-original-structural-hint").is_visible()
+                help_details.locator("summary").click()
+                assert not help_details.evaluate("(el) => el.open")
                 assert frame.locator("#jaal-original-layout-mode input[type=radio]").count() == 5
                 assert frame.get_by_label("網狀（收攏）", exact=True).is_disabled()
                 assert frame.get_by_label("階層（收攏）", exact=True).is_disabled()
