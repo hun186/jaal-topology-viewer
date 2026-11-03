@@ -201,10 +201,33 @@ def check(port):
                     "() => Boolean(window.dash_clientside?.jaal_temporal?.lastRendered?.date)",
                     timeout=30000,
                 )
+                initial = page.evaluate(
+                    "() => ({...window.dash_clientside.jaal_temporal.frame})"
+                )
+                assert initial["mode"] == "rolling"
+                assert "滑動時間窗" in page.locator("#jaal-temporal-status").inner_text()
+                assert page.get_by_label(
+                    "固定社群（比較流量）", exact=True
+                ).is_checked()
+                assert not page.locator(
+                    "#jaal-temporal-labels input[type=checkbox]"
+                ).is_checked()
+                # Compare the rolling slice against the cumulative history.
+                page.get_by_label("累積至目前", exact=True).check()
+                page.wait_for_function(
+                    "() => window.dash_clientside?.jaal_temporal?.frame?.mode === 'cumulative'",
+                    timeout=30000,
+                )
+                page.wait_for_function(
+                    "() => window.dash_clientside?.jaal_temporal?.lastRendered?.sourceEdges === " +
+                    "window.dash_clientside?.jaal_temporal?.frame?.links",
+                    timeout=30000,
+                )
                 full = page.evaluate(
                     "() => ({...window.dash_clientside.jaal_temporal.lastRendered})"
                 )
                 full_messages = page.locator("#jaal-temporal-status").inner_text()
+                assert "累積至目前" in full_messages
                 assert "封信" in full_messages
                 assert full["sourceEdges"] > 100, full
 
