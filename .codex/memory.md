@@ -23,6 +23,8 @@
 
 - 2026-11-04 的時間窗 UX：將日級滑動窗延伸成 minute/hour/day，[start,end) 互斥預設 (step=window)、重疊自訂步長；滑桿範圍可動雙端，另用藍條表示播放中時段；frame 超過 240 明確報錯。此分支需以最新 CI/Review/實機視覺檢查為準。
 
+- 2026-11-04 使用者新增獨立 Jaal searchable root/radius 需求：本候選實作 `neighborhood.py` + `22.jaal_local_focus.js` + Dash 搜尋選單，對 DAG 和一般有環有向圖提供 out/in/both 最短 0..10 hop 或全部可達、誘導子圖；根節點清空恢復全圖。需以 PR 最新 CI/Review 及 Windows 實機證據確認，未自動升級 consumer pin。
+
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
