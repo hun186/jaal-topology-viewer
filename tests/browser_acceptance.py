@@ -70,7 +70,7 @@ def check(port: int, evidence: Path) -> None:
             for asset in ("16.jaal_visible_labels.js",
                           "17.jaal_structural_collapse.js",
                           "18.jaal_community_collapse.js",
-                          "bootstrap.min.css"):
+                          "bootstrap.min.css", "19.jaal_compact_layout.css"):
                 with urlopen(target + "/topology/assets/" + asset, timeout=5) as response:
                     assert response.status == 200, asset
 
@@ -114,15 +114,15 @@ def check(port: int, evidence: Path) -> None:
                 help_details.locator("summary").click()
                 assert help_details.evaluate("(el) => el.open")
                 assert frame.locator("#jaal-original-structural-hint").is_visible()
+                assert "已檢測到有向迴路" in frame.locator(
+                    "#jaal-original-structural-hint"
+                ).inner_text()
                 help_details.locator("summary").click()
                 assert not help_details.evaluate("(el) => el.open")
                 assert frame.locator("#jaal-original-layout-mode input[type=radio]").count() == 5
                 assert frame.get_by_label("網狀（收攏）", exact=True).is_disabled()
                 assert frame.get_by_label("階層（收攏）", exact=True).is_disabled()
                 assert frame.get_by_label("網狀（社群收攏・Louvain）", exact=True).is_enabled()
-                assert "已檢測到有向迴路" in frame.locator(
-                    "#jaal-original-structural-hint"
-                ).inner_text()
                 assert "一般有環網路" in frame.locator(
                     "#jaal-original-graph-profile"
                 ).inner_text()
