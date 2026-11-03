@@ -3,7 +3,7 @@ from pathlib import Path
 import unittest
 
 from jaal_topology import Graph, GraphInputError, load_graph, select_subgraph
-from jaal_topology.community import detect_louvain
+from jaal_topology.community import detect_louvain, community_quotient_has_cycle
 
 
 class DirectedCommunityTests(unittest.TestCase):
@@ -16,6 +16,7 @@ class DirectedCommunityTests(unittest.TestCase):
         result = detect_louvain(graph)
         again = detect_louvain(graph)
         self.assertEqual(result, again)
+        self.assertIsInstance(result.quotient_has_cycle, bool)
         self.assertEqual(len(result.member_to_group), 77)
         self.assertEqual(set(result.member_to_group), set(graph.nodes))
         self.assertGreaterEqual(len(result.groups), 2)
@@ -40,6 +41,29 @@ class DirectedCommunityTests(unittest.TestCase):
             sum(result.cross_group_edges.values()), len(edges),
         )
         self.assertEqual(result.groups, detect_louvain(graph).groups)
+
+    def test_quotient_cycle_does_not_imply_original_dag_cycle(self):
+        from jaal_topology.data import assess_structural_collapse
+        original = Graph(
+            (("A", "C"), ("D", "B")),
+            ("A", "B", "C", "D"),
+        )
+        self.assertFalse(assess_structural_collapse(original).has_cycle)
+        partition = {"A": "alpha", "B": "alpha",
+                     "C": "beta", "D": "beta"}
+        projected = tuple(
+            (partition[a], partition[b]) for a, b in original.edges
+        )
+        self.assertTrue(
+            community_quotient_has_cycle(partition.values(), projected)
+        )
+        self.assertFalse(community_quotient_has_cycle(
+            partition.values(), (("alpha", "beta"),)
+        ))
+        self.assertFalse(community_quotient_has_cycle(
+            partition.values(), (("alpha", "alpha"),)
+        ))
+        self.assertFalse(detect_louvain(Graph((), ("Solo",))).quotient_has_cycle)
 
     def test_empty_and_invalid_inputs(self):
         graph = Graph((), ("Solo",), {})

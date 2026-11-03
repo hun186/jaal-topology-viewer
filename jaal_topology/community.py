@@ -10,7 +10,7 @@ from collections import Counter
 from dataclasses import dataclass
 from math import isfinite
 
-from .data import Graph, GraphInputError
+from .data import Graph, GraphInputError, assess_structural_collapse
 
 
 @dataclass(frozen=True)
@@ -19,9 +19,19 @@ class CommunityResult:
     member_to_group: dict[str, str]
     cross_group_edges: dict[tuple[str, str], int]
     internal_edges: dict[str, int]
+    quotient_has_cycle: bool = False
     method: str = "directed-louvain-topology-only"
     seed: int = 42
     resolution: float = 1.0
+
+
+def community_quotient_has_cycle(groups, directed_pairs) -> bool:
+    """Detect directed cycles AFTER aggregation, without changing the source."""
+    labels = tuple(sorted(set(groups)))
+    if not labels:
+        return False
+    inter = tuple(sorted(set((a, b) for a, b in directed_pairs if a != b)))
+    return assess_structural_collapse(Graph(inter, labels)).has_cycle
 
 
 def detect_louvain(graph: Graph, *, resolution: float = 1.0,
@@ -82,7 +92,11 @@ def detect_louvain(graph: Graph, *, resolution: float = 1.0,
         else:
             between[(src, dst)] += 1
     assert sum(within.values()) + sum(between.values()) == len(graph.edges)
+    quotient_cyclic = community_quotient_has_cycle(
+        memberships.values(), between.keys()
+    )
     return CommunityResult(
         ordered, memberships, dict(sorted(between.items())),
-        dict(sorted(within.items())), seed=seed, resolution=float(resolution),
+        dict(sorted(within.items())), quotient_has_cycle=quotient_cyclic,
+        seed=seed, resolution=float(resolution),
     )

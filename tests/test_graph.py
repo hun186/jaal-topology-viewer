@@ -204,6 +204,10 @@ class CSVInterfaceTests(unittest.TestCase):
             "一般有環網路",
             find(layout.get_json(), "jaal-original-graph-profile")["children"],
         )
+        self.assertIn(
+            "社群彙總圖",
+            find(layout.get_json(), "jaal-original-community-cycle-hint")["children"],
+        )
 
 
     def test_all_four_options_have_bounded_reversible_styles(self):

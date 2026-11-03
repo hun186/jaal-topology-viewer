@@ -136,7 +136,13 @@ structural-descendant collapsed radio choices are **disabled with an explanation
 because cyclic reachability makes many nodes appear to have nearly all others
 as descendants. Full network/hierarchy and Louvain remain available. For
 acyclic DAGs with multiple parents, structural collapse remains available
-with a warning that reachable descendants are not exclusive subordinates. The community partition is an analytical
+with a warning that reachable descendants are not exclusive subordinates. The quotient can have a **new directed cycle even when the input is a
+directed acyclic taxonomy DAG**. The UI reports the quotient-cycle status
+separately from the original graph; it is never presented as a cycle in the
+source taxonomy. Selecting a community link will expose the underlying
+unmodified directed source relations (no invented reverse edge).
+
+The community partition is an analytical
 grouping, **not** an organization chart. The renderer preserves independent
 directional totals; edge count labels are unique source pairs, not emails.
 Search/Filter temporarily restores uncollapsed source visualization while

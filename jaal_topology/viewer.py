@@ -152,7 +152,8 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
     from jaal import Jaal
 
     structure = assess_structural_collapse(graph)
-    community_partition = detect_louvain(graph).member_to_group
+    community_result = detect_louvain(graph)
+    community_partition = community_result.member_to_group
     edges, nodes = to_jaal_dataframes(graph, root=root)
     network = Jaal(edges, nodes)
     network._callback_search_graph = _search_english_id
@@ -197,6 +198,17 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
                   id="jaal-original-graph-profile",
                   style={"fontSize": "12px", "fontWeight": 600,
                          "color": "#9A3412" if structure.has_cycle else "#334155"}),
+        html.Span(
+            ("原始圖無環，但 Louvain 社群彙總後產生循環；不代表分類父子關係有環。"
+             if not structure.has_cycle and community_result.quotient_has_cycle else
+             "原始圖含有向迴路，社群彙總圖也有循環。"
+             if structure.has_cycle and community_result.quotient_has_cycle else
+             "社群彙總圖無循環；原始關係與社群彙總屬不同層級。"),
+            id="jaal-original-community-cycle-hint",
+            style={"fontSize": "12px",
+                   "color": "#9A3412" if community_result.quotient_has_cycle
+                   else "#475569"},
+        ),
         html.Span("顯示模式："),
         dcc.RadioItems(
             id="jaal-original-layout-mode",
