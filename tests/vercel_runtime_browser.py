@@ -157,7 +157,7 @@ def check(port):
                 def choose_case(text, url_suffix):
                     page.locator("#jaal-case-picker").click()
                     page.get_by_text(text, exact=True).last.click(timeout=20000)
-                    page.wait_for_url("**" + url_suffix, timeout=60000)
+                    page.wait_for_url(url + url_suffix, timeout=60000)
                     page.locator(".vis-network canvas").first.wait_for(
                         state="visible", timeout=90000
                     )
