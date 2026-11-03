@@ -199,6 +199,8 @@ class VercelJaalRuntimeTests(unittest.TestCase):
         length_options, unchanged = invoke("network", "jaal-original-edge-length.value")
         self.assertIn("length", length_options["edges"])
         self.assertEqual(length_options["edges"]["length"], 120)
+        self.assertIs(length_options["physics"]["enabled"], False)
+        self.assertEqual(length_options["physics"]["barnesHut"]["springLength"], 120)
         restored, disabled = invoke(
             "network", "jaal-original-physics-restore.n_intervals", ticks=1
         )
