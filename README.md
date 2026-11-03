@@ -20,6 +20,14 @@ its controls. The graph-type/cycle explanation is available from the
 occupying drawing height. The graph-type badge remains visible so cycle
 restrictions are not silently hidden. The Jaal logo is compact.
 
+The toolbar now **scrolls with the page** instead of staying fixed.
+Graph height adapts to the viewport rather than the old fixed 600px.
+Use **全版檢視 ⛶** to temporarily show only the actual Jaal/visdcc
+graph across the available window; **退出全版 ✕** or **Escape** restores
+the settings and graph controls without remounting the graph. The
+focus layout fills the current browser viewport (or the hosting iframe's
+viewport); it does not invoke the operating system fullscreen API.
+
 The root `app.py` is a Vercel Flask WSGI entrypoint for the demo only.
 No private data or user file upload is exposed. This does not change
 the localhost CLI or the downstream `text-category-profiler` pin.

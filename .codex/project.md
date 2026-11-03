@@ -33,9 +33,9 @@
 | `app.py`, `requirements.txt`, `vercel.json` | Vercel Flask WSGI 真正 Jaal/Dash 展示，只載入虛構固定 CSV，不改本機 CLI |
 | `jaal_topology/__init__.py`, `data.py` | `Graph`、`GraphInputError`、`load_graph`、`select_subgraph` |
 | `cli.py`, `__main__.py` | `jaal-topology` 與 `python -m jaal_topology` |
-| `viewer.py`, `modes.py` | `build_app`、五種模式、原版 Jaal Search/Filter/Color/Size；左側可收合而不卸載元件、精簡頂部工具列與可展開說明 |
+| `viewer.py`, `modes.py` | `build_app`、五種模式、原版 Jaal Search/Filter/Color/Size；左側可收合、頂部工具列可捲動、全版繪圖（可按 Esc 恢復）、可展開說明，不卸載原版 Network |
 | `community.py` | 定種子、保留方向的 Louvain 拓樸分群與方向計數 |
-| `assets/` | Browser JS（包含社群投影／收攏）、Bootstrap CSS、專用精簡工具列 CSS（19.jaal_compact_layout.css），從套件直接提供 |
+| `assets/` | Browser JS（包含社群投影／收攏）、Bootstrap CSS、專用精簡工具列 CSS（19.jaal_compact_layout.css、20.jaal_focus_escape.js），從套件直接提供 |
 | `integration.py` | `mount_flask`；Flask 同來源、同 port |
 | `tests/`, `examples/` | Python/Node 測試、最小 CSV fixture |
 | `vercel-poc/`, `vercel.json`, `.github/workflows/vercel-poc-merge-only.yml` | Vercel 真實 Python Jaal PoC；舊 SVG 留作歷史對照；Git 自動部署禁止、相關 PR 合併後才可依 opt-in workflow 發布（預設關閉） |

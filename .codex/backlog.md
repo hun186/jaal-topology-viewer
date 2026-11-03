@@ -6,7 +6,7 @@
 | ID | 優先度 | 狀態 | 項目 | 完成條件 |
 | --- | --- | --- | --- | --- |
 | BL-001 | High | Partial PASS | Windows 實機 Jaal／Stage 4 browser 視覺相容驗收 | 已有 consumer PR #227、Windows 使用者 9 項候選實機 PASS 與 Hosted browser acceptance；未覆蓋的 UI／版本組合或完整 ML 工況仍需個別列證，不宣稱全矩陣已驗收 |
-| BL-003 | High | In Progress | Vercel PoC 與本機 Jaal 視覺／互動一致 | PR #10 共用真正 Jaal／Dash 且已合併，但公網 Flask 因 Vercel 每日額度 HTTP 402 未部署；改善可收合側欄與精簡說明後需最新 HEAD Hosted CI／Review，Merge 後才可更新網站，並確認實際 LIVE HTTP/JS；僅相關 Merge 才部署 |
+| BL-003 | High | In Progress | Vercel PoC 與本機 Jaal 視覺／互動一致 | PR #10 共用真正 Jaal／Dash 且已合併，但公網 Flask 因 Vercel 每日額度 HTTP 402 未部署；已改善側欄/說明，但使用者實測仍反映工具列 sticky 與 600px 固定畫布；新增可退出全版檢視、非 sticky 工具列、依 viewport 高度畫布，仍需最新 HEAD Hosted CI／Review，Merge 後才可更新網站，並確認實際 LIVE HTTP/JS；僅相關 Merge 才部署 |
 | BL-002 | Medium | In Progress | 乾淨外部 consumer 安裝與 Dash/Jaal 版本組合驗證 | upstream clean Wheel smoke（Ubuntu／Windows，非 editable）與 HTTP/JS/CSS 正在補齊；外部 consumer 安裝、Dash 多版本矩陣與互動驗收仍需額外證據 |
 
 ## Candidate Ideas

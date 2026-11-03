@@ -120,6 +120,15 @@ def _normalize_upstream_layout(layout):
     # Bootstrap columns for a reversible, CSS-driven responsive layout.
     panel_found = graph_found = False
     for item in _descendants(layout):
+        if isinstance(item, dbc.Row) and any(
+            isinstance(child, html.Img)
+            and isinstance(getattr(child, "src", None), str)
+            and child.src.startswith("data:image/png;base64,")
+            for child in _descendants(item)
+        ):
+            item.className = " ".join(filter(None, [
+                getattr(item, "className", "") or "", "jaal-brand-row"
+            ]))
         if not isinstance(item, dbc.Col):
             continue
         ids = {getattr(child, "id", None) for child in _descendants(item)}
@@ -191,8 +200,11 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
             if isinstance(edge.get("title"), str):
                 edge["title"] = escape_html(edge["title"], quote=True)
 
+    # visdcc adds its own intermediate wrapper, so '100%' can shrink to
+    # ~150px even when Bootstrap's graph column is viewport-sized. Use a
+    # viewport CSS length on the actual vis-network frame instead.
     original_app = network.create(directed=True, vis_opts={
-        "height": "600px",
+        "height": "calc(100dvh - 150px)",
         "interaction": {"hover": True},
         "physics": {"enabled": True, "stabilization": {"iterations": 100}},
     })
@@ -221,6 +233,12 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
             "收合設定 ◀", id="jaal-sidebar-toggle", n_clicks=0,
             className="jaal-sidebar-toggle", title="收合左側 Search / Filter / Color / Size 設定",
             **{"aria-expanded": "true", "aria-controls": "jaal-original-app-shell"},
+        ),
+        html.Button(
+            "全版檢視 ⛶", id="jaal-focus-toggle", n_clicks=0,
+            className="jaal-focus-toggle",
+            title="拓撲圖佔滿視窗；再按一次退出全版",
+            **{"aria-pressed": "false"},
         ),
         html.Span(
             "圖形：" + type_labels[structure.graph_kind],
@@ -305,11 +323,27 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
         controls,
         html.Div(original_app.layout, id="jaal-original-app-shell",
                  className="jaal-original-app-shell"),
-    ], className="jaal-viewer-shell")
+    ], id="jaal-viewer-root", className="jaal-viewer-shell")
     app.callback_map.update(original_app.callback_map)
     app._callback_list.extend(original_app._callback_list)
     if not app.callback_map or len(app.callback_map) != len(original_app.callback_map):
         raise RuntimeError("Original Jaal callbacks were not preserved")
+
+    @app.callback(
+        Output("jaal-viewer-root", "className"),
+        Output("jaal-focus-toggle", "children"),
+        Output("jaal-focus-toggle", "aria-pressed"),
+        Input("jaal-focus-toggle", "n_clicks"),
+    )
+    def toggle_focus_view(clicks):
+        """Overlay a viewport-sized graph without replacing the real visdcc canvas."""
+        focused = bool((clicks or 0) % 2)
+        return (
+            "jaal-viewer-shell jaal-focus-mode"
+            if focused else "jaal-viewer-shell",
+            "退出全版 ✕" if focused else "全版檢視 ⛶",
+            "true" if focused else "false",
+        )
 
     @app.callback(
         Output("jaal-original-app-shell", "className"),
@@ -332,12 +366,19 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
         Output("jaal-original-physics-restore", "disabled"),
         Input("jaal-original-layout-mode", "value"),
         Input("jaal-original-physics-restore", "n_intervals"),
+        Input("jaal-focus-toggle", "n_clicks"),
         prevent_initial_call=True,
     )
-    def switch_mode(mode, _ticks):
+    def switch_mode(mode, _ticks, focus_clicks):
         if structure.has_cycle and mode in ("network-collapsed", "hierarchical-collapsed"):
             raise ValueError("Structural descendant collapse disabled for directed cycles")
         triggered = callback_context.triggered[0]["prop_id"].split(".", 1)[0]
+        focused = bool((focus_clicks or 0) % 2)
+        # Update the *real* vis-network frame height when focus changes.
+        # This is a partial options update: all Louvain/graph data and
+        # current mode remain mounted; no second renderer is created.
+        if triggered == "jaal-focus-toggle":
+            return {"height": "100dvh" if focused else base["height"]}, no_update
         if triggered == "jaal-original-physics-restore":
             if mode not in ("network", "network-collapsed", "network-community-collapsed"):
                 return no_update, True
@@ -357,7 +398,10 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
             "network", "network-collapsed", "network-community-collapsed",
             "hierarchical", "hierarchical-collapsed",
         ):
-            return layout_options(base, mode), mode.startswith("hierarchical")
+            options = layout_options(base, mode)
+            if focused:
+                options["height"] = "100dvh"
+            return options, mode.startswith("hierarchical")
         raise ValueError("Unsupported Jaal layout mode")
 
     app.clientside_callback(
