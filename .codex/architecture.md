@@ -17,12 +17,14 @@
 | `community.py` | NetworkX 有向 Louvain 分群、固定種子、direction-preserving aggregates |
 | `assets/` | JS 中文 label／structural collapse／Louvain community projection、local Bootstrap CSS |
 | `integration.py` | `DispatcherMiddleware` 在既有 Flask WSGI 同 port 掛載 child Dash |
+| `gallery.py` | 選擇有限、明確列出的 Graph；每案獨立 Dash/Flask WSGI mount；下拉透過 URL 導向另一案，避免 Jaal 綁定舊 graph callback |
 
 1. `load_graph` 逐份讀關係 CSV；保留有向邊與多父／環，去除相同的邊。
 2. 以可選 `ClassLabel,CT` metadata 附加顯示名稱，不改原始 ID。
 3. `select_subgraph` 依 root 沿 child 遍歷，保留所有兩端在子圖的原始邊並執行 limits。
 4. `build_app` 準備 DataFrame、Jaal 原有回呼、四種 legacy 模式＋實驗社群控制、Louvain membership 與套件內資產。
 5. CLI `127.0.0.1:8059` 或 Flask WSGI prefix 提供互動圖。
+6. 可選 Gallery 將 1..20 個明確登記、已載入的 Graph 各自 mount 到同一 host 的獨立 Dash path；切換案例使用 URL navigation 讓 callback 狀態隔離，不修改 CSV 或共享圖狀態。
 
 ## 不變條件
 - Original node ID 是搜尋及關係權威；中文僅顯示，不回寫 CSV。

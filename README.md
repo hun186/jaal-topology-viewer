@@ -37,6 +37,65 @@ workflow can release **only a relevant merged PR** when its separate
 GitHub credentials and enable switch are explicitly configured.
 There are no PR preview deployments.
 
+## Multi-case Jaal gallery
+
+The gallery is an optional part of the **portable Jaal component**, not a
+separate SVG mockup. The public demo, as served by `app.py`, offers a searchable
+**示範案例** dropdown containing:
+
+- **公司寄收件網路（一般有環）** — original fictional corporate messages
+  (77 nodes, 169 directed links), the default at `/`; use Louvain for
+  collapsed network views
+- **公司組織階層樹（無環）** — synthetic 52-node, 51-edge hierarchy,
+  initially in hierarchy-collapsed mode, at `/cases/org-tree/`
+- **專案相依網路（多父 DAG）** — synthetic 19-node, 31-edge
+  directed acyclic graph with shared successors, initially in hierarchy
+  mode, at `/cases/project-dag/`
+
+Changing cases navigates **on the same local/hosted domain and port**.
+Each page is a separately mounted original Dash/Jaal app with its own
+Search/Filter/Color/Size callbacks, cycle safety rules, Louvain partition
+and mode selection. Reloading the page when switching prevents stale
+graph callbacks/data from leaking across cases. There is no CSV upload or
+filesystem explorer in the public demo. The default `build_app(graph)`
+and existing `mount_flask(...)` consumers remain unchanged.
+
+Other Python projects can construct their own **allowlisted** gallery:
+
+```python
+from jaal_topology import GalleryCase, create_gallery_app, load_graph, select_subgraph
+
+cases = [
+    GalleryCase("emails", "寄收件網路",
+                select_subgraph(load_graph("email_edges.csv", "people.csv"))),
+    GalleryCase("taxonomy", "分類階層樹",
+                select_subgraph(load_graph("tree_edges.csv", "names.csv")),
+                initial_mode="hierarchical-collapsed"),
+]
+dash_app = create_gallery_app(cases)
+app = dash_app.server       # WSGI Flask host, one listener
+app.run(host="127.0.0.1", port=8099, debug=False)
+```
+
+Only the gallery uses a case selector. The `create_gallery_app` API takes
+1–20 preloaded `GalleryCase` entries with unique safe ASCII slugs.
+The first case stays at `/`, and subsequent cases are mounted at
+`/cases/<key>/`. If two datasets should share a case, callers must
+explicitly load/compose them first. Input and graph limits are still
+enforced by `load_graph`, `select_subgraph` and `build_app`.
+
+For the built-in public examples (when running from the repository),
+use the same existing Vercel-equivalent command:
+
+```bat
+.venv-vercel\Scripts\python.exe -c "from app import app; app.run(host='127.0.0.1', port=8099, debug=False)"
+```
+
+The case dropdown changes only local/server-loaded examples; **it does
+not trigger a new Vercel deployment**. The production Vercel URL remains
+on its previously deployed version until an authorized, quota-available
+post-Merge release is separately verified.
+
 ## Install and use in another Python project
 
 This repository **is the standalone package root**. With Python 3.10+

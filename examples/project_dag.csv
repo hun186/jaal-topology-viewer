@@ -1,0 +1,32 @@
+parent,child
+Initiative,Architecture
+Initiative,Delivery
+Initiative,Security
+Architecture,Research
+Delivery,Operations
+Security,Release
+Architecture,Client Requirements
+Delivery,Client Requirements
+Delivery,Capacity Plan
+Security,Data Model
+Architecture,API Contract
+Delivery,API Contract
+Delivery,Access Policy
+Security,Test Strategy
+Architecture,Build Pipeline
+Delivery,Build Pipeline
+Delivery,Monitoring
+Security,Release Checklist
+Architecture,Documentation
+Delivery,Documentation
+Delivery,Review Gate
+Security,Go-Live
+Review Gate,Go-Live
+Client Requirements,Data Model
+Data Model,API Contract
+Access Policy,Review Gate
+Test Strategy,Review Gate
+Build Pipeline,Release Checklist
+Monitoring,Go-Live
+Documentation,Release Checklist
+Release Checklist,Go-Live

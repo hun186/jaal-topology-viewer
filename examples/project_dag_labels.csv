@@ -1,0 +1,20 @@
+ClassLabel,CT
+Initiative,示範專案
+Architecture,架構設計
+Delivery,交付管理
+Security,資安治理
+Research,前期研究
+Operations,維運
+Release,發布管理
+Client Requirements,客戶需求
+Capacity Plan,容量規劃
+Data Model,資料模型
+API Contract,API 契約
+Access Policy,存取政策
+Test Strategy,測試策略
+Build Pipeline,建置流水線
+Monitoring,監控
+Release Checklist,發布檢查表
+Documentation,技術文件
+Review Gate,審查關卡
+Go-Live,正式啟用

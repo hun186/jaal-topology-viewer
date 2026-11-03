@@ -1,0 +1,53 @@
+ClassLabel,CT
+Root Office,總管理處
+HQ Committee,管理委員會
+Engineering,技術研發
+Engineering / Platform,技術研發／平台工程
+Engineering / Platform / Lead,技術研發／平台工程／主管
+Engineering / Platform / Specialist,技術研發／平台工程／專員
+Engineering / Data Systems,技術研發／資料系統
+Engineering / Data Systems / Lead,技術研發／資料系統／主管
+Engineering / Data Systems / Specialist,技術研發／資料系統／專員
+Engineering / Quality,技術研發／品質工程
+Engineering / Quality / Lead,技術研發／品質工程／主管
+Engineering / Quality / Specialist,技術研發／品質工程／專員
+Operations,營運管理
+Operations / Procurement,營運管理／採購
+Operations / Procurement / Lead,營運管理／採購／主管
+Operations / Procurement / Specialist,營運管理／採購／專員
+Operations / Logistics,營運管理／物流
+Operations / Logistics / Lead,營運管理／物流／主管
+Operations / Logistics / Specialist,營運管理／物流／專員
+Operations / Customer Support,營運管理／客戶服務
+Operations / Customer Support / Lead,營運管理／客戶服務／主管
+Operations / Customer Support / Specialist,營運管理／客戶服務／專員
+Commercial,商務發展
+Commercial / Sales,商務發展／業務
+Commercial / Sales / Lead,商務發展／業務／主管
+Commercial / Sales / Specialist,商務發展／業務／專員
+Commercial / Marketing,商務發展／行銷
+Commercial / Marketing / Lead,商務發展／行銷／主管
+Commercial / Marketing / Specialist,商務發展／行銷／專員
+Commercial / Partnerships,商務發展／策略合作
+Commercial / Partnerships / Lead,商務發展／策略合作／主管
+Commercial / Partnerships / Specialist,商務發展／策略合作／專員
+Finance,財務管理
+Finance / Accounting,財務管理／會計
+Finance / Accounting / Lead,財務管理／會計／主管
+Finance / Accounting / Specialist,財務管理／會計／專員
+Finance / Planning,財務管理／財務規劃
+Finance / Planning / Lead,財務管理／財務規劃／主管
+Finance / Planning / Specialist,財務管理／財務規劃／專員
+Finance / Compliance,財務管理／法遵
+Finance / Compliance / Lead,財務管理／法遵／主管
+Finance / Compliance / Specialist,財務管理／法遵／專員
+People,人才發展
+People / Recruiting,人才發展／招募
+People / Recruiting / Lead,人才發展／招募／主管
+People / Recruiting / Specialist,人才發展／招募／專員
+People / Learning,人才發展／教育訓練
+People / Learning / Lead,人才發展／教育訓練／主管
+People / Learning / Specialist,人才發展／教育訓練／專員
+People / Employee Care,人才發展／員工關懷
+People / Employee Care / Lead,人才發展／員工關懷／主管
+People / Employee Care / Specialist,人才發展／員工關懷／專員

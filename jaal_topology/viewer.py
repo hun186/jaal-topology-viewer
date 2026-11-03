@@ -146,11 +146,14 @@ def _normalize_upstream_layout(layout):
         raise RuntimeError("Upstream Jaal panel/graph column contract changed")
 
 
-def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
-    """Build an independent localhost-ready Dash Jaal app, including community mode.
+def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
+              case_options=None, current_case_path=None,
+              initial_mode="network"):
+    """Build a localhost-ready Dash Jaal app; optional isolated case navigation.
 
-    The original Jaal Search/Filter/Color/Size callbacks are preserved.
-    JavaScript is installed from THIS package, not from the calling project.
+    Original Jaal Search/Filter/Color/Size callbacks remain intact. Each
+    gallery case is its own Dash app; switching pages reloads the target case
+    rather than attaching stale callbacks to another graph's data.
     """
     from .data import GraphInputError
     from .modes import layout_options
@@ -181,6 +184,26 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
     from jaal import Jaal
 
     structure = assess_structural_collapse(graph)
+    if initial_mode not in (
+        "network", "network-collapsed", "network-community-collapsed",
+        "hierarchical", "hierarchical-collapsed",
+    ):
+        raise GraphInputError("Unsupported initial gallery layout mode.")
+    if structure.has_cycle and initial_mode in (
+        "network-collapsed", "hierarchical-collapsed",
+    ):
+        raise GraphInputError("Cannot start a cyclic gallery case in structural collapse.")
+    if (case_options is None) != (current_case_path is None):
+        raise GraphInputError("Case navigation needs both choices and current case path.")
+    if case_options is not None:
+        if (not isinstance(case_options, (list, tuple))
+                or not case_options
+                or not isinstance(current_case_path, str)
+                or current_case_path not in {
+                    opt.get("value") for opt in case_options
+                    if isinstance(opt, dict) and isinstance(opt.get("value"), str)
+                }):
+            raise GraphInputError("Invalid case navigation options or selected path.")
     community_result = detect_louvain(graph)
     community_partition = community_result.member_to_group
     edges, nodes = to_jaal_dataframes(graph, root=root)
@@ -216,7 +239,10 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
         raise RuntimeError("Original Jaal graph/options layout contract changed")
     base = deepcopy(graph_network.options)
     base.setdefault("nodes", {}).setdefault("shape", "dot")
-    graph_network.options = deepcopy(base)
+    graph_network.options = (
+        deepcopy(base) if initial_mode == "network"
+        else layout_options(base, initial_mode)
+    )
     _normalize_upstream_layout(original_app.layout)
 
     type_labels = {
@@ -228,7 +254,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
     # Keep the original mode, language and cycle guard IDs unchanged.
     # The compact top bar stays visible; verbose explanations are available
     # from a native details popup and consume no drawing height by default.
-    controls = html.Div([
+    controls_children = [
         html.Button(
             "收合設定 ◀", id="jaal-sidebar-toggle", n_clicks=0,
             className="jaal-sidebar-toggle", title="收合左側 Search / Filter / Color / Size 設定",
@@ -261,7 +287,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
                     {"label": "階層（收攏）", "value": "hierarchical-collapsed",
                      "disabled": structure.has_cycle},
                 ],
-                value="network", inline=True,
+                value=initial_mode, inline=True,
             ),
         ], className="jaal-mode-group"),
         dcc.Checklist(
@@ -302,7 +328,24 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
                   data=not structure.has_cycle, storage_type="memory"),
         dcc.Interval(id="jaal-original-physics-restore",
                      interval=300, disabled=True, n_intervals=0),
-    ], id="jaal-compact-toolbar", className="jaal-compact-toolbar")
+    ]
+    if case_options is not None:
+        # A normal URL change deliberately creates a clean Dash instance per
+        # graph. Using graph.data alone would leave upstream Jaal callbacks
+        # searching/filtering a different, previously loaded graph.
+        controls_children.insert(0, html.Div([
+            html.Span("示範案例", className="jaal-case-caption"),
+            dcc.Dropdown(
+                id="jaal-case-picker", options=case_options,
+                value=current_case_path, clearable=False, searchable=True,
+                className="jaal-case-picker",
+            ),
+            dcc.Location(id="jaal-case-location", refresh=True),
+        ], className="jaal-case-selector"))
+    controls = html.Div(
+        controls_children, id="jaal-compact-toolbar",
+        className="jaal-compact-toolbar",
+    )
 
     # Jaal creates a Dash instance without a configurable asset directory.
     # Construct a correctly configured shell and reuse its actual callbacks,
@@ -328,6 +371,21 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
     app._callback_list.extend(original_app._callback_list)
     if not app.callback_map or len(app.callback_map) != len(original_app.callback_map):
         raise RuntimeError("Original Jaal callbacks were not preserved")
+
+    if case_options is not None:
+        from dash.exceptions import PreventUpdate
+
+        allowed_paths = frozenset(option["value"] for option in case_options)
+
+        @app.callback(
+            Output("jaal-case-location", "href"),
+            Input("jaal-case-picker", "value"),
+            prevent_initial_call=True,
+        )
+        def change_gallery_case(selected_path):
+            if selected_path not in allowed_paths or selected_path == current_case_path:
+                raise PreventUpdate
+            return selected_path
 
     @app.callback(
         Output("jaal-viewer-root", "className"),

@@ -35,6 +35,26 @@ The old static SVG prototype remains in `vercel-poc/` as an explicitly
 The public runtime does not support arbitrary file uploads, secrets,
 private datasets, databases or model training.
 
+## Switching between fictional examples
+
+The real Dash/Vercel-equivalent PoC uses the reusable
+`jaal_topology.gallery.create_gallery_app()` registry, offering a
+searchable **示範案例** dropdown with independently mounted Jaal pages:
+
+| Case | Path | Topology | Initial view |
+| --- | --- | --- | --- |
+| Company senders/recipients | `/` | 77 nodes / 169 directed edges; cyclic | Network |
+| Fictional organization hierarchy | `/cases/org-tree/` | 52 nodes / 51 edges; tree | Hierarchy collapsed |
+| Project dependency network | `/cases/project-dag/` | 19 nodes / 31 edges; multi-parent DAG | Hierarchy |
+
+Each case is loaded once from a reviewed, fictional local CSV file and
+served with its **own real Jaal/Dash callback graph**. Case navigation
+changes the browser path on the same origin; it does not re-deploy Vercel
+or call any API to load private/untrusted input. Original IDs, translated
+labels, cycle guard, panel/focus controls and Search/Filter/Color/Size
+remain case-local. Programmatic clients may supply their own allowlisted
+`GalleryCase` sequence. See the repository README for the public API.
+
 ## Run a deployment-equivalent local instance
 
 ```sh
