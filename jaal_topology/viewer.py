@@ -465,13 +465,14 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     ], value=700, clearable=False, searchable=False,
                     className="jaal-temporal-select",
                 ),
-                dcc.RadioItems(
+                html.Span("分段方式"),
+                dcc.Dropdown(
                     id="jaal-temporal-overlap",
                     options=[
-                        {"label": "互斥分段（步長＝窗長）", "value": "disjoint"},
-                        {"label": "重疊滑窗（自訂步長）", "value": "overlap"},
-                    ], value="disjoint", inline=True,
-                    className="jaal-temporal-modes",
+                        {"label": "互斥（步長＝窗長）", "value": "disjoint"},
+                        {"label": "重疊滑窗", "value": "overlap"},
+                    ], value="disjoint", clearable=False, searchable=False,
+                    className="jaal-temporal-overlap-select",
                 ),
                 html.Details([
                     html.Summary("進階：社群與循環"),
@@ -506,6 +507,9 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                         allowCross=False, updatemode="mouseup",
                     ), className="jaal-temporal-range",
                 ),
+                html.Details([
+                    html.Summary("精確起訖時間"),
+                    html.Div([
                 html.Span("起點"),
                 dcc.Input(
                     id="jaal-temporal-start-text", type="text", debounce=True,
@@ -520,6 +524,8 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     className="jaal-temporal-date-input",
                     placeholder="YYYY-MM-DDTHH:MM",
                 ),
+                    ], className="jaal-temporal-precision-body"),
+                ], className="jaal-temporal-precision"),
                 html.Button("◀", id="jaal-temporal-back", n_clicks=0,
                             title="後退一個時間步長"),
                 html.Button("▶ 播放", id="jaal-temporal-play", n_clicks=0),
