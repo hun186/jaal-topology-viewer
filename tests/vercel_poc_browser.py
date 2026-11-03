@@ -63,6 +63,12 @@ def main():
             page.get_by_role("button", name="部門收攏示意").click()
             collapsed = int(page.locator("#visibleNodes").inner_text())
             assert 0 < collapsed < 77
+            # Collapsed groups must be searchable by their members' Chinese names.
+            page.locator("#chinese").check()
+            page.locator("#search").fill("執行長")
+            assert page.locator("svg .graph-node.cluster:not(.faded)").count() >= 1
+            assert page.locator("svg .graph-node.cluster.faded").count() >= 1
+            page.locator("#search").fill("")
             cluster = page.locator("svg .graph-node.cluster").first
             cluster.click()
             assert int(page.locator("#visibleNodes").inner_text()) > collapsed
