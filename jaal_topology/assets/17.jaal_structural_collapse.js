@@ -217,7 +217,10 @@
   function project(instance) {
     const state = instance.__jaalStructural;
     if (!state || !COLLAPSED.has(state.mode)) return;
-    const source = instance.props && instance.props.data;
+    const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
+    const source = temporal && typeof temporal.projectSource === "function" ?
+      temporal.projectSource(instance.props && instance.props.data) :
+      (instance.props && instance.props.data);
     if (!source || !instance.nn || !instance.ee) return;
     let shown = visibleIds(state.model, state.expanded);
     // Upstream Jaal Search hides every non-matching node. A deep match
@@ -302,7 +305,10 @@
     if (!state || !COLLAPSED.has(state.mode)) return;
     cancelReflow(state);
     state.mode = null;
-    const source = this.props && this.props.data;
+    const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
+    const source = temporal && typeof temporal.projectSource === "function" ?
+      temporal.projectSource(this.props && this.props.data) :
+      (this.props && this.props.data);
     if (!source || !this.nn || !this.ee) return;
     // Restore the exact Jaal source nodes and edges after compact mode.
     reconcileDataset(this.nn, source.nodes.map(node => ({
@@ -318,7 +324,10 @@
     const community = root.dash_clientside && root.dash_clientside.jaal_community_collapse;
     if (community && typeof community.restore === "function") community.restore.call(this);
     if (!COLLAPSED.has(mode) || !this.nn || !this.ee || !this.net) return;
-    const source = this.props && this.props.data;
+    const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
+    const source = temporal && typeof temporal.projectSource === "function" ?
+      temporal.projectSource(this.props && this.props.data) :
+      (this.props && this.props.data);
     if (!source || !Array.isArray(source.nodes) || !Array.isArray(source.edges)) return;
     const key = signature(source);
     let state = this.__jaalStructural;
