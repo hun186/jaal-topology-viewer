@@ -125,6 +125,57 @@
   min-width: 130px;
   padding: 2px 12px 10px;
 }
+.jaal-temporal-date-input {
+  width: 158px;
+  min-width: 0;
+  height: 27px;
+  border: 1px solid #a6c0dc;
+  border-radius: 5px;
+  background: #fff;
+  color: #294760;
+  padding: 3px 6px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.jaal-temporal-range {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+.jaal-temporal-range .rc-slider-handle {
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border-width: 3px;
+  z-index: 3;
+}
+.jaal-temporal-live-window {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #355578;
+}
+.jaal-temporal-window-axis {
+  position: relative;
+  flex: 1 1 200px;
+  max-width: 480px;
+  min-width: 140px;
+  height: 12px;
+  border-radius: 5px;
+  background: #dbe8f5;
+  border: 1px solid #a6bdd5;
+  overflow: hidden;
+}
+.jaal-temporal-window-highlight {
+  position: absolute;
+  height: 100%;
+  top: 0;
+  min-width: 2px;
+  background: #2478d5;
+  border-radius: 4px;
+  transition: left .14s linear, width .14s linear;
+}
+
 .jaal-temporal-status {
   font-size: 12px;
   color: #3a5d81;
