@@ -5,19 +5,22 @@ one or more relationship CSV files, plus optional node display metadata CSV.
 This package has no import from `BertScript`, `ClassesTree`, `TCFMain`, model
 training, or WorkPool. It **never writes** either source CSV.
 
-## Optional public Vercel proof of concept
+## Public Vercel PoC — real Jaal Viewer
 
-The [Vercel public PoC](vercel-poc/README.md) is a browser-only, read-only
-SVG visualization of the 77-node / 169-link fictional communication demo.
-It supports directed link inspection, search, Chinese labels, pan/zoom,
-network/hierarchy layouts and fictional department-based collapse.
-It is **not** the Python Dash/Jaal runtime or Louvain.
+The [public demonstration](vercel-poc/README.md) now mounts the **real
+Python Jaal/Dash app**, using the same core, layout controls, Search/
+Filter/Color/Size and Louvain/community logic as this portable viewer.
+It is driven by the fictional 77-node/169-edge company example; cyclic
+graphs correctly disable the two DAG-only collapse modes.
 
-To conserve Vercel daily deployments, automatic Git deployments are disabled
-on **all branches**. A separately enabled GitHub Action can deploy only when
-a relevant PR has **merged into main**. PR updates and CI runs never deploy;
-Vercel credentials and activation must be configured separately. See
-vercel-poc/README.md.
+The root `app.py` is a Vercel Flask WSGI entrypoint for the demo only.
+No private data or user file upload is exposed. This does not change
+the localhost CLI or the downstream `text-category-profiler` pin.
+
+Vercel Git push/PR auto deployments remain disabled. The dedicated
+workflow can release **only a relevant merged PR** when its separate
+GitHub credentials and enable switch are explicitly configured.
+There are no PR preview deployments.
 
 ## Install and use in another Python project
 
