@@ -8,7 +8,7 @@ background scheduler is involved.
 from __future__ import annotations
 
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 
 from .community import detect_louvain
 from .data import Graph, GraphInputError
@@ -16,6 +16,7 @@ from .data import Graph, GraphInputError
 MAX_TEMPORAL_DAYS = 120
 MAX_TEMPORAL_EVENTS = 50_000
 MAX_TEMPORAL_FRAMES_EDGES = 180_000
+MAX_TEMPORAL_FRAMES = 240
 
 
 class TemporalTimeline:
@@ -31,6 +32,7 @@ class TemporalTimeline:
             raise GraphInputError("Temporal source graph exceeds render bounds")
         edge_set = set(graph.edges)
         daily = {}
+        timestamped = []
         aware = None
         for event in events:
             try:
@@ -51,9 +53,13 @@ class TemporalTimeline:
                 raise GraphInputError("Temporal event endpoint absent from source Graph")
             day = timestamp.date()
             daily.setdefault(day, Counter())[(sender, recipient)] += 1
+            timestamped.append((timestamp, (sender, recipient)))
         self.graph = graph
         self.timezone = "UTC" if aware else "local-naive"
         self.by_day = daily
+        # Minute/hour analysis needs original timestamps: daily counters alone
+        # cannot reconstruct precise half-open windows.
+        self._timestamped = tuple(sorted(timestamped, key=lambda row: row[0]))
         self.first_day = min(daily)
         self.last_day = max(daily)
         days = (self.last_day - self.first_day).days + 1
@@ -144,4 +150,85 @@ class TemporalTimeline:
             "start_index": first_index,
             "end_index": last_index,
             "timezone": self.timezone,
+        }
+
+    def interval_frames(self, *, start_minute=0, end_minute=None,
+                        mode="rolling", window_minutes=4320,
+                        step_minutes=None):
+        """Bounded minute-resolution playback with [start,end) event semantics.
+
+        Offsets are integer minutes since midnight at the first event day.
+        rolling + step==window is a disjoint partition (the default).
+        rolling + step<window overlaps; cumulative retains the analysis start.
+        Day-based snapshot()/frames() stay backwards-compatible.
+        """
+        from datetime import datetime as _datetime
+        base = _datetime.combine(
+            self.first_day, time.min,
+            tzinfo=timezone.utc if self.timezone == "UTC" else None,
+        )
+        total = len(self.days) * 1440
+        if end_minute is None:
+            end_minute = total
+        if step_minutes is None:
+            step_minutes = window_minutes
+        if (any(type(value) is not int for value in (
+                start_minute, end_minute, window_minutes, step_minutes))
+                or not 0 <= start_minute < end_minute <= total
+                or not 1 <= window_minutes <= total
+                or not 1 <= step_minutes <= window_minutes
+                or mode not in ("rolling", "cumulative")):
+            raise GraphInputError("Invalid precise temporal interval, window or step")
+        # Strict capacity guard: never silently skip frames or collapse the
+        # user's requested 1-minute precision into daily counts.
+        starts = range(start_minute, end_minute, step_minutes)
+        if len(starts) > MAX_TEMPORAL_FRAMES:
+            raise GraphInputError(
+                "Too many animation frames (max 240); narrow the selected "
+                "analysis dates/times, or choose a larger window/step"
+            )
+        rows = []
+        total_edges = 0
+        for offset in starts:
+            lo = start_minute if mode == "cumulative" else offset
+            hi = min(end_minute, offset + window_minutes)
+            begin = base + timedelta(minutes=lo)
+            finish = base + timedelta(minutes=hi)
+            counts = Counter(pair for timestamp, pair in self._timestamped
+                             if begin <= timestamp < finish)
+            endpoints = {id_ for pair in counts for id_ in pair}
+            snap = Graph(
+                tuple(sorted(counts)),
+                tuple(node for node in self.graph.nodes if node in endpoints),
+                {id_: label for id_, label in self.graph.translations.items()
+                 if id_ in endpoints},
+                dict(counts),
+            )
+            total_edges += len(snap.edges)
+            if total_edges > MAX_TEMPORAL_FRAMES_EDGES:
+                raise GraphInputError("Temporal frame payload exceeds 180000 edges")
+            groups = detect_louvain(snap)
+            start_iso = begin.isoformat(timespec="minutes")
+            end_iso = finish.isoformat(timespec="minutes")
+            rows.append({
+                "date": start_iso, "from": start_iso, "to": end_iso,
+                "to_exclusive": end_iso, "mode": mode,
+                "messages": sum(counts.values()),
+                "nodes": len(snap.nodes), "links": len(snap.edges),
+                "edges": [[a, b, snap.edge_counts[(a, b)]]
+                          for a, b in snap.edges],
+                "partition": groups.member_to_group,
+                "window_minutes": window_minutes,
+                "step_minutes": step_minutes,
+                "axis_start": (lo - start_minute) / (end_minute - start_minute),
+                "axis_end": (hi - start_minute) / (end_minute - start_minute),
+            })
+        return {
+            "frames": rows,
+            "start_index": 0, "end_index": len(rows) - 1,
+            "timezone": self.timezone, "unit_minutes": 1,
+            "window_minutes": window_minutes,
+            "step_minutes": step_minutes,
+            "analysis_from": (base + timedelta(minutes=start_minute)).isoformat(timespec="minutes"),
+            "analysis_to_exclusive": (base + timedelta(minutes=end_minute)).isoformat(timespec="minutes"),
         }
