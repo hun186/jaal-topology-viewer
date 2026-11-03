@@ -307,8 +307,11 @@
 .jaal-graph-kind-warning {
   color: #a44b21;
 }
+/* Prefer a single row for the five layout choices at desktop widths.
+   A 480px basis made them wrap, creating a third toolbar row when
+   the optional local-neighborhood picker was introduced. */
 .jaal-mode-group {
-  flex: 1 1 480px;
+  flex: 1 1 680px;
   min-width: 0;
   display: flex;
   align-items: center;
