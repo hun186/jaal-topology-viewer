@@ -239,7 +239,9 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                 or set(graph.nodes) != set(source.nodes)
                 or graph.edge_counts != source.edge_counts):
             raise GraphInputError("Temporal event source must match this Graph")
-        temporal_frames = temporal_timeline.frames(mode="rolling", window_days=3)
+        temporal_frames = temporal_timeline.interval_frames(
+            mode="rolling", window_minutes=3*1440, step_minutes=3*1440,
+        )
     community_result = detect_louvain(graph)
     community_partition = community_result.member_to_group
     edges, nodes = to_jaal_dataframes(graph, root=root)
@@ -398,14 +400,20 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                      interval=300, disabled=True, n_intervals=0),
     ]
     if temporal_frames is not None:
-        from datetime import date
+        from datetime import datetime, time, timedelta, timezone
         days = temporal_timeline.days
-        last = len(days) - 1
+        total_minutes = len(days) * 1440
+        first_instant = datetime.combine(
+            days[0], time.min,
+            tzinfo=timezone.utc if temporal_timeline.timezone == "UTC" else None,
+        )
+        last_instant = first_instant + timedelta(minutes=total_minutes)
         date_marks = {
-            i: day.strftime("%m/%d")
+            i * 1440: day.strftime("%m/%d")
             for i, day in enumerate(days)
-            if i in (0, last) or day.weekday() == 0
+            if i == 0 or day.weekday() == 0
         }
+        date_marks[total_minutes] = last_instant.strftime("%m/%d")
         controls_children.append(html.Div([
             html.Div([
                 html.Strong("時間演化", className="jaal-temporal-heading"),
@@ -418,14 +426,33 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     value="rolling", inline=True,
                     className="jaal-temporal-modes",
                 ),
-                html.Span("時間窗"),
+                html.Span("時間單位"),
+                dcc.Dropdown(
+                    id="jaal-temporal-unit",
+                    options=[
+                        {"label": "1 分鐘", "value": 1},
+                        {"label": "10 分鐘", "value": 10},
+                        {"label": "1 小時", "value": 60},
+                        {"label": "3 小時", "value": 180},
+                        {"label": "1 天", "value": 1440},
+                    ], value=1440, clearable=False, searchable=False,
+                    className="jaal-temporal-select",
+                ),
+                html.Span("區間長度"),
                 dcc.Dropdown(
                     id="jaal-temporal-window",
-                    options=[
-                        {"label": f"{day} 天", "value": day}
-                        for day in (1, 3, 7, 14, 30)
-                    ], value=3, clearable=False, searchable=False,
+                    options=[{"label": f"{n} 單位", "value": n}
+                             for n in (1, 2, 3, 6, 12, 24, 30)],
+                    value=3, clearable=False, searchable=False,
                     className="jaal-temporal-select",
+                ),
+                dcc.RadioItems(
+                    id="jaal-temporal-overlap",
+                    options=[
+                        {"label": "互斥分段（步長＝窗長）", "value": "disjoint"},
+                        {"label": "重疊滑窗（自訂步長）", "value": "overlap"},
+                    ], value="disjoint", inline=True,
+                    className="jaal-temporal-modes",
                 ),
                 html.Span("社群演化"),
                 dcc.RadioItems(
@@ -440,13 +467,12 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     options=[{"label": "顯示全部節點名稱（較擁擠）", "value": "all"}],
                     value=[], inline=True,
                 ),
-                html.Span("步長"),
+                html.Span("重疊時步長"),
                 dcc.Dropdown(
                     id="jaal-temporal-step",
-                    options=[
-                        {"label": f"{day} 天", "value": day}
-                        for day in (1, 2, 5, 7)
-                    ], value=1, clearable=False, searchable=False,
+                    options=[{"label": f"{n} 單位", "value": n}
+                             for n in (1, 2, 3, 6, 12, 24)],
+                    value=1, clearable=False, searchable=False,
                     className="jaal-temporal-select",
                 ),
                 html.Span("速度"),
@@ -467,13 +493,27 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                 ),
             ], className="jaal-temporal-options"),
             html.Div([
-                html.Span("分析區間"),
+                html.Span("分析範圍（兩端皆可拖曳）"),
                 html.Div(
                     dcc.RangeSlider(
-                        id="jaal-temporal-range", min=0, max=last, step=1,
-                        marks=date_marks, value=[0, last],
+                        id="jaal-temporal-range", min=0, max=total_minutes,
+                        step=1440, marks=date_marks, value=[0, total_minutes],
                         allowCross=False, updatemode="mouseup",
                     ), className="jaal-temporal-range",
+                ),
+                html.Span("起點"),
+                dcc.Input(
+                    id="jaal-temporal-start-text", type="text", debounce=True,
+                    value=first_instant.isoformat(timespec="minutes"),
+                    className="jaal-temporal-date-input",
+                    title="輸入 ISO 8601 起點，如 2026-10-05T09:00",
+                ),
+                html.Span("終點（不含）"),
+                dcc.Input(
+                    id="jaal-temporal-end-text", type="text", debounce=True,
+                    value=last_instant.isoformat(timespec="minutes"),
+                    className="jaal-temporal-date-input",
+                    title="輸入 ISO 8601 排他性終點，如 2026-10-05T10:00",
                 ),
                 html.Button("◀", id="jaal-temporal-back", n_clicks=0,
                             title="後退一個時間步長"),
@@ -483,13 +523,30 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                 html.Span("播放進度"),
                 html.Div(
                     dcc.Slider(
-                        id="jaal-temporal-index", min=0, max=last, step=1,
-                        marks=date_marks, value=last, updatemode="mouseup",
+                        id="jaal-temporal-index", min=0,
+                        max=temporal_frames["end_index"], step=1,
+                        marks={0:"開始", temporal_frames["end_index"]:"結束"},
+                        value=temporal_frames["end_index"], updatemode="mouseup",
                     ), className="jaal-temporal-playhead",
                 ),
             ], className="jaal-temporal-navigation"),
+            html.Div([
+                html.Span("目前播放時窗（藍條隨時間移動，右端不含）"),
+                html.Div(
+                    html.Div(
+                        id="jaal-temporal-window-highlight",
+                        className="jaal-temporal-window-highlight",
+                        style={
+                            "left": f"{temporal_frames['frames'][-1]['axis_start'] * 100}%",
+                            "width": f"{(temporal_frames['frames'][-1]['axis_end'] - temporal_frames['frames'][-1]['axis_start']) * 100}%",
+                        },
+                    ),
+                    className="jaal-temporal-window-axis",
+                ),
+            ], className="jaal-temporal-live-window"),
             html.Div(
-                f"滑動時間窗｜{temporal_frames['frames'][-1]['from']} ～ {days[-1]}　"
+                f"互斥分段｜[{temporal_frames['frames'][-1]['from']}, "
+                f"{temporal_frames['frames'][-1]['to']})　"
                 f"{temporal_frames['frames'][-1]['messages']} 封信",
                 id="jaal-temporal-status", className="jaal-temporal-status",
                 role="status",
