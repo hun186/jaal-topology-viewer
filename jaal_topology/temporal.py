@@ -175,7 +175,7 @@ class TemporalTimeline:
         if (any(type(value) is not int for value in (
                 start_minute, end_minute, window_minutes, step_minutes))
                 or not 0 <= start_minute < end_minute <= total
-                or not 1 <= window_minutes <= total
+                or not 1 <= window_minutes <= MAX_TEMPORAL_DAYS * 1440
                 or not 1 <= step_minutes <= window_minutes
                 or mode not in ("rolling", "cumulative")):
             raise GraphInputError("Invalid precise temporal interval, window or step")
