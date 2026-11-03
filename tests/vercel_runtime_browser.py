@@ -13,6 +13,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def serve(port):
+    # When Python executes tests/script.py, sys.path[0] is the tests folder,
+    # not the checkout root containing the Vercel app.py entrypoint.
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
     from app import app
 
     app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False)
@@ -33,7 +37,7 @@ def check(port):
             start = time.monotonic()
             while time.monotonic() - start < 90:
                 if child.poll() is not None:
-                    raise AssertionError("WSGI entrypoint exited: " + str(child.returncode))
+                    raise AssertionError("WSGI entrypoint exited: " + str(child.returncode) + "\n" + log.read_text(encoding="utf-8", errors="replace")[-3500:])
                 try:
                     with urlopen(url + "/healthz", timeout=2) as resp:
                         if resp.status == 200:
