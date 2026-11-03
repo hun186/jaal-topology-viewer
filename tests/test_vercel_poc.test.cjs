@@ -1,12 +1,13 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import {spawnSync} from "node:child_process";
-import {readFileSync} from "node:fs";
-import {resolve} from "node:path";
-import {parseCsv} from "../vercel-poc/build.mjs";
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const {spawnSync} = require("node:child_process");
+const {readFileSync} = require("node:fs");
+const {resolve} = require("node:path");
 
-const root = resolve(import.meta.dirname, "..");
-test("CSV parser preserves quoted delimiters and rejects broken fields", () => {
+
+const root = resolve(__dirname, "..");
+test("CSV parser preserves quoted delimiters and rejects broken fields", async () => {
+  const {parseCsv} = await import("../vercel-poc/build.mjs");
   assert.deepEqual(parseCsv('from,to\r\n"A,B","C""D"\r\n'), [
     ["from", "to"], ["A,B", 'C"D']
   ]);
