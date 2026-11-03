@@ -5,7 +5,30 @@
 (function (root) {
   "use strict";
   const MIN_GROUP_SIZE = 3;
-  const stateAPI = {partition: {}};
+  const stateAPI = {partition: {}, edgeLength: 120};
+
+  function setEdgeLength(value) {
+    if (Number.isInteger(value) && value >= 60 && value <= 300) {
+      stateAPI.edgeLength = value;
+    }
+  }
+
+  function point(p) {
+    return p && Number.isFinite(p.x) && Number.isFinite(p.y);
+  }
+
+  function anchoredMember(group, id, members, anchor, otherAnchors) {
+    const ordered = [...members].sort();
+    const index = ordered.indexOf(id);
+    const closest = otherAnchors.filter(point).reduce((distance, other) =>
+      Math.min(distance, Math.hypot(other.x - anchor.x, other.y - anchor.y)), Infinity);
+    const separation = stateAPI.edgeLength / 120;
+    const limit = Number.isFinite(closest) ? Math.max(32, closest * 0.38) : Infinity;
+    const radius = Math.min(limit, (28 + 22 * Math.sqrt(index + 1)) * separation);
+    const angle = index * 2.399963229728653;
+    return {x: anchor.x + radius * Math.cos(angle),
+            y: anchor.y + radius * Math.sin(angle)};
+  }
   const INSPECTOR_ID = "jaal-community-edge-inspector";
 
   function nameFor(id, zh) {
@@ -261,6 +284,10 @@
       net && typeof net.getPositions === "function"
         ? net.getPositions() : {});
     const nodePositions = state.positions || Object.create(null);
+    state.clusterPositions = state.clusterPositions || Object.create(null);
+    for (const clusterId of Object.keys(state.view?.clusterToGroup || {})) {
+      if (point(oldPos[clusterId])) state.clusterPositions[clusterId] = oldPos[clusterId];
+    }
     for (const [id, pos] of Object.entries(oldPos)) {
       if (Number.isFinite(pos.x) && Number.isFinite(pos.y) &&
           !id.startsWith("__jaal_internal_community__")) {
@@ -274,25 +301,24 @@
       for (const node of view.nodes) {
         if (oldIdSet.has(String(node.id))) continue;
         const id = String(node.id);
-        const cached = nodePositions[id];
-        if (cached && Number.isFinite(cached.x) && Number.isFinite(cached.y)) {
-          node.x = cached.x; node.y = cached.y;
-          continue;
-        }
         const group = Object.prototype.hasOwnProperty.call(state.partition, id)
           ? String(state.partition[id]) : null;
-        if (group !== null) {
-          const clusterId = Object.keys(state.view?.clusterToGroup || {}).find(
-            id => state.view.clusterToGroup[id] === group
-          );
-          const anchor = clusterId && oldPos[clusterId];
-          if (anchor && Number.isFinite(anchor.x) && Number.isFinite(anchor.y)) {
-            const order = (view.members.get(group) || []).indexOf(id);
-            const angle = order * 2.399963229728653; // golden angle
-            const radius = 18 * Math.sqrt(order + 1);
-            node.x = anchor.x + radius * Math.cos(angle);
-            node.y = anchor.y + radius * Math.sin(angle);
-          }
+        const clusterId = group !== null &&
+          Object.keys(state.view?.clusterToGroup || {}).find(
+            key => state.view.clusterToGroup[key] === group);
+        const anchor = clusterId &&
+          (point(oldPos[clusterId]) ? oldPos[clusterId] : state.clusterPositions[clusterId]);
+        if (point(anchor)) {
+          // Expanding a box MUST place its newly exposed members around that
+          // box, not at their distant positions from the original full graph.
+          const otherAnchors = Object.entries(state.clusterPositions)
+            .filter(([key]) => key !== clusterId).map(([,pos]) => pos);
+          const placed = anchoredMember(group, id, view.members.get(group) || [],
+                                        anchor, otherAnchors);
+          node.x = placed.x; node.y = placed.y;
+        } else {
+          const cached = nodePositions[id];
+          if (point(cached)) {node.x = cached.x; node.y = cached.y;}
         }
       }
       for (const node of view.nodes) {
@@ -308,16 +334,18 @@
           }
           continue;
         }
-        const cachedCluster = state.clusterPositions &&
-          state.clusterPositions[String(node.id)];
-        if (cachedCluster) {
+        const cachedCluster = state.clusterPositions[String(node.id)];
+        if (point(cachedCluster)) {
+          // Re-collapse around the old box anchor; never teleport to a
+          // far-away member centroid or the initial constellation origin.
           node.x = cachedCluster.x; node.y = cachedCluster.y;
         } else if (temporalActive) {
           // Stable, legible constellation for the mail demo. A member centroid
           // often places every synthetic group on top of the same dense core.
           const groups = [...view.members.keys()].sort();
           const angle = 2 * Math.PI * groups.indexOf(group) / groups.length;
-          const radius = Math.max(290, groups.length * 65);
+          const radius = Math.max(290, groups.length * 65) *
+            (stateAPI.edgeLength / 120);
           node.x = radius * Math.cos(angle);
           node.y = radius * Math.sin(angle);
         } else {
@@ -330,14 +358,31 @@
         }
       }
     }
-    // Keep users' manually dragged cluster coordinates across open/close.
-    state.clusterPositions = state.clusterPositions || Object.create(null);
-    for (const id of Object.keys(state.view?.clusterToGroup || {})) {
-      const pos = oldPos[id];
-      if (pos && Number.isFinite(pos.x) && Number.isFinite(pos.y)) {
-        state.clusterPositions[id] = pos;
+    // The explicit edge-length control scales the visible frozen geometry,
+    // not just vis physics (which is deliberately disabled during playback).
+    const previous = state.spacing || stateAPI.edgeLength;
+    if (previous !== stateAPI.edgeLength) {
+      const ratio = stateAPI.edgeLength / previous;
+      const coords = view.nodes.map(n => point(n) ? {x:n.x,y:n.y} : oldPos[String(n.id)])
+        .filter(point);
+      if (coords.length) {
+        const center = {x: coords.reduce((v,p)=>v+p.x,0)/coords.length,
+                        y: coords.reduce((v,p)=>v+p.y,0)/coords.length};
+        const scale = p => ({x:center.x+(p.x-center.x)*ratio,
+                             y:center.y+(p.y-center.y)*ratio});
+        for (const node of view.nodes) {
+          const current = point(node) ? node : oldPos[String(node.id)];
+          if (point(current)) Object.assign(node, scale(current));
+        }
+        for (const [key,p] of Object.entries(state.clusterPositions)) {
+          if (point(p)) state.clusterPositions[key] = scale(p);
+        }
+        for (const [key,p] of Object.entries(nodePositions)) {
+          if (point(p)) nodePositions[key] = scale(p);
+        }
       }
     }
+    state.spacing = stateAPI.edgeLength;
     // No new fit() call. The temporal quotient keeps all IDs and only
     // updates hidden/weight fields. Normal static mode retains legacy reset.
     if (!temporalActive) {
@@ -432,7 +477,8 @@
   }
 
   root.dash_clientside = root.dash_clientside || {};
-  Object.assign(stateAPI, {activate, restore, makeView, explainEdge});
+  Object.assign(stateAPI, {activate, restore, makeView, explainEdge, setEdgeLength,
+    anchoredMember});
   root.dash_clientside.jaal_community_collapse = stateAPI;
   if (typeof module !== "undefined" && module.exports) {
     module.exports = stateAPI;
