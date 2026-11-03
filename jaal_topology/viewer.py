@@ -339,6 +339,51 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             ),
         ], className="jaal-mode-group"),
         html.Details([
+            html.Summary("局部子圖／根節點",
+                         title="搜尋英文 ID 或中文別名，選擇起點及幾步內可達節點"),
+            html.Div([
+                html.Span("起始根節點（清除選擇＝顯示全圖）"),
+                dcc.Dropdown(
+                    id="jaal-local-root",
+                    options=[
+                        {
+                            "label": (name[:70] + ("…" if len(name) > 70 else "")) +
+                            (" ｜ " + graph.translations[name][:48]
+                             if graph.translations.get(name) else ""),
+                            "value": name,
+                        }
+                        for name in sorted(graph.nodes)
+                    ],
+                    placeholder="搜尋節點 ID／中文名稱…",
+                    value=None, searchable=True, clearable=True,
+                    className="jaal-local-root-picker",
+                ),
+                html.Span("最短步數"),
+                dcc.Dropdown(
+                    id="jaal-local-hops",
+                    options=[
+                        {"label": f"{n} 步", "value": n}
+                        for n in (0, 1, 2, 3, 4, 5, 10)
+                    ] + [{"label": "全部可達", "value": "all"}],
+                    value=2, clearable=False, searchable=False,
+                    className="jaal-local-radius-picker",
+                ),
+                html.Span("可達方向"),
+                dcc.RadioItems(
+                    id="jaal-local-direction", value="out", inline=True,
+                    options=[
+                        {"label": "向外 →", "value": "out"},
+                        {"label": "向內 ←", "value": "in"},
+                        {"label": "雙向 ↔", "value": "both"},
+                    ], className="jaal-local-direction",
+                ),
+                html.Div(
+                    f"目前顯示全圖：{len(graph.nodes)} 節點、{len(graph.edges)} 有向邊",
+                    id="jaal-local-status", role="status",
+                ),
+            ], className="jaal-local-body"),
+        ], className="jaal-local-details"),
+        html.Details([
             html.Summary("調整邊長", title="調整非時間圖的彈簧長度或時間圖固定座標的間距"),
             html.Div([
                 html.Span("基礎邊長／間距（60–300 px）"),
@@ -394,6 +439,8 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                   data=graph.translations, storage_type="memory"),
         dcc.Store(id="jaal-community-membership",
                   data=community_partition, storage_type="memory"),
+        dcc.Store(id="jaal-local-scope", data={"root": None},
+                  storage_type="memory"),
         dcc.Store(id="jaal-structural-eligible",
                   data=not structure.has_cycle, storage_type="memory"),
         dcc.Interval(id="jaal-original-physics-restore",
@@ -845,6 +892,32 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             Input("jaal-temporal-speed", "value"),
         )
 
+    @app.callback(
+        Output("jaal-local-scope", "data"),
+        Output("jaal-local-status", "children"),
+        Input("jaal-local-root", "value"),
+        Input("jaal-local-hops", "value"),
+        Input("jaal-local-direction", "value"),
+    )
+    def update_local_scope(node, hops, direction):
+        from .neighborhood import reachable_node_ids
+        if node is None:
+            return ({"root": None},
+                    f"目前顯示全圖：{len(graph.nodes)} 節點、"
+                    f"{len(graph.edges)} 有向邊")
+        try:
+            ids = reachable_node_ids(graph, node, hops=hops,
+                                     direction=direction)
+        except GraphInputError:
+            return ({"root": None}, "無效根節點或步數，已恢復全圖")
+        chosen = set(ids)
+        edges = sum(1 for a, b in graph.edges if a in chosen and b in chosen)
+        labels = {"out": "向外", "in": "向內", "both": "雙向"}
+        return ({"root": node, "ids": list(ids), "hops": hops,
+                 "direction": direction},
+                f"局部子圖：{len(ids)} 節點、{edges} 有向邊；"
+                f"{labels[direction]} {hops} 步（原始資料未更動）")
+
     graph_run_inputs = [
         Input("jaal-original-layout-mode", "value"),
         Input("graph", "data"),
@@ -860,6 +933,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             Input("jaal-temporal-community-policy", "value"),
         ])
     graph_run_inputs.append(Input("jaal-original-edge-length", "value"))
+    graph_run_inputs.append(Input("jaal-local-scope", "data"))
     app.clientside_callback(
         ClientsideFunction(namespace="jaal_visible_labels",
                            function_name="apply"),
