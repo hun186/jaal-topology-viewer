@@ -312,9 +312,12 @@ def check(port: int, evidence: Path) -> None:
                 local_details.locator("summary").click()
                 assert local_details.evaluate("(el) => el.open")
                 frame.locator("#jaal-local-hops").click()
-                frame.locator("#jaal-local-hops").get_by_text(
-                    "0 步", exact=True
-                ).last.click()
+                # Dash/react-select may portal the option menu into the iframe
+                # body rather than under the dropdown wrapper itself.
+                frame.get_by_text("0 步", exact=True).last.click(timeout=15000)
+                expect(frame.locator("#jaal-local-hops")).to_contain_text(
+                    "0 步", timeout=10000
+                )
                 candidate = frame.locator("body").evaluate("""() =>
                     window.__acceptanceNetwork.props.data.nodes.find(
                         n => String(n.id).includes("Executive"))?.id ||
