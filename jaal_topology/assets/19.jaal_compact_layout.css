@@ -56,6 +56,86 @@
     max-width: none;
   }
 }
+/* Temporal controls are optional and shown only for event-backed graphs.
+   Playback frames are computed once, then selected entirely in the browser. */
+.jaal-temporal-controls {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  padding: 5px 8px 2px;
+  background: #f2f7fd;
+  border: 1px solid #dae6f4;
+  border-radius: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.jaal-temporal-options,
+.jaal-temporal-navigation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 9px;
+  font-size: 12px;
+}
+.jaal-temporal-heading {
+  color: #245385;
+  white-space: nowrap;
+}
+.jaal-temporal-modes {
+  display: flex;
+  gap: 9px;
+}
+.jaal-temporal-modes label,
+#jaal-temporal-loop label {
+  font-size: 12px;
+  margin: 0;
+  white-space: nowrap;
+}
+.jaal-temporal-select {
+  flex: 0 0 88px;
+  min-width: 0;
+  font-size: 12px;
+}
+.jaal-temporal-select .Select-control,
+.jaal-temporal-select .Select__control {
+  min-height: 29px;
+  height: 29px;
+  border-color: #bcd0e4;
+}
+.jaal-temporal-navigation > button {
+  border: 1px solid #90a8c4;
+  background: #fff;
+  border-radius: 5px;
+  min-height: 27px;
+  color: #254d76;
+  cursor: pointer;
+}
+.jaal-temporal-navigation > button:hover {
+  background: #dbeaff;
+}
+.jaal-temporal-range {
+  flex: 1 1 170px;
+  min-width: 135px;
+  max-width: 280px;
+  padding: 2px 9px 10px;
+}
+.jaal-temporal-playhead {
+  flex: 1 1 200px;
+  min-width: 130px;
+  padding: 2px 12px 10px;
+}
+.jaal-temporal-status {
+  font-size: 12px;
+  color: #3a5d81;
+  font-variant-numeric: tabular-nums;
+  white-space: normal;
+}
+.jaal-temporal-controls .rc-slider-mark-text {
+  font-size: 9px;
+  white-space: nowrap;
+}
+
 .jaal-sidebar-toggle {
   flex: 0 0 auto;
   border: 1px solid #90a8c4;
@@ -298,8 +378,21 @@ body:has(.jaal-focus-mode) {
   box-shadow: none;
   background: transparent;
 }
-.jaal-focus-mode .jaal-compact-toolbar > :not(#jaal-focus-toggle) {
+.jaal-focus-mode .jaal-compact-toolbar > :not(#jaal-focus-toggle):not(#jaal-temporal-controls) {
   display: none !important;
+}
+.jaal-focus-mode #jaal-temporal-controls {
+  display: flex !important;
+  position: fixed;
+  z-index: 2200;
+  left: 12px;
+  bottom: 10px;
+  width: min(940px, calc(100vw - 110px));
+  max-height: min(45vh, 220px);
+  overflow-y: auto;
+  padding: 7px;
+  background: rgba(242,247,253,.94);
+  box-shadow: 0 3px 16px rgba(15,23,42,.2);
 }
 .jaal-focus-mode #jaal-focus-toggle {
   background: rgba(245,249,255,.94);

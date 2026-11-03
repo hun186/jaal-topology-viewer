@@ -55,6 +55,7 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             "bootstrap.min.css",
             "19.jaal_compact_layout.css",
             "20.jaal_focus_escape.js",
+            "21.jaal_temporal_playback.js",
         ):
             result = self.client.get("/assets/" + name)
             self.assertEqual(result.status_code, 200, name)
@@ -134,6 +135,69 @@ class VercelJaalRuntimeTests(unittest.TestCase):
         self.assertIn("下載模擬郵件事件 CSV", serialized)
         self.assertIn("本案例以合成郵件收發量加權", serialized)
         self.assertIn("企業郵件實務模擬（業務與事件）", serialized)
+
+    def test_temporal_controls_and_callbacks_exist_only_on_event_case(self):
+        from app import _timeline
+
+        layout = self.client.get("/_dash-layout").get_json()
+        serialized = json.dumps(layout, ensure_ascii=False)
+        for control in (
+            "jaal-temporal-controls", "jaal-temporal-range",
+            "jaal-temporal-mode", "jaal-temporal-window",
+            "jaal-temporal-step", "jaal-temporal-speed",
+            "jaal-temporal-play", "jaal-temporal-back",
+            "jaal-temporal-forward", "jaal-temporal-loop",
+            "jaal-temporal-index", "jaal-temporal-status",
+            "jaal-temporal-frames", "jaal-temporal-frame",
+        ):
+            self.assertIn(control, serialized)
+        self.assertGreater(len(_timeline.days), 20)
+        self.assertLessEqual(len(_timeline.days), 31)
+        self.assertEqual(self.client.get(
+            "/assets/21.jaal_temporal_playback.js").status_code, 200)
+        callbacks = self.client.get("/_dash-dependencies").get_json()
+        self.assertTrue(any("jaal-temporal" in str(item)
+                            for item in callbacks))
+        for path in ("/cases/mail-network/", "/cases/org-tree/",
+                     "/cases/project-dag/"):
+            child_layout = self.client.get(path + "_dash-layout").get_json()
+            self.assertNotIn("jaal-temporal-controls",
+                             json.dumps(child_layout))
+
+    def test_temporal_layout_changes_do_not_restart_physics(self):
+        # Exercise the real registered Dash callback using Dash's own
+        # request-local context variable, not a mocked product implementation.
+        from types import SimpleNamespace
+        from dash._callback_context import context_value
+
+        callback = next(
+            config["callback"].__wrapped__
+            for key, config in self.dash_app.callback_map.items()
+            if "graph.options" in key
+            and "jaal-original-physics-restore.disabled" in key
+        )
+
+        def invoke(mode, triggered, ticks=0):
+            token = context_value.set(SimpleNamespace(
+                triggered_inputs=[{"prop_id": triggered, "value": None}]
+            ))
+            try:
+                return callback(mode, ticks, 0)
+            finally:
+                context_value.reset(token)
+
+        for mode in ("network", "network-community-collapsed", "hierarchical"):
+            with self.subTest(mode=mode):
+                options, _disabled = invoke(
+                    mode, "jaal-original-layout-mode.value"
+                )
+                self.assertIs(options["physics"]["enabled"], False)
+
+        restored, disabled = invoke(
+            "network", "jaal-original-physics-restore.n_intervals", ticks=1
+        )
+        self.assertIs(restored["physics"]["enabled"], False)
+        self.assertTrue(disabled)
 
     def test_vercel_configuration_never_automatically_builds_prs(self):
         from pathlib import Path

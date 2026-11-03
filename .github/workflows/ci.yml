@@ -126,7 +126,7 @@ jobs:
               for asset in (
                   "16.jaal_visible_labels.js", "17.jaal_structural_collapse.js",
                   "18.jaal_community_collapse.js", "bootstrap.min.css",
-              "19.jaal_compact_layout.css", "20.jaal_focus_escape.js",
+              "19.jaal_compact_layout.css", "20.jaal_focus_escape.js", "21.jaal_temporal_playback.js",
               ):
                   assert client.get("/installed-graph/assets/" + asset).status_code == 200, asset
           print("CLEAN_WHEEL_ISOLATED_HTTP_PASS", sys.platform, source)

@@ -204,7 +204,10 @@
   }
 
   function sourceData(instance) {
-    return instance.props && instance.props.data;
+    const source = instance.props && instance.props.data;
+    const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
+    return temporal && typeof temporal.projectSource === "function" ?
+      temporal.projectSource(source) : source;
   }
 
   function project(instance) {
@@ -300,6 +303,10 @@
     state.positions = nodePositions;
     state.view = view;
     state.filtered = filtered;
+    const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
+    if (temporal && typeof temporal.noteRender === "function") {
+      temporal.noteRender(instance, source);
+    }
   }
 
   function restore() {
@@ -325,12 +332,18 @@
     if (structural && typeof structural.restore === "function") {
       structural.restore.call(this);
     }
-    const currentKey = graphSignature(source);
+    const timeline = root.dash_clientside && root.dash_clientside.jaal_temporal;
+    const windowKey = timeline && timeline.frame
+      ? JSON.stringify([timeline.frame.from, timeline.frame.to]) : "";
+    const currentKey = graphSignature(source) + windowKey;
     const partition = stateAPI.partition && typeof stateAPI.partition === "object"
       ? stateAPI.partition : {};
     let state = this.__jaalCommunity;
     if (!state || state.key !== currentKey) {
-      state = {key: currentKey, opened: new Set(), positions: Object.create(null)};
+      state = {
+        key: currentKey, opened: new Set(),
+        positions: state && state.positions ? state.positions : Object.create(null),
+      };
       this.__jaalCommunity = state;
     }
     state.active = true;
