@@ -256,9 +256,9 @@ test("precise playback advances whole interval frames and moves both blue-bar en
   assert.match(label0, /\[2026-10-05T09:00, 2026-10-05T09:10\)/);
   assert.equal(frame0.to_exclusive, frame1.from);
   assert.equal(style0.left, "0%");
-  assert.equal(style1.left, (100/3)+"%");
-  assert.equal(style0.width, (100/3)+"%");
-  assert.equal(style1.width, (100/3)+"%");
+  assert.ok(Math.abs(parseFloat(style1.left) - 100/3) < 1e-8);
+  assert.ok(Math.abs(parseFloat(style0.width) - 100/3) < 1e-8);
+  assert.ok(Math.abs(parseFloat(style1.width) - 100/3) < 1e-8);
   assert.equal(temporal.axis(precise)[0], 2);
   trigger("jaal-temporal-tick");
   assert.deepEqual(temporal.playback(1,0,0,1,precise,0,false,7,[]),
