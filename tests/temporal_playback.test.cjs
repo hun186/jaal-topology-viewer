@@ -79,7 +79,7 @@ function trigger(id) {
 const packet = {
   start_index: 2, end_index: 5, frames: [2, 3, 4, 5].map(i => ({
     date: "2026-10-" + String(i+1).padStart(2, "0"),
-    from: "2026-10-01", to: "2026-10-" + (i+1),
+    from: "2026-10-01", to: "2026-10-" + String(i+1).padStart(2, "0"),
     messages: i*10, nodes: 2, links: 1,
     edges: [["A", "B", i*10]], partition: {},
   })),
