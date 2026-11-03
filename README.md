@@ -118,6 +118,11 @@ behavior.
   The status line explicitly identifies the selected mode, from/to dates,
   live messages, active people and active directed links; rolling windows
   can *lose* old relationships as the playhead advances.
+- **基礎邊長／間距** (60–300 px) adjusts the network's spring length
+  for ordinary graphs and the frozen visual spacing of the temporal
+  community viewer. It never changes stored edge weights or source data.
+  Expanding a community places its members near the last box position;
+  collapsing restores that same anchor, with the current camera preserved.
 - **固定社群（比較流量）** is the default: the full-period weighted Louvain
   partition stays anchored while real per-window traffic, active groups
   and pair weights change. Opened groups remain opened, and group/link IDs
