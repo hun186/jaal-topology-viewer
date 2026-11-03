@@ -12,11 +12,12 @@
 
 - Issue #4 已由 [PR #6](https://github.com/hun186/jaal-topology-viewer/pull/6) 合併驗證 Louvain resolution/seed 與 3000-node／5000-edge 邊界；BL-002 的隔離 Wheel smoke 由 PR #7 Hosted CI 通過，Dash 2/3/4 固定版本矩陣以其 PR 最新 HEAD CI/Review 為準，不外推至 consumer 全組合。
 
-- Vercel PoC 使用相同 Jaal/Dash Flask WSGI、固定 77/169 虛構圖，無任意上傳。PR #10 已 CI/Review/Merge，2026-11-03 嘗試部署受到 Vercel HTTP 402 每日限額阻擋，公開站仍為先前靜態版；不能宣稱 Python 已 READY。Git 自動部署禁用，merge-only 工作流需顯式 enable/secret。使用者 Windows 本地 Python 3.12 WSGI 三項單元測試 PASS。PR #11 左欄收合/說明彈窗/CI 8/8 PASS 已 Merge（841756fc19c03954f180c7237afdf72de97a7dcf）。使用者再次實機指出工具列 sticky 不會捲走、畫布仍受固定高度限制；擬改善為普通可捲動工具列＋可還原的全版繪圖。
+- Vercel PoC 使用相同 Jaal/Dash Flask WSGI、固定 77/169 虛構圖，無任意上傳。PR #10 已 CI/Review/Merge，2026-11-03 嘗試部署受到 Vercel HTTP 402 每日限額阻擋，公開站仍為先前靜態版；不能宣稱 Python 已 READY。Git 自動部署禁用，merge-only 工作流需顯式 enable/secret。使用者 Windows 本地 Python 3.12 WSGI 三項單元測試 PASS。PR #11 左欄收合已 Merge（841756fc），PR #12 非 sticky 控制列、真正全版畫布與 Esc 還原已在 8/8 Hosted CI／Codex Review 通過並 Merge（2562cd741203de2cdab0fd5f414a8a41ef49a038）。目前使用者要求可透過下拉切換多個示例，正在以可選 GalleryCase/create_gallery_app 共用元件增設 3 個受限虛構案例、同埠獨立 Dash app，舊單圖 API 不變。
 
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
+| 2026-11-03 | [PR #12](https://github.com/hun186/jaal-topology-viewer/pull/12) 已 Merge | Latest HEAD `e0b5822e77ad4acc840661fc4a79119f346c3cfb` Hosted CI [41618971626](https://github.com/hun186/jaal-topology-viewer/actions/runs/41618971626) 8/8 PASS；Windows 真 Canvas viewport height、Esc 還原驗證；Codex Review 0 Finding，merge `2562cd741203de2cdab0fd5f414a8a41ef49a038`；Vercel 仍因先前 HTTP402 未部署 Python。 |
 | 2026-11-03 | [PR #7](https://github.com/hun186/jaal-topology-viewer/pull/7) 已 Merge | Latest HEAD `9f699ef45994267e5f19039b5187da503ed2461f` Hosted [41591382206](https://github.com/hun186/jaal-topology-viewer/actions/runs/41591382206) 四項工作 PASS，正式 Codex Review completed/0 findings；merge commit `744bcdba684d3bbfd5bf87190ec9ed13b4569130`；Ubuntu／Windows clean Wheel install + same-port assets 驗證。 |
 | 2026-11-03 | [PR #6](https://github.com/hun186/jaal-topology-viewer/pull/6) 已 Merge | Latest HEAD `b4d50af8b8501763d22a2ebee6cf5d29abeaad5e` Hosted [41590709918](https://github.com/hun186/jaal-topology-viewer/actions/runs/41590709918) Ubuntu／Windows PASS，正式 Codex Review completed/0 findings；merge commit `c1642147c40fa4e9907161ab7c64ceb02ff4b667`，新增 Louvain Seed/Resolution 與 3k/5k 邊界測試。 |
 | 2026-11-03 | [Consumer PR #227](https://github.com/hun186/text-category-profiler/pull/227) 已 Merge | 受控升級 Jaal exact pin 至 `47942ac3bd08d8cbcc615fa215c5e5eef286f486`；使用者 Stage 4 候選九項實機 PASS，consumer PR #227 九項 Hosted workflow success；保留舊四模式 rollback。未驗證全部外部環境。 |
