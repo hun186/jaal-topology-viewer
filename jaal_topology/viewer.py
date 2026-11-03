@@ -454,8 +454,11 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     ], value="disjoint", inline=True,
                     className="jaal-temporal-modes",
                 ),
-                html.Span("社群演化"),
-                dcc.RadioItems(
+                html.Details([
+                    html.Summary("進階：社群、步長、速度"),
+                    html.Div([
+                        html.Span("社群演化"),
+                        dcc.RadioItems(
                     id="jaal-temporal-community-policy",
                     options=[
                         {"label": "固定社群（比較流量）", "value": "fixed"},
@@ -491,6 +494,8 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     options=[{"label": "循環", "value": "loop"}],
                     value=["loop"], inline=True,
                 ),
+                    ], className="jaal-temporal-options"),
+                ], className="jaal-temporal-advanced"),
             ], className="jaal-temporal-options"),
             html.Div([
                 html.Span("分析範圍（兩端皆可拖曳）"),
