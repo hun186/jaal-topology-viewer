@@ -164,7 +164,8 @@ def _normalize_upstream_layout(layout):
 
 def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
               case_options=None, current_case_path=None,
-              initial_mode="network"):
+              initial_mode="network", case_description="",
+              case_resources=()):
     """Build a localhost-ready Dash Jaal app; optional isolated case navigation.
 
     Original Jaal Search/Filter/Color/Size callbacks remain intact. Each
@@ -220,6 +221,10 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     if isinstance(opt, dict) and isinstance(opt.get("value"), str)
                 }):
             raise GraphInputError("Invalid case navigation options or selected path.")
+    if not isinstance(case_description, str) or len(case_description) > 900:
+        raise GraphInputError("Case description must be a short string.")
+    if not isinstance(case_resources, tuple):
+        raise GraphInputError("Case resources must be a tuple of local links.")
     community_result = detect_louvain(graph)
     community_partition = community_result.member_to_group
     edges, nodes = to_jaal_dataframes(graph, root=root)
@@ -340,7 +345,9 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                      f"這是無環有向圖，但有 {structure.multi_parent_nodes} 個多父節點；子樹收攏計算的是可達的不同節點，不一定是獨占的下屬。"
                      if structure.multi_parent_nodes else
                      "子樹收攏：點節點逐層展開。")
-                    + " 社群收攏：點社群展開、點成員收合；分群依連線拓樸，不代表職級。",
+                    + (" 社群收攏：點社群展開、點成員收合；本案例以合成郵件收發量加權 Louvain，不代表組織職級；社群間邊數仍是不同寄收件對數，不是郵件總封數。"
+                       if graph.edge_counts else
+                       " 社群收攏：點社群展開、點成員收合；分群依連線拓樸，不代表職級。"),
                     id="jaal-original-structural-hint",
                 ),
             ], className="jaal-context-popup"),
@@ -355,6 +362,17 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         dcc.Interval(id="jaal-original-physics-restore",
                      interval=300, disabled=True, n_intervals=0),
     ]
+    if case_description or case_resources:
+        controls_children.insert(0, html.Details([
+            html.Summary("案例情境／資料", title="查看模擬規則與來源檔案"),
+            html.Div([
+                html.P(case_description, className="jaal-case-description"),
+                html.Div([
+                    html.A(label, href=url, target="_blank", rel="noopener noreferrer")
+                    for label, url in case_resources
+                ], className="jaal-case-resources"),
+            ], className="jaal-context-popup"),
+        ], id="jaal-case-story", className="jaal-context-details jaal-case-story"))
     if case_options is not None:
         # A normal URL change deliberately creates a clean Dash instance per
         # graph. Using graph.data alone would leave upstream Jaal callbacks
