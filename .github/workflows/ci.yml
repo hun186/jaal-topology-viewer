@@ -97,6 +97,7 @@ jobs:
           "$PYTHON" -m pip install --no-cache-dir wheelhouse/*.whl
           cd "$HOME"
           "$PYTHON" - <<'PY'
+          import json
           import sys
           import tempfile
           from pathlib import Path
@@ -104,7 +105,9 @@ jobs:
           import jaal_topology
           from jaal_topology import ASSETS_DIR, load_graph
           from jaal_topology.community import detect_louvain
+          from jaal_topology.email_simulation import EmailEvent
           from jaal_topology.integration import mount_flask
+          from jaal_topology.temporal import TemporalTimeline
           from jaal_topology.viewer import build_app
           
           # Run outside the checkout; importing the editable source would be a false PASS.
@@ -119,10 +122,45 @@ jobs:
               assert set(detect_louvain(graph).member_to_group) == set(graph.nodes)
               standalone = build_app(graph)
               assert standalone.server.test_client().get("/_dash-layout").status_code == 200
+              # External consumer opt-in, from a non-editable wheel on both OSes.
+              # No cloned project modules or Git checkout on the Python import path.
+              events = (
+                  EmailEvent("m1", "2026-10-05T09:00", "thread-a",
+                             "Root", "Child", "team-routine", "hello"),
+                  EmailEvent("m2", "2026-10-06T10:00", "thread-a",
+                             "Child", "Root", "team-routine", "reply",
+                             reply_to="m1"),
+              )
+              timeline = TemporalTimeline(graph, events)
+              day, meta = timeline.snapshot(1, mode="rolling", window_days=1)
+              assert day.edge_counts == {("Child", "Root"): 1}
+              assert meta["messages"] == 1
+              packet = timeline.frames(mode="rolling", window_days=1)
+              assert len(packet["frames"]) == 2
+              assert packet["frames"][0]["messages"] == 1
+              assert packet["frames"][1]["edges"] == [["Child", "Root", 1]]
+              assert graph.edge_counts == {}  # unchanged CSV source
               host = Flask("clean_wheel_smoke")
-              mount_flask(host, graph, mount_path="/installed-graph")
+              @host.get("/upstream-health")
+              def upstream_health():
+                  return "consumer-host-ok"
+              mounted = mount_flask(host, graph, mount_path="/installed-graph",
+                                    temporal_timeline=timeline)
               client = host.test_client()
-              assert client.get("/installed-graph/_dash-layout").status_code == 200
+              assert client.get("/upstream-health").get_data(as_text=True) == "consumer-host-ok"
+              layout_response = client.get("/installed-graph/_dash-layout")
+              assert layout_response.status_code == 200
+              serialized = json.dumps(layout_response.get_json(), ensure_ascii=False)
+              assert "jaal-temporal-controls" in serialized
+              assert "jaal-temporal-frames" in serialized
+              assert "jaal-temporal-window" in serialized
+              assert "jaal-temporal-frame" in serialized
+              callback_response = client.get("/installed-graph/_dash-dependencies")
+              assert callback_response.status_code == 200
+              assert "jaal-temporal" in callback_response.get_data(as_text=True)
+              assert mounted.callback_map
+              print("CLEAN_WHEEL_TEMPORAL_CONSUMER_PASS", sys.platform,
+                    meta["messages"], len(packet["frames"]))
               for asset in (
                   "16.jaal_visible_labels.js", "17.jaal_structural_collapse.js",
                   "18.jaal_community_collapse.js", "bootstrap.min.css",
