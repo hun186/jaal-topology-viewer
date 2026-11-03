@@ -68,6 +68,37 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             },
         )
 
+    def test_public_gallery_cases_use_real_dash_routes_and_distinct_graphs(self):
+        from app import _CASES, _tree, _dag
+
+        self.assertEqual(len(_CASES), 3)
+        self.assertEqual((len(_tree.nodes), len(_tree.edges)), (52, 51))
+        self.assertEqual((len(_dag.nodes), len(_dag.edges)), (19, 31))
+        for path, case_label, expected_mode, expected_count in (
+            ("/", "公司寄收件網路（一般有環）", "network", 77),
+            ("/cases/org-tree/", "公司組織階層樹（無環）",
+             "hierarchical-collapsed", 52),
+            ("/cases/project-dag/", "專案相依網路（多父 DAG）",
+             "hierarchical", 19),
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 200)
+                result = self.client.get(path + "_dash-layout")
+                self.assertEqual(result.status_code, 200)
+                payload = json.dumps(result.get_json(), ensure_ascii=False)
+                self.assertIn(case_label, payload)
+                self.assertIn('"value": "' + expected_mode + '"', payload)
+                self.assertIn('"id": "jaal-case-picker"', payload)
+                self.assertIn('"id": "jaal-case-location"', payload)
+                self.assertIn('"id": "graph"', payload)
+                self.assertIn('"nodes": [', payload)
+                self.assertEqual(
+                    self.client.get(path + "assets/16.jaal_visible_labels.js").status_code,
+                    200,
+                )
+        self.assertIs(self.app._jaal_topology_mounts["/cases/org-tree"].server.wsgi_app
+                      is not None, True)
+
     def test_vercel_configuration_never_automatically_builds_prs(self):
         from pathlib import Path
 
