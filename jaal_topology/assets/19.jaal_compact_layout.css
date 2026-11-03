@@ -293,7 +293,9 @@ body:has(.jaal-focus-mode) {
 }
 .jaal-focus-mode .jaal-graph-col .vis-network {
   width: 100% !important;
-  height: 100% !important;
+  /* Match graph.options in focus mode. Percent heights collapse through
+     visdcc's intermediate wrapper; the viewport value is intentional. */
+  height: 100dvh !important;
 }
 @media (max-width: 560px) {
   .jaal-focus-mode .jaal-compact-toolbar {
