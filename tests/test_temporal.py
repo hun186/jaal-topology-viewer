@@ -63,6 +63,29 @@ class TemporalTimelineTests(unittest.TestCase):
         self.assertEqual(packet, t.frames(first_index=4, last_index=11,
                                           mode="rolling", window_days=3))
 
+    def test_rolling_slice_expires_real_edges_while_cumulative_retains_them(self):
+        graph = Graph(
+            (("A", "B"), ("C", "D")),
+            ("A", "B", "C", "D"),
+            edge_counts={("A", "B"): 2, ("C", "D"): 1},
+        )
+        events = [
+            EmailEvent("1", "2026-10-05T09:00", "t1", "A", "B", "team-routine", "one"),
+            EmailEvent("2", "2026-10-05T10:00", "t1", "A", "B", "team-routine", "two"),
+            EmailEvent("3", "2026-10-07T10:00", "t2", "C", "D", "team-routine", "three"),
+        ]
+        timeline = TemporalTimeline(graph, events)
+        rolling, rolling_meta = timeline.snapshot(2, mode="rolling", window_days=1)
+        cumulative, cumulative_meta = timeline.snapshot(2, mode="cumulative")
+        self.assertEqual(rolling.edge_counts, {("C", "D"): 1})
+        self.assertEqual(rolling_meta["from"], "2026-10-07")
+        self.assertEqual(rolling_meta["messages"], 1)
+        self.assertEqual(cumulative.edge_counts, graph.edge_counts)
+        self.assertEqual(cumulative_meta["messages"], 3)
+        frame = timeline.frames(mode="rolling", window_days=1)["frames"][2]
+        self.assertEqual(frame["edges"], [["C", "D", 1]])
+        self.assertEqual(frame["links"], 1)
+
     def test_empty_weekend_does_not_invent_mail_or_edges(self):
         graph = Graph((("A", "B"),), ("A", "B"),
                       edge_counts={("A", "B"): 2})
