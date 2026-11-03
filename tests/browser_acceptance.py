@@ -85,6 +85,12 @@ def check(port: int, evidence: Path) -> None:
                     state="visible", timeout=90000
                 )
                 assert frame.locator("#jaal-original-layout-mode input[type=radio]").count() == 5
+                assert frame.get_by_label("網狀（收攏）", exact=True).is_disabled()
+                assert frame.get_by_label("階層（收攏）", exact=True).is_disabled()
+                assert frame.get_by_label("網狀（社群收攏・Louvain）", exact=True).is_enabled()
+                assert "已檢測到有向迴路" in frame.locator(
+                    "#jaal-original-structural-hint"
+                ).inner_text()
                 assert frame.locator("#jaal-original-chinese-labels input[type=checkbox]").count() == 1
                 assert frame.locator("#search_graph").count() == 1
                 # Vis.js really created a nonzero-size canvas inside the embedded Dash app.
@@ -134,7 +140,7 @@ def check(port: int, evidence: Path) -> None:
                 labels = {
                     "network": "網狀（全展開）",
                     "network-community-collapsed": "網狀（社群收攏・Louvain）",
-                    "hierarchical-collapsed": "階層（收攏）",
+                    "hierarchical": "階層（全展開）",
                 }
 
                 def choose(mode: str) -> None:
@@ -187,8 +193,8 @@ def check(port: int, evidence: Path) -> None:
                             for n in s["nodes"]),
                 )
                 checkbox.uncheck()
-                choose("hierarchical-collapsed")
-                page.screenshot(path=str(evidence / "04-hierarchy-collapsed.png"), full_page=True)
+                choose("hierarchical")
+                page.screenshot(path=str(evidence / "04-hierarchy-full.png"), full_page=True)
                 choose("network")
                 restored = require_state(
                     "mode restoration rehydrates 77 unmodified English IDs",
@@ -204,7 +210,7 @@ def check(port: int, evidence: Path) -> None:
                     raise AssertionError("Browser JavaScript errors: " + " | ".join(errors))
                 (evidence / "acceptance-summary.txt").write_text(
                     "PASS: Hosted Windows Chromium same-port iframe, five radio modes, "
-                    "real visdcc DataSet cluster quotient, Search hidden flags, "
+                    "real visdcc DataSet cluster quotient, cycle-protected structural modes, Search hidden flags, "
                     "Chinese CT labels and 77-node/169-edge restoration. Screenshots "
                     "are inspection evidence; manual Stage 4 drag/camera/Color/Size "
                     "acceptance is NOT asserted.\n",

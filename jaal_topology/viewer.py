@@ -10,7 +10,7 @@ from copy import deepcopy
 from html import escape as escape_html
 from collections import defaultdict, deque
 
-from .data import Graph
+from .data import Graph, assess_structural_collapse
 
 
 def _depths(graph: Graph, root=None):
@@ -151,6 +151,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
     )
     from jaal import Jaal
 
+    structure = assess_structural_collapse(graph)
     community_partition = detect_louvain(graph).member_to_group
     edges, nodes = to_jaal_dataframes(graph, root=root)
     network = Jaal(edges, nodes)
@@ -191,10 +192,12 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
             id="jaal-original-layout-mode",
             options=[
                 {"label": "網狀（全展開）", "value": "network"},
-                {"label": "網狀（收攏）", "value": "network-collapsed"},
+                {"label": "網狀（收攏）", "value": "network-collapsed",
+                 "disabled": structure.has_cycle},
                 {"label": "網狀（社群收攏・Louvain）", "value": "network-community-collapsed"},
                 {"label": "階層（全展開）", "value": "hierarchical"},
-                {"label": "階層（收攏）", "value": "hierarchical-collapsed"},
+                {"label": "階層（收攏）", "value": "hierarchical-collapsed",
+                 "disabled": structure.has_cycle},
             ],
             value="network", inline=True,
         ),
@@ -210,8 +213,17 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
                   data=community_partition, storage_type="memory"),
         dcc.Interval(id="jaal-original-physics-restore",
                      interval=300, disabled=True, n_intervals=0),
-        html.Span("子樹收攏：點節點逐層展開。社群收攏：點社群展開、點成員收合；分群依通訊拓樸，不代表職級。",
-                  style={"fontSize": "12px", "color": "#475569"}),
+        html.Span(
+            ("已檢測到有向迴路：子樹收攏會把循環可達的節點誤當階層後代，故停用網狀／階層的「收攏」選項；請改用網狀（社群收攏・Louvain）。"
+             if structure.has_cycle else
+             f"這是無環有向圖，但有 {structure.multi_parent_nodes} 個多父節點；子樹收攏計算的是可達的不同節點，不一定是獨占的下屬。"
+             if structure.multi_parent_nodes else
+             "子樹收攏：點節點逐層展開。")
+            + " 社群收攏：點社群展開、點成員收合；分群依連線拓樸，不代表職級。",
+            id="jaal-original-structural-hint",
+            style={"fontSize": "12px",
+                   "color": "#9A3412" if structure.has_cycle else "#475569"},
+        ),
     ], style={"display": "flex", "alignItems": "center", "gap": "12px",
               "flexWrap": "wrap", "padding": "8px 4px",
               "position": "sticky", "top": "0",
@@ -246,6 +258,8 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
         prevent_initial_call=True,
     )
     def switch_mode(mode, _ticks):
+        if structure.has_cycle and mode in ("network-collapsed", "hierarchical-collapsed"):
+            raise ValueError("Structural descendant collapse disabled for directed cycles")
         triggered = callback_context.triggered[0]["prop_id"].split(".", 1)[0]
         if triggered == "jaal-original-physics-restore":
             if mode not in ("network", "network-collapsed", "network-community-collapsed"):

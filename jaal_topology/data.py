@@ -104,6 +104,46 @@ def load_graph(edge_files, metadata_file=None, *,
     return Graph(tuple(edges), nodes, translations)
 
 
+@dataclass(frozen=True)
+class StructuralCollapseProfile:
+    """Read-only graph suitability signals, without inferring relation meaning."""
+    has_cycle: bool
+    multi_parent_nodes: int
+    root_count: int
+
+
+def assess_structural_collapse(graph: Graph) -> StructuralCollapseProfile:
+    """Inspect the selected directed graph in O(nodes + distinct edges).
+
+    Cyclic reachability makes descendant-bubble counts misleading. Multi-parent
+    acyclic taxonomy DAGs can still be meaningful: warn rather than disable.
+    """
+    children = {node: set() for node in graph.nodes}
+    indegree = {node: 0 for node in graph.nodes}
+    for source, target in graph.edges:
+        if source not in children or target not in children:
+            raise GraphInputError("Graph edges must reference selected nodes")
+        if target not in children[source]:
+            children[source].add(target)
+            indegree[target] += 1
+    roots = [node for node, degree in indegree.items() if degree == 0]
+    remaining = indegree.copy()
+    pending = deque(roots)
+    visited = 0
+    while pending:
+        source = pending.popleft()
+        visited += 1
+        for target in children[source]:
+            remaining[target] -= 1
+            if remaining[target] == 0:
+                pending.append(target)
+    return StructuralCollapseProfile(
+        has_cycle=visited != len(graph.nodes),
+        multi_parent_nodes=sum(degree > 1 for degree in indegree.values()),
+        root_count=len(roots),
+    )
+
+
 def select_subgraph(graph: Graph, root=None, *, max_nodes=250, max_edges=5000):
     """Select reachable descendants, or bounded full graph when root is None.
 

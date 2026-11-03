@@ -122,6 +122,30 @@ class CSVInterfaceTests(unittest.TestCase):
             {row["synthetic_sender_id"] for row in mapping}, set(graph.nodes)
         )
 
+    def test_structural_collapse_cycle_gate_and_dag_multi_parent_warning(self):
+        from jaal_topology.data import Graph, assess_structural_collapse
+
+        tree = Graph((("A", "B"), ("A", "C")), ("A", "B", "C"))
+        forest = Graph((("A", "B"), ("C", "D")), ("A", "B", "C", "D"))
+        diamond = Graph(
+            (("A", "B"), ("A", "C"), ("B", "D"), ("C", "D")),
+            ("A", "B", "C", "D"),
+        )
+        cycle = Graph((("A", "B"), ("B", "C"), ("C", "B")), ("A", "B", "C"))
+        self_loop = Graph((("A", "A"),), ("A",))
+        mixed = Graph(
+            (("A", "B"), ("C", "D"), ("D", "C")),
+            ("A", "B", "C", "D"),
+        )
+        for graph in (tree, forest, diamond):
+            self.assertFalse(assess_structural_collapse(graph).has_cycle)
+        self.assertEqual(assess_structural_collapse(tree).multi_parent_nodes, 0)
+        self.assertEqual(assess_structural_collapse(forest).root_count, 2)
+        self.assertEqual(assess_structural_collapse(diamond).multi_parent_nodes, 1)
+        for graph in (cycle, self_loop, mixed):
+            self.assertTrue(assess_structural_collapse(graph).has_cycle)
+        self.assertEqual(assess_structural_collapse(cycle).root_count, 1)
+
     def test_company_demo_serves_full_real_jaal_layout(self):
         """No mock renderer: load the shipped CSV and inspect the Dash app."""
         from jaal_topology.viewer import build_app
@@ -155,6 +179,18 @@ class CSVInterfaceTests(unittest.TestCase):
         self.assertEqual(
             find(layout.get_json(), "jaal-original-layout-mode")["value"],
             "network",
+        )
+        modes = {
+            option["value"]: option
+            for option in find(layout.get_json(), "jaal-original-layout-mode")["options"]
+        }
+        self.assertTrue(modes["network-collapsed"]["disabled"])
+        self.assertTrue(modes["hierarchical-collapsed"]["disabled"])
+        self.assertFalse(modes["network"].get("disabled", False))
+        self.assertFalse(modes["network-community-collapsed"].get("disabled", False))
+        self.assertIn(
+            "已檢測到有向迴路",
+            find(layout.get_json(), "jaal-original-structural-hint")["children"],
         )
 
 

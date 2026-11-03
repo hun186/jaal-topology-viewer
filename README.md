@@ -122,8 +122,13 @@ Start with **網狀（全展開） / network** for this general directed graph.
 Try **網狀（社群收攏・Louvain）** for experimental topology-based
 communities (seed 42, resolution 1; unweighted distinct directed pairs).
 Click a community to open it; click one of its members to collapse it.
-The four legacy modes stay unchanged: **網狀（收攏）** still uses taxonomy
-descendants, *not* communities. The community partition is an analytical
+The four legacy mode codes stay supported: **網狀（收攏）** still uses taxonomy
+descendants, *not* communities. For **directed cyclic graphs**, the two
+structural-descendant collapsed radio choices are **disabled with an explanation**,
+because cyclic reachability makes many nodes appear to have nearly all others
+as descendants. Full network/hierarchy and Louvain remain available. For
+acyclic DAGs with multiple parents, structural collapse remains available
+with a warning that reachable descendants are not exclusive subordinates. The community partition is an analytical
 grouping, **not** an organization chart. The renderer preserves independent
 directional totals; edge count labels are unique source pairs, not emails.
 Search/Filter temporarily restores uncollapsed source visualization while
