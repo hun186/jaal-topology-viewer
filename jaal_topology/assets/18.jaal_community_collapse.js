@@ -303,6 +303,10 @@
     state.positions = nodePositions;
     state.view = view;
     state.filtered = filtered;
+    const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
+    if (temporal && typeof temporal.noteRender === "function") {
+      temporal.noteRender(instance, source);
+    }
   }
 
   function restore() {
