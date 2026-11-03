@@ -41,7 +41,7 @@ def serve(port: int) -> None:
 
 
 def check(port: int, evidence: Path) -> None:
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import sync_playwright, expect
 
     evidence.mkdir(parents=True, exist_ok=True)
     log_path = evidence / "localhost-server.log"
@@ -99,8 +99,8 @@ def check(port: int, evidence: Path) -> None:
                 before_height = frame.locator("#jaal-compact-toolbar").bounding_box()["height"]
                 assert before_height < 105, before_height
                 sidebar_toggle.click()
-                assert sidebar_toggle.get_attribute("aria-expanded") == "false"
-                assert not panel.is_visible()
+                expect(sidebar_toggle).to_have_attribute("aria-expanded", "false", timeout=15000)
+                expect(panel).to_be_hidden(timeout=15000)
                 page.wait_for_timeout(700)
                 grown_width = graph_column.bounding_box()["width"]
                 grown_canvas = frame.locator(".vis-network canvas").first.bounding_box()["width"]
@@ -109,8 +109,8 @@ def check(port: int, evidence: Path) -> None:
                 # Settings were never unmounted; restore all existing inputs.
                 assert frame.locator("#search_graph").count() == 1
                 sidebar_toggle.click()
-                assert sidebar_toggle.get_attribute("aria-expanded") == "true"
-                assert panel.is_visible()
+                expect(sidebar_toggle).to_have_attribute("aria-expanded", "true", timeout=15000)
+                expect(panel).to_be_visible(timeout=15000)
                 help_details.locator("summary").click()
                 assert help_details.evaluate("(el) => el.open")
                 assert frame.locator("#jaal-original-structural-hint").is_visible()
