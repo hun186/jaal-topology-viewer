@@ -59,6 +59,19 @@
     if (rows.length) ds.update(rows);
   }
 
+  function noteRender(instance, source) {
+    if (!state.frame || !instance || !instance.nn || !instance.ee) return;
+    state.lastRendered = {
+      date: state.frame.date,
+      from: state.frame.from,
+      to: state.frame.to,
+      sourceNodes: source.nodes.length,
+      sourceEdges: source.edges.length,
+      drawnNodes: instance.nn.getIds().length,
+      drawnEdges: instance.ee.getIds().length,
+    };
+  }
+
   function apply() {
     if (!state.frame || !this || !this.nn || !this.ee) return;
     const source = projectSource(this.props && this.props.data);
@@ -87,6 +100,7 @@
       net.moveTo({...camera, animation: false});
     }
     this.__jaalTemporalPositions = saved;
+    noteRender(this, source);
   }
 
   function triggerName() {
@@ -157,7 +171,7 @@
 
   root.dash_clientside = root.dash_clientside || {};
   Object.assign(state, {
-    setFrame, projectSource, apply, playback, choose, speed,
+    setFrame, projectSource, apply, noteRender, playback, choose, speed,
   });
   root.dash_clientside.jaal_temporal = state;
   if (typeof module !== "undefined" && module.exports) {
