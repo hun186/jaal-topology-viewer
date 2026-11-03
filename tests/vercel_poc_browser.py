@@ -41,7 +41,7 @@ def main():
             page = browser.new_page(viewport={"width": 1365, "height": 930})
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.goto(url, wait_until="networkidle", timeout=45000)
-            page.locator("#nodeTotal").get_by_text("77").wait_for()
+            page.wait_for_function("document.getElementById('nodeTotal').textContent === '77'", timeout=15000)
             assert page.locator("#edgeTotal").inner_text() == "169"
             assert page.locator("#visibleNodes").inner_text() == "77"
             assert page.locator("svg .graph-node").count() == 77
