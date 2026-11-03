@@ -336,14 +336,17 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                 value=initial_mode, inline=True,
             ),
         ], className="jaal-mode-group"),
-        html.Div([
-            html.Span("基礎邊長／間距", title="調整非時間圖的彈簧長度；時間圖調整固定座標的空間尺度"),
-            dcc.Slider(
-                id="jaal-original-edge-length", min=60, max=300, step=20,
-                value=120, marks={60:"短", 120:"標準", 300:"長"},
-                tooltip={"placement":"bottom", "always_visible":False},
-            ),
-        ], className="jaal-edge-length-control"),
+        html.Details([
+            html.Summary("調整邊長", title="調整非時間圖的彈簧長度或時間圖固定座標的間距"),
+            html.Div([
+                html.Span("基礎邊長／間距（60–300 px）"),
+                dcc.Slider(
+                    id="jaal-original-edge-length", min=60, max=300, step=20,
+                    value=120, marks={60:"短", 120:"標準", 300:"長"},
+                    tooltip={"placement":"bottom", "always_visible":False},
+                ),
+            ], className="jaal-edge-length-control"),
+        ], className="jaal-edge-length-details"),
         dcc.Checklist(
             id="jaal-original-chinese-labels",
             className="jaal-language-toggle",
@@ -614,8 +617,11 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         if triggered == "jaal-original-edge-length":
             if type(edge_length) is not int or not 60 <= edge_length <= 300:
                 return no_update, no_update
+            physics_enabled = (temporal_frames is None and
+                               not mode.startswith("hierarchical"))
             return ({"edges": {"length": edge_length},
-                     "physics": {"barnesHut": {"springLength": edge_length}}},
+                     "physics": {"enabled": physics_enabled,
+                                 "barnesHut": {"springLength": edge_length}}},
                     no_update)
         if triggered == "jaal-original-physics-restore":
             if mode not in ("network", "network-collapsed", "network-community-collapsed"):
