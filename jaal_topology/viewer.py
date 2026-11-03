@@ -93,7 +93,7 @@ def _descendants(component):
 
 
 def _normalize_upstream_layout(layout):
-    """Restrict Jaal's huge logo and Bootstrap negative outer row margins."""
+    """Normalize upstream Jaal layout and tag its original panel and canvas columns."""
     from dash import html
     import dash_bootstrap_components as dbc
 
@@ -102,9 +102,9 @@ def _normalize_upstream_layout(layout):
             getattr(item, "src", None), str
         ) and item.src.startswith("data:image/png;base64,"):
             if item.width == "80px":
-                item.width = 80
+                item.width = 48
                 item.style = {**(getattr(item, "style", None) or {}),
-                              "width": "80px", "maxWidth": "100%",
+                              "width": "48px", "maxWidth": "100%",
                               "height": "auto"}
                 break
     if isinstance(layout, html.Div):
@@ -115,6 +115,26 @@ def _normalize_upstream_layout(layout):
                     classes = (getattr(row, "className", None) or "").split()
                     if "g-0" not in classes:
                         row.className = " ".join([*classes, "g-0"])
+
+    # Retain upstream component IDs and callbacks. Only tag their existing
+    # Bootstrap columns for a reversible, CSS-driven responsive layout.
+    panel_found = graph_found = False
+    for item in _descendants(layout):
+        if not isinstance(item, dbc.Col):
+            continue
+        ids = {getattr(child, "id", None) for child in _descendants(item)}
+        if "search_graph" in ids:
+            item.className = " ".join(filter(None, [
+                getattr(item, "className", "") or "", "jaal-settings-col"
+            ]))
+            panel_found = True
+        elif "graph" in ids:
+            item.className = " ".join(filter(None, [
+                getattr(item, "className", "") or "", "jaal-graph-col"
+            ]))
+            graph_found = True
+    if not (panel_found and graph_found):
+        raise RuntimeError("Upstream Jaal panel/graph column contract changed")
 
 
 def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
@@ -193,66 +213,78 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
         "dag": "無環 DAG（共享後代／多父節點）",
         "cyclic": "一般有環網路（不適合子樹收攏）",
     }
+    # Keep the original mode, language and cycle guard IDs unchanged.
+    # The compact top bar stays visible; verbose explanations are available
+    # from a native details popup and consume no drawing height by default.
     controls = html.Div([
-        html.Span("圖形類型：" + type_labels[structure.graph_kind],
-                  id="jaal-original-graph-profile",
-                  style={"fontSize": "12px", "fontWeight": 600,
-                         "color": "#9A3412" if structure.has_cycle else "#334155"}),
+        html.Button(
+            "收合設定 ◀", id="jaal-sidebar-toggle", n_clicks=0,
+            className="jaal-sidebar-toggle", title="收合左側 Search / Filter / Color / Size 設定",
+            **{"aria-expanded": "true", "aria-controls": "jaal-original-app-shell"},
+        ),
         html.Span(
-            ("原始圖無環，但 Louvain 社群彙總後產生循環；不代表分類父子關係有環。"
-             if not structure.has_cycle and community_result.quotient_has_cycle else
-             "原始圖含有向迴路，社群彙總圖也有循環。"
-             if structure.has_cycle and community_result.quotient_has_cycle else
-             "社群彙總圖無循環；原始關係與社群彙總屬不同層級。"),
-            id="jaal-original-community-cycle-hint",
-            style={"fontSize": "12px",
-                   "color": "#9A3412" if community_result.quotient_has_cycle
-                   else "#475569"},
+            "圖形：" + type_labels[structure.graph_kind],
+            id="jaal-original-graph-profile",
+            className=("jaal-graph-kind jaal-graph-kind-warning"
+                       if structure.has_cycle else "jaal-graph-kind"),
         ),
-        html.Span("顯示模式："),
-        dcc.RadioItems(
-            id="jaal-original-layout-mode",
-            options=[
-                {"label": "網狀（全展開）", "value": "network"},
-                {"label": "網狀（收攏）", "value": "network-collapsed",
-                 "disabled": structure.has_cycle},
-                {"label": "網狀（社群收攏・Louvain）", "value": "network-community-collapsed"},
-                {"label": "階層（全展開）", "value": "hierarchical"},
-                {"label": "階層（收攏）", "value": "hierarchical-collapsed",
-                 "disabled": structure.has_cycle},
-            ],
-            value="network", inline=True,
-        ),
+        html.Div([
+            html.Span("顯示模式", className="jaal-mode-caption"),
+            dcc.RadioItems(
+                id="jaal-original-layout-mode",
+                className="jaal-mode-options",
+                options=[
+                    {"label": "網狀（全展開）", "value": "network"},
+                    {"label": "網狀（收攏）", "value": "network-collapsed",
+                     "disabled": structure.has_cycle},
+                    {"label": "網狀（社群收攏・Louvain）",
+                     "value": "network-community-collapsed"},
+                    {"label": "階層（全展開）", "value": "hierarchical"},
+                    {"label": "階層（收攏）", "value": "hierarchical-collapsed",
+                     "disabled": structure.has_cycle},
+                ],
+                value="network", inline=True,
+            ),
+        ], className="jaal-mode-group"),
         dcc.Checklist(
             id="jaal-original-chinese-labels",
+            className="jaal-language-toggle",
             options=[{"label": "優先顯示中文名稱（無翻譯時顯示英文）",
                       "value": "zh"}],
             value=[], inline=True,
         ),
+        html.Details([
+            html.Summary("圖形說明", title="查看圖形結構與收攏規則"),
+            html.Div([
+                html.Div(
+                    ("原始圖無環，但 Louvain 社群彙總後產生循環；不代表分類父子關係有環。"
+                     if not structure.has_cycle and community_result.quotient_has_cycle else
+                     "原始圖含有向迴路，社群彙總圖也有循環。"
+                     if structure.has_cycle and community_result.quotient_has_cycle else
+                     "社群彙總圖無循環；原始關係與社群彙總屬不同層級。"),
+                    id="jaal-original-community-cycle-hint",
+                ),
+                html.Div(
+                    ("已檢測到有向迴路：子樹收攏會把循環可達的節點誤當階層後代，故停用網狀／階層的「收攏」選項；請改用網狀（社群收攏・Louvain）。"
+                     if structure.has_cycle else
+                     f"這是無環有向圖，但有 {structure.multi_parent_nodes} 個多父節點；子樹收攏計算的是可達的不同節點，不一定是獨占的下屬。"
+                     if structure.multi_parent_nodes else
+                     "子樹收攏：點節點逐層展開。")
+                    + " 社群收攏：點社群展開、點成員收合；分群依連線拓樸，不代表職級。",
+                    id="jaal-original-structural-hint",
+                ),
+            ], className="jaal-context-popup"),
+        ], id="jaal-original-help-details", className="jaal-context-details"),
+        # Stores/interval remain mounted even when user hides the left pane.
         dcc.Store(id="jaal-original-ct-translations",
                   data=graph.translations, storage_type="memory"),
         dcc.Store(id="jaal-community-membership",
                   data=community_partition, storage_type="memory"),
-        # Same immutable selected-graph assessment guards the browser callback.
         dcc.Store(id="jaal-structural-eligible",
                   data=not structure.has_cycle, storage_type="memory"),
         dcc.Interval(id="jaal-original-physics-restore",
                      interval=300, disabled=True, n_intervals=0),
-        html.Span(
-            ("已檢測到有向迴路：子樹收攏會把循環可達的節點誤當階層後代，故停用網狀／階層的「收攏」選項；請改用網狀（社群收攏・Louvain）。"
-             if structure.has_cycle else
-             f"這是無環有向圖，但有 {structure.multi_parent_nodes} 個多父節點；子樹收攏計算的是可達的不同節點，不一定是獨占的下屬。"
-             if structure.multi_parent_nodes else
-             "子樹收攏：點節點逐層展開。")
-            + " 社群收攏：點社群展開、點成員收合；分群依連線拓樸，不代表職級。",
-            id="jaal-original-structural-hint",
-            style={"fontSize": "12px",
-                   "color": "#9A3412" if structure.has_cycle else "#475569"},
-        ),
-    ], style={"display": "flex", "alignItems": "center", "gap": "12px",
-              "flexWrap": "wrap", "padding": "8px 4px",
-              "position": "sticky", "top": "0",
-              "backgroundColor": "rgba(255,255,255,0.93)", "zIndex": 20})
+    ], id="jaal-compact-toolbar", className="jaal-compact-toolbar")
 
     # Jaal creates a Dash instance without a configurable asset directory.
     # Construct a correctly configured shell and reuse its actual callbacks,
@@ -269,11 +301,31 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
             *list(original_app.config.external_stylesheets),
         ],
     )
-    app.layout = html.Div([controls, original_app.layout])
+    app.layout = html.Div([
+        controls,
+        html.Div(original_app.layout, id="jaal-original-app-shell",
+                 className="jaal-original-app-shell"),
+    ], className="jaal-viewer-shell")
     app.callback_map.update(original_app.callback_map)
     app._callback_list.extend(original_app._callback_list)
     if not app.callback_map or len(app.callback_map) != len(original_app.callback_map):
         raise RuntimeError("Original Jaal callbacks were not preserved")
+
+    @app.callback(
+        Output("jaal-original-app-shell", "className"),
+        Output("jaal-sidebar-toggle", "children"),
+        Output("jaal-sidebar-toggle", "aria-expanded"),
+        Input("jaal-sidebar-toggle", "n_clicks"),
+    )
+    def toggle_settings_panel(clicks):
+        """Expand graph width without unmounting Jaal settings or losing filters."""
+        collapsed = bool((clicks or 0) % 2)
+        return (
+            "jaal-original-app-shell jaal-panel-collapsed"
+            if collapsed else "jaal-original-app-shell",
+            "顯示設定 ▶" if collapsed else "收合設定 ◀",
+            "false" if collapsed else "true",
+        )
 
     @app.callback(
         Output("graph", "options"),
