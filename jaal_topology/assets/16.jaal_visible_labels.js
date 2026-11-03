@@ -69,6 +69,14 @@
     globalThis.dash_clientside.jaal_community_collapse.activate.call(this);
   }).call(this);`;
 
+  let projectionRevision = 0;
+  function updatedCommand(command) {
+    // Only a bounded integer is placed into executable JS text, never a
+    // user-supplied label or ID. Different root selections must re-run vis.
+    projectionRevision = (projectionRevision + 1) % 1000000;
+    return command + "\n/*focus-revision:" + projectionRevision + "*/";
+  }
+
   function resolve(id, preferChinese) {
     const label = String(id);
     const state = root.dash_clientside.jaal_visible_labels;
@@ -81,7 +89,7 @@
 
   function apply(mode, graphData, selectedLanguages, translations, membership,
                  structuralEligible, temporalFrame, labelOptions, communityPolicy,
-                 edgeLength) {
+                 edgeLength, localScope) {
     // Only pre-authored static commands are ever evaluated by visdcc.
     // CSV contents are data in a bounded Dash Store, never executable code.
     if (!graphData || !Array.isArray(graphData.nodes)) return "";
@@ -93,8 +101,15 @@
     // Non-temporal callers have one fewer optional input. Keep both legacy
     // callback signatures and fixed Git-SHA downstream consumers compatible.
     if (Number.isInteger(temporalFrame) && edgeLength === undefined) {
+      // Non-temporal graph-run callback has scope immediately after spacing.
+      localScope = labelOptions;
       edgeLength = temporalFrame;
       temporalFrame = null;
+      labelOptions = undefined;
+    }
+    const focus = root.dash_clientside && root.dash_clientside.jaal_local_focus;
+    if (focus && typeof focus.setSelection === "function") {
+      focus.setSelection(localScope);
     }
     if (community && typeof community.setEdgeLength === "function") {
       community.setEdgeLength(edgeLength);
@@ -127,7 +142,7 @@
         ? "var text = globalThis.dash_clientside.jaal_visible_labels.resolve(node.id, true);"
         : "var text = String(node.id);"
     );
-    const restorePrefix = "if (globalThis.dash_clientside && globalThis.dash_clientside.jaal_community_collapse) globalThis.dash_clientside.jaal_community_collapse.restore.call(this); if (globalThis.dash_clientside && globalThis.dash_clientside.jaal_structural_collapse) globalThis.dash_clientside.jaal_structural_collapse.restore.call(this); var ds = this.nn;";
+    const restorePrefix = "if (globalThis.dash_clientside && globalThis.dash_clientside.jaal_community_collapse) globalThis.dash_clientside.jaal_community_collapse.restore.call(this); if (globalThis.dash_clientside && globalThis.dash_clientside.jaal_structural_collapse) globalThis.dash_clientside.jaal_structural_collapse.restore.call(this); if (globalThis.dash_clientside && globalThis.dash_clientside.jaal_local_focus) globalThis.dash_clientside.jaal_local_focus.apply.call(this); var ds = this.nn;";
     // The server and the actual visdcc callback have separate Dash inputs.
     // Disabling radio choices or rejecting the server options callback alone
     // cannot prevent a directly injected value from activating JS collapse.
@@ -135,29 +150,31 @@
     // still pinned to the original four-mode asset/callback signature.
     if (structuralEligible === false &&
         (mode === "network-collapsed" || mode === "hierarchical-collapsed")) {
-      return network.replace("var ds = this.nn;", restorePrefix);
+      return updatedCommand(network.replace("var ds = this.nn;", restorePrefix));
     }
     if (mode === "network-community-collapsed") {
-      return preferChinese ? COMMUNITY_RUN.replace("activate.call(this)", "activate.call(this, true)") : COMMUNITY_RUN;
+      return updatedCommand(preferChinese
+        ? COMMUNITY_RUN.replace("activate.call(this)", "activate.call(this, true)")
+        : COMMUNITY_RUN);
     }
     if (mode === "hierarchical-collapsed") {
-      return preferChinese ? HIERARCHICAL_COLLAPSED_RUN.replace(
+      return updatedCommand(preferChinese ? HIERARCHICAL_COLLAPSED_RUN.replace(
         '"hierarchical-collapsed"',
         '"hierarchical-collapsed", true'
-      ) : HIERARCHICAL_COLLAPSED_RUN;
+      ) : HIERARCHICAL_COLLAPSED_RUN);
     }
     if (mode === "network-collapsed") {
-      return preferChinese ? NETWORK_COLLAPSED_RUN.replace(
+      return updatedCommand(preferChinese ? NETWORK_COLLAPSED_RUN.replace(
         '"network-collapsed"',
         '"network-collapsed", true'
-      ) : NETWORK_COLLAPSED_RUN;
+      ) : NETWORK_COLLAPSED_RUN);
     }
-    if (mode === "hierarchical") return hierarchy.replace(
+    if (mode === "hierarchical") return updatedCommand(hierarchy.replace(
       "var ds = this.nn;", restorePrefix
-    );
-    if (mode === "network") return network.replace(
+    ));
+    if (mode === "network") return updatedCommand(network.replace(
       "var ds = this.nn;", restorePrefix
-    );
+    ));
     return "";
   }
 

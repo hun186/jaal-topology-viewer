@@ -11,6 +11,7 @@
 | CONTRACT-004 | Flask WSGI 同埠 | `integration.py`, `viewer.py` |
 | CONTRACT-005 | 四種 legacy 模式＋實驗 Louvain 社群模式／browser assets | `modes.py`, `viewer.py`, `assets/` |
 | CONTRACT-006 | 多案例展示 Gallery API | `gallery.py`, `viewer.py`, `integration.py`, `test_gallery.py` |
+| CONTRACT-007 | 可搜尋根節點與有向 k-hop 局部子圖 | `neighborhood.py`, `viewer.py`, `assets/22.jaal_local_focus.js`, `test_neighborhood.py` |
 
 ## CONTRACT-001 — CSV
 - 一個以上關係 CSV，UTF-8/BOM；可無 header，或 `parent,child`、`from,to`、`source,target`、`母類別,子類別`、`#母類別,子類別`；前兩欄定有向邊，額外欄位忽略。
@@ -48,6 +49,13 @@
 - `build_app` 與 `mount_flask` 新增*可選*導航參數；原有單圖參數、callback ID/JSON、中文及五模式不變。案例切換用同來源 `dcc.Location` 導向另一 URL，觸發新 Dash app 頁面載入；不以同頁 graph.data 換圖，避免原版 Jaal 搜尋/篩選 callback 保留上一案例的 Graph。
 - 初始模式需是五種受支援值；若圖形有環，不得以子樹結構收攏初始模式啟動，拒絕不安全案例；切換不回寫來源資料、不掃描磁碟、不提供檔案上傳。
 - 公開案例的 allowlist 與 CSV 於 `app.py` 中宣告；Vercel CI 不部署，僅符合條件的 Merge 可發布。
+
+## CONTRACT-007 — Interactive local scope
+
+- 原生 `build_app(graph)` 的工具列新增可搜尋的原 ID／中文別名根節點選單，清除表示全圖。最大範圍僅限原本已驗證載入的 3000 node/5000 edge Graph；不繞過 bounds。
+- `reachable_node_ids(graph, root, hops=2, direction="out")` 回傳 graph.nodes 原排序 ID，hops 為 0..10 或 "all"，方向 out/in/both，BFS unique-ID、防循環，錯誤 GraphInputError。不改寫 graph、edges、translations。
+- 前端 `jaal-local-scope` Store 由 server 驗證，瀏覽器只接收原始 ID 列表，JS `22.jaal_local_focus.js` 在 vis DataSet 中隱藏無關節點與有向邊、或提供各收攏模式對應的 induced subgraph，不改 `graph.data` 原始 Graph。Reset 復原所有原始節點／邊。
+- 時序圖局部範圍取全期間原始 Graph 可達性，與每個時間窗活躍狀態取交集，不會在每格重算根節點／跳動。既有 Search/Filter 和 Python `root=` 初始化可維持原使用方法。
 
 ## Cross-repo
 - 消費端固定 reviewed Git SHA；上游 merge 不自動改 consumer。更動接口需同步測試，breaking change 要記錄版本與遷移方案。

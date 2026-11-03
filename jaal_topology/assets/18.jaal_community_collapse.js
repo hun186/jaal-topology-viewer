@@ -248,8 +248,11 @@
     const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
     // A temporal slice is NOT a Search/Filter. Its inactive nodes and edges
     // stay present with hidden=true so communities keep their identities.
-    return temporal && typeof temporal.stableSource === "function" ?
-      temporal.stableSource(source) : source;
+    const stable = temporal && typeof temporal.stableSource === "function"
+      ? temporal.stableSource(source) : source;
+    const focus = root.dash_clientside && root.dash_clientside.jaal_local_focus;
+    return focus && typeof focus.scoped === "function"
+      ? focus.scoped(stable) : stable;
   }
 
   function project(instance) {

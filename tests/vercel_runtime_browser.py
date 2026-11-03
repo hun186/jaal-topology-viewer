@@ -66,9 +66,7 @@ def check(port):
                 canvas_open = page.locator(".vis-network canvas").first.bounding_box()["width"]
                 # The timeline adds a compact second control row; other
                 # single-graph and non-temporal cases retain the small toolbar.
-                height = page.locator("#jaal-compact-toolbar").bounding_box()["height"]
-                print("TRACE_TEMPORAL_TOOLBAR_HEIGHT=" + str(height), flush=True)
-                assert height < 260, height
+                assert page.locator("#jaal-compact-toolbar").bounding_box()["height"] < 260
                 sidebar.click()
                 expect(sidebar).to_have_attribute("aria-expanded", "false", timeout=15000)
                 expect(panel).to_be_hidden(timeout=15000)
@@ -207,8 +205,7 @@ def check(port):
                     "() => ({...window.dash_clientside.jaal_temporal.frame})"
                 )
                 assert initial["mode"] == "rolling"
-                # The default rolling mode now uses mutually exclusive
-                # [start,end) bins, not the legacy overlapping-window label.
+                # Default rolling mode uses disjoint [start,end) bins.
                 initial_status = page.locator("#jaal-temporal-status").inner_text()
                 assert "互斥分段" in initial_status, initial_status
                 assert "封信" in initial_status, initial_status

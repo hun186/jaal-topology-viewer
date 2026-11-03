@@ -346,3 +346,63 @@ test("expanded community nodes stay near the previously drawn box and re-collaps
   community.setEdgeLength(120);
   community.restore.call(instance);
 });
+
+test("local root scope keeps original IDs and directed induced edges across modes", () => {
+  const focus = require("../jaal_topology/assets/22.jaal_local_focus.js");
+  const original = {
+    nodes: ["A","B","C","D"].map(id => ({id, label:id})),
+    edges: [["A","B"],["B","C"],["C","A"],["D","A"]]
+      .map(([from,to],i) => ({id:"e"+i,from,to})),
+  };
+  const before = JSON.stringify(original);
+  focus.setSelection({root:"A",ids:["A","B","C"],hops:2,direction:"out"});
+  assert.equal(focus.root,"A");
+  const narrowed = focus.scoped(original);
+  assert.deepEqual(narrowed.nodes.map(n=>n.id),["A","B","C"]);
+  assert.deepEqual(narrowed.edges.map(e=>e.id),["e0","e1","e2"]);
+  assert.equal(narrowed.edges[2].from,"C");
+  assert.equal(narrowed.edges[2].to,"A");
+  const nn=new Map(original.nodes.map(n=>[n.id,{...n}]));
+  const ee=new Map(original.edges.map(e=>[e.id,{...e}]));
+  const ds = map => ({
+    update:rows=>rows.forEach(row=>map.set(row.id,{...map.get(row.id),...row})),
+  });
+  let moves=0;
+  const instance = {
+    nn:ds(nn), ee:ds(ee), props:{data:original},
+    net:{
+      getViewPosition:()=>({x:0,y:0}),getScale:()=>0.9,
+      moveTo:()=>{moves++;},
+    },
+  };
+  focus.apply.call(instance);
+  assert.equal(nn.get("D").hidden,true);
+  assert.equal(ee.get("e3").hidden,true);
+  assert.equal(nn.get("B").hidden,false);
+  assert.equal(moves,1);
+  focus.setSelection({root:null});
+  focus.apply.call(instance);
+  assert.equal(nn.get("D").hidden,false);
+  assert.equal(ee.get("e3").hidden,false);
+  assert.equal(focus.scoped(original),original);
+  assert.equal(JSON.stringify(original),before);
+});
+
+test("root picker changes trigger bounded re-renders, not dynamic JS interpolation", () => {
+  const focus = require("../jaal_topology/assets/22.jaal_local_focus.js");
+  const malicious = "<img src=x onerror=alert(1)>";
+  const graph = {nodes:[{id:"Root"},{id:malicious}],
+                 edges:[{id:"e",from:"Root",to:malicious}]};
+  const packet = {root:"Root",ids:["Root"],hops:0,direction:"out"};
+  const a=apply("network",graph,[],{}, {},true,120,packet);
+  assert.ok(a.includes("jaal_local_focus.apply.call(this)"));
+  assert.ok(!a.includes(malicious));
+  assert.equal(focus.root,"Root");
+  const b=apply("network-community-collapsed",graph,[],{}, {},true,120,packet);
+  assert.ok(b.includes("jaal_community_collapse.activate"));
+  assert.ok(!b.includes(malicious));
+  assert.notEqual(a,b);
+  const c=apply("network",graph,[],{}, {},true,120,
+                {root:null});
+  assert.notEqual(a,c,"scope change must re-run visdcc");
+});
