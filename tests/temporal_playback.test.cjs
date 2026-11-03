@@ -236,3 +236,35 @@ test("temporal community retains quotient IDs even when whole groups go silent",
   assert.equal(quiet.nodes[0].hidden,true);
   assert.match(first.edges[0].title,/8 封信/);
 });
+
+test("precise playback advances whole interval frames and moves both blue-bar ends", () => {
+  const precise = {
+    unit_minutes: 10, overlap: "disjoint", start_index: 0, end_index: 2,
+    frames: [0, 1, 2].map(i => ({
+      date: "2026-10-05T09:" + String(i*10).padStart(2,"0"),
+      from: "2026-10-05T09:" + String(i*10).padStart(2,"0"),
+      to: "2026-10-05T09:" + String((i+1)*10).padStart(2,"0"),
+      to_exclusive: "2026-10-05T09:" + String((i+1)*10).padStart(2,"0"),
+      axis_start: i/3, axis_end: (i+1)/3, mode: "rolling",
+      messages: 1, nodes: 2, links: 1,
+      edges: [["A","B",1]], partition: {A:"team", B:"team"},
+    })),
+  };
+  const [frame0, label0, style0] = temporal.choose(0, precise);
+  const [frame1, label1, style1] = temporal.choose(1, precise);
+  assert.match(label0, /互斥分段/);
+  assert.match(label0, /\[2026-10-05T09:00, 2026-10-05T09:10\)/);
+  assert.equal(frame0.to_exclusive, frame1.from);
+  assert.equal(style0.left, "0%");
+  assert.equal(style1.left, (100/3)+"%");
+  assert.equal(style0.width, (100/3)+"%");
+  assert.equal(style1.width, (100/3)+"%");
+  assert.equal(temporal.axis(precise)[0], 2);
+  trigger("jaal-temporal-tick");
+  assert.deepEqual(temporal.playback(1,0,0,1,precise,0,false,7,[]),
+                   [1,false,"⏸ 暫停"],"step selection does not skip precomputed interval frames");
+  const error = temporal.choose(0,{frames:[],error:"max 240"});
+  assert.deepEqual(error[0].edges,[]);
+  assert.match(error[1],/max 240/);
+  assert.equal(error[2].width,"0%");
+});
