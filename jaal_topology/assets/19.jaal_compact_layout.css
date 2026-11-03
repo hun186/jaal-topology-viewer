@@ -24,6 +24,38 @@
   font-size: 13px;
   line-height: 1.5;
 }
+/* Gallery picker is optional: single-graph embedders keep the old UI. */
+.jaal-case-selector {
+  flex: 0 1 302px;
+  min-width: 190px;
+  max-width: 340px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.jaal-case-caption {
+  flex: 0 0 auto;
+  font-size: 13px;
+  color: #344b60;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.jaal-case-picker {
+  flex: 1 1 175px;
+  min-width: 140px;
+  font-size: 13px;
+}
+.jaal-case-picker .Select-control,
+.jaal-case-picker .Select__control {
+  min-height: 31px;
+  border-color: #bfccda;
+}
+@media (max-width: 700px) {
+  .jaal-case-selector {
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
 .jaal-sidebar-toggle {
   flex: 0 0 auto;
   border: 1px solid #90a8c4;
