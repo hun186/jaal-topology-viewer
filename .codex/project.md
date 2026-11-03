@@ -15,7 +15,7 @@
 - 使用者：檢視分類樹或其他有向關係的 Python 開發者，以及下游 `text-category-profiler`。
 - 輸入：一個以上 parent/child CSV、可選 `ClassLabel,CT` metadata、root 與渲染上限。
 - 輸出：Dash/Jaal 互動圖（四種 legacy 模式加一個實驗 Louvain 社群收攏模式；中文名稱預設關閉）；**不回寫**任一 CSV。
-- 非目標：BertScript／TCFMain／WorkPool／模型訓練，consumer 的 root 搜尋下拉、sidebar 與 iframe autoheight，正式 Python Runtime 公網部署、自動同步下游。僅有獨立虛構資料的靜態公開 SVG PoC，不是正式 Jaal Runtime。
+- 非目標：BertScript／TCFMain／WorkPool／模型訓練，consumer 的 root 搜尋下拉、sidebar 與 iframe autoheight，正式 Python Runtime 接受任意公開輸入、自動同步下游。Vercel PoC 已改為相同 Jaal/Dash 程式的受限公網展示，僅載入 77/169 虛構資料，不提供上傳。
 
 ## 技術與執行
 | 項目 | 已確認 | 證據 |
@@ -30,6 +30,7 @@
 ## 入口與 Repository 地圖
 | 路徑 | 作用 |
 | --- | --- |
+| `app.py`, `requirements.txt`, `vercel.json` | Vercel Flask WSGI 真正 Jaal/Dash 展示，只載入虛構固定 CSV，不改本機 CLI |
 | `jaal_topology/__init__.py`, `data.py` | `Graph`、`GraphInputError`、`load_graph`、`select_subgraph` |
 | `cli.py`, `__main__.py` | `jaal-topology` 與 `python -m jaal_topology` |
 | `viewer.py`, `modes.py` | `build_app`、四種既有模式＋Louvain 社群收攏、Jaal Search/Filter/Color/Size |
