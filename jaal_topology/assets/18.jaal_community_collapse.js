@@ -132,9 +132,15 @@
     if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
   }
 
-  function showEdgeInspector(view, visibleEdgeId, zh) {
+  function showEdgeInspector(instance, view, visibleEdgeId, zh) {
     const origins = explainEdge(view, visibleEdgeId);
-    if (!origins.length || !root.document || !root.document.body) return;
+    // Anchor the inspector inside the real vis-network canvas container.
+    // Fixed-to-iframe-viewport bottom can put its close button BELOW the
+    // user's visible parent-page viewport when Stage 4 lazily embeds Jaal.
+    const host = instance && instance.net && instance.net.body &&
+      instance.net.body.container;
+    if (!origins.length || !root.document || !host ||
+        typeof host.appendChild !== "function") return;
     const doc = root.document;
     closeInspector();
     const panel = doc.createElement("section");
@@ -142,8 +148,9 @@
     panel.setAttribute("role", "region");
     panel.setAttribute("aria-label", "社群有向連線原始來源");
     Object.assign(panel.style, {
-      position: "fixed", right: "12px", bottom: "12px", zIndex: "1000",
-      maxWidth: "min(450px, calc(100% - 24px))", maxHeight: "40vh",
+      position: "absolute", right: "12px", top: "12px", zIndex: "1000",
+      maxWidth: "min(450px, calc(100% - 24px))",
+      maxHeight: "calc(100% - 24px)",
       overflow: "auto", boxSizing: "border-box", background: "#fff",
       border: "1px solid #6486c5", borderRadius: "8px",
       boxShadow: "0 4px 18px rgba(0, 0, 0, 0.16)",
@@ -186,7 +193,7 @@
         " 條可在原始圖逐項檢視。";
       panel.appendChild(rest);
     }
-    doc.body.appendChild(panel);
+    host.appendChild(panel);
   }
 
   function reconcile(dataset, rows) {
@@ -339,7 +346,7 @@
         if (!id) {
           const edge = event && event.edges && event.edges.length
             ? String(event.edges[0]) : null;
-          if (edge !== null) showEdgeInspector(current.view, edge, current.zh);
+          if (edge !== null) showEdgeInspector(component, current.view, edge, current.zh);
           return;
         }
         closeInspector();
