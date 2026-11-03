@@ -16,6 +16,25 @@ test("portable engine exports four active layout commands", () => {
   }
 });
 
+test("cyclic graph injection cannot emit a descendant-collapse visdcc command", () => {
+  const graph = {
+    nodes: ["A", "B", "C"].map(id => ({id, label: id})),
+    edges: [["A", "B"], ["B", "C"], ["C", "A"]]
+      .map(([from, to], i) => ({id: String(i), from, to})),
+  };
+  for (const mode of ["network-collapsed", "hierarchical-collapsed"]) {
+    const blocked = apply(mode, graph, [], {}, {}, false);
+    assert.ok(blocked.includes("var ds = this.nn"));
+    assert.ok(!blocked.includes("jaal_structural_collapse.activate"));
+    const allowed = apply(mode, graph, [], {}, {}, true);
+    assert.ok(allowed.includes("jaal_structural_collapse.activate"));
+    // Older five-argument call sites continue to receive the old behavior.
+    assert.ok(apply(mode, graph, [], {}, {}).includes(
+      "jaal_structural_collapse.activate"
+    ));
+  }
+});
+
 test("multi-parent directed graph remains an exact unique-descendant graph", () => {
   const graph = collapsed.graphModel({
     nodes: ["A","B","C","D"].map(id => ({id})),

@@ -184,6 +184,9 @@ class CSVInterfaceTests(unittest.TestCase):
             option["value"]: option
             for option in find(layout.get_json(), "jaal-original-layout-mode")["options"]
         }
+        self.assertIs(
+            find(layout.get_json(), "jaal-structural-eligible")["data"], False
+        )
         self.assertTrue(modes["network-collapsed"]["disabled"])
         self.assertTrue(modes["hierarchical-collapsed"]["disabled"])
         self.assertFalse(modes["network"].get("disabled", False))

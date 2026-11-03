@@ -211,6 +211,9 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
                   data=graph.translations, storage_type="memory"),
         dcc.Store(id="jaal-community-membership",
                   data=community_partition, storage_type="memory"),
+        # Same immutable selected-graph assessment guards the browser callback.
+        dcc.Store(id="jaal-structural-eligible",
+                  data=not structure.has_cycle, storage_type="memory"),
         dcc.Interval(id="jaal-original-physics-restore",
                      interval=300, disabled=True, n_intervals=0),
         html.Span(
@@ -292,5 +295,6 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
         Input("jaal-original-chinese-labels", "value"),
         Input("jaal-original-ct-translations", "data"),
         Input("jaal-community-membership", "data"),
+        Input("jaal-structural-eligible", "data"),
     )
     return app
