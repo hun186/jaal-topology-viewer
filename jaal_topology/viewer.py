@@ -601,7 +601,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         Input("jaal-original-edge-length", "value"),
         prevent_initial_call=True,
     )
-    def switch_mode(mode, _ticks, focus_clicks, edge_length):
+    def switch_mode(mode, _ticks, focus_clicks, edge_length=120):
         if structure.has_cycle and mode in ("network-collapsed", "hierarchical-collapsed"):
             raise ValueError("Structural descendant collapse disabled for directed cycles")
         triggered = callback_context.triggered[0]["prop_id"].split(".", 1)[0]
