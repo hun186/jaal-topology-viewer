@@ -15,6 +15,12 @@ used by the standalone Python CLI, exposed as Flask WSGI from the root
   structural collapse controls are disabled **exactly as on localhost**.
   Louvain mode stays available.
 
+The real Jaal UI now uses a compact, wrapping top toolbar and
+a toggleable original Search/Filter/Color/Size settings panel. Hidden
+settings retain their values, and the graph column expands to the
+available width. The long cycle/quotient explanations appear only when
+opening **圖形說明** (the graph's cyclic status remains visible).
+
 The old static SVG prototype remains in `vercel-poc/` as an explicitly
 **unpublished historical comparison**; it is *not* the deployed viewer.
 The public runtime does not support arbitrary file uploads, secrets,

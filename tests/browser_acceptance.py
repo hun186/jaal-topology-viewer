@@ -41,7 +41,7 @@ def serve(port: int) -> None:
 
 
 def check(port: int, evidence: Path) -> None:
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import sync_playwright, expect
 
     evidence.mkdir(parents=True, exist_ok=True)
     log_path = evidence / "localhost-server.log"
@@ -70,7 +70,7 @@ def check(port: int, evidence: Path) -> None:
             for asset in ("16.jaal_visible_labels.js",
                           "17.jaal_structural_collapse.js",
                           "18.jaal_community_collapse.js",
-                          "bootstrap.min.css"):
+                          "bootstrap.min.css", "19.jaal_compact_layout.css"):
                 with urlopen(target + "/topology/assets/" + asset, timeout=5) as response:
                     assert response.status == 200, asset
 
@@ -84,13 +84,45 @@ def check(port: int, evidence: Path) -> None:
                 frame.locator(".vis-network canvas").first.wait_for(
                     state="visible", timeout=90000
                 )
+                # The original Jaal settings are independently collapsible;
+                # graph/canvas must expand to the released width and restore.
+                sidebar_toggle = frame.locator("#jaal-sidebar-toggle")
+                panel = frame.locator(".jaal-settings-col")
+                graph_column = frame.locator(".jaal-graph-col")
+                help_details = frame.locator("#jaal-original-help-details")
+                assert sidebar_toggle.is_visible()
+                assert sidebar_toggle.get_attribute("aria-expanded") == "true"
+                assert panel.is_visible()
+                assert not help_details.evaluate("(el) => el.open")
+                before_width = graph_column.bounding_box()["width"]
+                before_canvas = frame.locator(".vis-network canvas").first.bounding_box()["width"]
+                before_height = frame.locator("#jaal-compact-toolbar").bounding_box()["height"]
+                assert before_height < 105, before_height
+                sidebar_toggle.click()
+                expect(sidebar_toggle).to_have_attribute("aria-expanded", "false", timeout=15000)
+                expect(panel).to_be_hidden(timeout=15000)
+                page.wait_for_timeout(700)
+                grown_width = graph_column.bounding_box()["width"]
+                grown_canvas = frame.locator(".vis-network canvas").first.bounding_box()["width"]
+                assert grown_width > before_width + 180, (before_width, grown_width)
+                assert grown_canvas > before_canvas + 150, (before_canvas, grown_canvas)
+                # Settings were never unmounted; restore all existing inputs.
+                assert frame.locator("#search_graph").count() == 1
+                sidebar_toggle.click()
+                expect(sidebar_toggle).to_have_attribute("aria-expanded", "true", timeout=15000)
+                expect(panel).to_be_visible(timeout=15000)
+                help_details.locator("summary").click()
+                assert help_details.evaluate("(el) => el.open")
+                assert frame.locator("#jaal-original-structural-hint").is_visible()
+                assert "已檢測到有向迴路" in frame.locator(
+                    "#jaal-original-structural-hint"
+                ).inner_text()
+                help_details.locator("summary").click()
+                assert not help_details.evaluate("(el) => el.open")
                 assert frame.locator("#jaal-original-layout-mode input[type=radio]").count() == 5
                 assert frame.get_by_label("網狀（收攏）", exact=True).is_disabled()
                 assert frame.get_by_label("階層（收攏）", exact=True).is_disabled()
                 assert frame.get_by_label("網狀（社群收攏・Louvain）", exact=True).is_enabled()
-                assert "已檢測到有向迴路" in frame.locator(
-                    "#jaal-original-structural-hint"
-                ).inner_text()
                 assert "一般有環網路" in frame.locator(
                     "#jaal-original-graph-profile"
                 ).inner_text()

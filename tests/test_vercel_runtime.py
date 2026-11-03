@@ -30,6 +30,9 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             "hierarchical", "hierarchical-collapsed",
         ):
             self.assertIn(f'"value": "{mode}"', serialized)
+        self.assertIn("jaal-sidebar-toggle", serialized)
+        self.assertIn("jaal-original-help-details", serialized)
+        self.assertIn("jaal-original-app-shell", serialized)
         self.assertIn("jaal-original-chinese-labels", serialized)
         self.assertIn("search_graph", serialized)
 
@@ -46,6 +49,7 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             "17.jaal_structural_collapse.js",
             "18.jaal_community_collapse.js",
             "bootstrap.min.css",
+            "19.jaal_compact_layout.css",
         ):
             result = self.client.get("/assets/" + name)
             self.assertEqual(result.status_code, 200, name)

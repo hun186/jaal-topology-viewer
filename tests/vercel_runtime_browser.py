@@ -23,7 +23,7 @@ def serve(port):
 
 
 def check(port):
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import sync_playwright, expect
 
     log = ROOT / "vercel-runtime-smoke.log"
     with log.open("w", encoding="utf-8") as out:
@@ -56,6 +56,28 @@ def check(port):
                 page.locator(".vis-network canvas").first.wait_for(
                     state="visible", timeout=90000,
                 )
+                sidebar = page.locator("#jaal-sidebar-toggle")
+                panel = page.locator(".jaal-settings-col")
+                column = page.locator(".jaal-graph-col")
+                help_details = page.locator("#jaal-original-help-details")
+                assert sidebar.is_visible() and panel.is_visible()
+                assert not help_details.evaluate("(el) => el.open")
+                width_open = column.bounding_box()["width"]
+                canvas_open = page.locator(".vis-network canvas").first.bounding_box()["width"]
+                assert page.locator("#jaal-compact-toolbar").bounding_box()["height"] < 105
+                sidebar.click()
+                expect(sidebar).to_have_attribute("aria-expanded", "false", timeout=15000)
+                expect(panel).to_be_hidden(timeout=15000)
+                page.wait_for_timeout(700)
+                assert column.bounding_box()["width"] > width_open + 180
+                assert page.locator(".vis-network canvas").first.bounding_box()["width"] > canvas_open + 150
+                sidebar.click()
+                expect(sidebar).to_have_attribute("aria-expanded", "true", timeout=15000)
+                expect(panel).to_be_visible(timeout=15000)
+                help_details.locator("summary").click()
+                assert page.locator("#jaal-original-structural-hint").is_visible()
+                help_details.locator("summary").click()
+                assert not help_details.evaluate("(el) => el.open")
                 assert page.locator(
                     "#jaal-original-layout-mode input[type=radio]"
                 ).count() == 5
