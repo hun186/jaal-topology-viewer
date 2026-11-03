@@ -137,6 +137,12 @@ dash_app = create_gallery_app([
 ])
 ```
 
+`temporal_timeline=timeline` can be attached to **any** `GalleryCase`, not
+just the first case at `/`. Each case owns its own mounted Dash callback
+state: ordinary taxonomy/DAG cases do not display temporal controls, while
+a selected event-backed case does. The timeline's source `Graph` must match
+the case's `Graph`; mismatched cases fail closed at app construction.
+
 The temporal API accepts up to 50,000 events spanning 120 calendar days
 and limits rendering to 3,000 nodes/5,000 directed edges (plus a bounded
 frame batch). Timestamp strings without offsets are explicitly considered
