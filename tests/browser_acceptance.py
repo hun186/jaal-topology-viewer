@@ -323,14 +323,26 @@ def check(port: int, evidence: Path) -> None:
                         n => String(n.id).includes("Executive"))?.id ||
                     window.__acceptanceNetwork.props.data.nodes[0].id
                 """)
-                # The searchable Dash Dropdown does not always mount its
-                # internal input until the control is focused. Exercise its
-                # actual keyboard UI instead of depending on an input child.
+                # Inspect the actual React Select element if a Windows Dash
+                # variant changes input nesting; never mutate Dash state.
                 root_picker = frame.locator("#jaal-local-root")
                 root_picker.click()
-                page.keyboard.insert_text(candidate)
-                page.keyboard.press("ArrowDown")
-                page.keyboard.press("Enter")
+                print("TRACE_ROOT_PICKER=" + root_picker.evaluate(
+                    "(el) => el.outerHTML.slice(0, 1400)"
+                ), flush=True)
+                search_input = root_picker.locator("input")
+                if search_input.count():
+                    search_input.fill(candidate)
+                else:
+                    page.keyboard.insert_text(candidate)
+                print("TRACE_ROOT_SEARCH=" + root_picker.evaluate(
+                    "(el) => el.outerHTML.slice(0, 1400)"
+                ), flush=True)
+                # Select the visible menu option rather than assuming the
+                # Enter key chooses the intended (possibly virtualized) row.
+                frame.get_by_text(candidate, exact=False).last.click(
+                    timeout=15000
+                )
                 expect(frame.locator("#jaal-local-status")).to_contain_text(
                     "局部子圖", timeout=15000
                 )

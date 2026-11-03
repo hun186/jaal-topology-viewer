@@ -260,6 +260,15 @@ test("precise playback advances whole interval frames and moves both blue-bar en
   assert.ok(Math.abs(parseFloat(style0.width) - 100/3) < 1e-8);
   assert.ok(Math.abs(parseFloat(style1.width) - 100/3) < 1e-8);
   assert.equal(temporal.axis(precise)[0], 2);
+  assert.deepEqual(temporal.axis(precise)[1], {
+    0: "10-05 09:00", 1: "10-05 09:10", 2: "10-05 09:20",
+  });
+  const cumulative = {...precise, frames: precise.frames.map(f => ({
+    ...f, from: "2026-10-05T09:00", mode: "cumulative",
+  }))};
+  assert.deepEqual(temporal.axis(cumulative)[1], {
+    0: "10-05 09:10", 1: "10-05 09:20", 2: "10-05 09:30",
+  }, "cumulative marks must show increasing exclusive cutoffs");
   trigger("jaal-temporal-tick");
   assert.deepEqual(temporal.playback(1,0,0,1,precise,0,false,7,[]),
                    [1,false,"⏸ 暫停"],"step selection does not skip precomputed interval frames");

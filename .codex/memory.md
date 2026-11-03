@@ -21,13 +21,14 @@
 - 2026-11-04 使用者 Windows 電郵案例回饋：Louvain 社群展開/收合有時在遠處重繪，並要求可調基礎邊長。修正透過群組前一錨點重新放射佈局、保留社群盒位置，新增 60–300px 視覺間距滑桿；實機視覺驗收需另外進行。
 - PR #18 已合併 main `89a3f9cceba03d18b1bba9b86292e3c7a61304d4`：3 天 rolling 預設、固定 Louvain、穩定 ID、稀疏標籤，CI 8/8 和 Codex 0 finding；不代表 Windows 人工視覺驗收。
 
-- 2026-11-04 的時間窗 UX：將日級滑動窗延伸成 minute/hour/day，[start,end) 互斥預設 (step=window)、重疊自訂步長；滑桿範圍可動雙端，另用藍條表示播放中時段；frame 超過 240 明確報錯。此分支需以最新 CI/Review/實機視覺檢查為準。
+- [PR #19](https://github.com/hun186/jaal-topology-viewer/pull/19) 已 Merge（`46cb4365cb543aa33338193c350c815eec4e3ae1`）：Louvain anchored 展開、60–300px 間距，分鐘／小時／日的互斥預設 [start,end) 及重疊滑窗、可編輯分析範圍與移動藍條；最後 HEAD `cca22c5` Hosted CI 8/8 PASS、正式 Codex Review completed/0 unresolved。Windows 人工視覺驗收仍待執行。
 
 - 2026-11-04 使用者新增獨立 Jaal searchable root/radius 需求：本候選實作 `neighborhood.py` + `22.jaal_local_focus.js` + Dash 搜尋選單，對 DAG 和一般有環有向圖提供 out/in/both 最短 0..10 hop 或全部可達、誘導子圖；根節點清空恢復全圖。需以 PR 最新 CI/Review 及 Windows 實機證據確認，未自動升級 consumer pin。
 
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
+| 2026-11-04 | [PR #19](https://github.com/hun186/jaal-topology-viewer/pull/19) 已 Merge | HEAD `cca22c5` [Hosted CI 41739326857](https://github.com/hun186/jaal-topology-viewer/actions/runs/41739326857) 8/8 PASS，正式 Codex Review completed／0 unresolved，Squash merge `46cb4365cb543aa33338193c350c815eec4e3ae1`。|
 | 2026-11-03 | [PR #17](https://github.com/hun186/jaal-topology-viewer/pull/17) 已 Merge | 8/8 Hosted CI、Codex Review completed/0 Finding；Squash merge `e680b473ab52f5197b3eb1e5bd654685c342a080`，nonroot graph gallery temporal control 隔離驗證。 |
 | 2026-11-03 | [PR #16](https://github.com/hun186/jaal-topology-viewer/pull/16) 已 Merge | HEAD `b2029b4111fc585273f3e12708642cc334b44f69` [Hosted CI 41660449981](https://github.com/hun186/jaal-topology-viewer/actions/runs/41660449981) 8/8 PASS，正式 Codex Review completed/0 Finding；Squash merge `1b9cd893531b3777b80f7efabb7bea170cbf5a85`，Linux/Windows 的獨立 Wheel 時間序列 consumer smoke PASS，不代表完整 Stage 4 驗收。 |
 | 2026-11-03 | [PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 已 Merge | HEAD `9e835cba849426d0bc2b23e5f806891a33d7998f` [Hosted CI 41659077144](https://github.com/hun186/jaal-topology-viewer/actions/runs/41659077144) 8/8 PASS，正式 Codex Review 完成 0 未解決 Finding，Squash merge `8fddffa1c94edeab0dce4cedafdd44a2ceeb1ac0`。動態時間片與佈局 physics 回歸測試已併入；不代表外部 consumer／公網部署完成。 |
