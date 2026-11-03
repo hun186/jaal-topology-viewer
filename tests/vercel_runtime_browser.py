@@ -23,7 +23,7 @@ def serve(port):
 
 
 def check(port):
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import sync_playwright, expect
 
     log = ROOT / "vercel-runtime-smoke.log"
     with log.open("w", encoding="utf-8") as out:
@@ -66,14 +66,14 @@ def check(port):
                 canvas_open = page.locator(".vis-network canvas").first.bounding_box()["width"]
                 assert page.locator("#jaal-compact-toolbar").bounding_box()["height"] < 105
                 sidebar.click()
-                assert not panel.is_visible()
-                assert sidebar.get_attribute("aria-expanded") == "false"
+                expect(sidebar).to_have_attribute("aria-expanded", "false", timeout=15000)
+                expect(panel).to_be_hidden(timeout=15000)
                 page.wait_for_timeout(700)
                 assert column.bounding_box()["width"] > width_open + 180
                 assert page.locator(".vis-network canvas").first.bounding_box()["width"] > canvas_open + 150
                 sidebar.click()
-                assert panel.is_visible()
-                assert sidebar.get_attribute("aria-expanded") == "true"
+                expect(sidebar).to_have_attribute("aria-expanded", "true", timeout=15000)
+                expect(panel).to_be_visible(timeout=15000)
                 help_details.locator("summary").click()
                 assert page.locator("#jaal-original-structural-hint").is_visible()
                 help_details.locator("summary").click()
