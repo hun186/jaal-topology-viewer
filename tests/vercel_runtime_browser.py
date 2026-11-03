@@ -207,7 +207,11 @@ def check(port):
                     "() => ({...window.dash_clientside.jaal_temporal.frame})"
                 )
                 assert initial["mode"] == "rolling"
-                assert "滑動時間窗" in page.locator("#jaal-temporal-status").inner_text()
+                # The default rolling mode now uses mutually exclusive
+                # [start,end) bins, not the legacy overlapping-window label.
+                initial_status = page.locator("#jaal-temporal-status").inner_text()
+                assert "互斥分段" in initial_status, initial_status
+                assert "封信" in initial_status, initial_status
                 assert page.get_by_label(
                     "固定社群（比較流量）", exact=True
                 ).is_checked()
