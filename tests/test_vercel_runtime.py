@@ -187,6 +187,8 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             finally:
                 context_value.reset(token)
 
+        length_control = self.client.get("/_dash-layout").get_json()
+        self.assertIn("jaal-original-edge-length", json.dumps(length_control))
         for mode in ("network", "network-community-collapsed", "hierarchical"):
             with self.subTest(mode=mode):
                 options, _disabled = invoke(
@@ -194,6 +196,9 @@ class VercelJaalRuntimeTests(unittest.TestCase):
                 )
                 self.assertIs(options["physics"]["enabled"], False)
 
+        length_options, unchanged = invoke("network", "jaal-original-edge-length.value")
+        self.assertIn("length", length_options["edges"])
+        self.assertEqual(length_options["edges"]["length"], 120)
         restored, disabled = invoke(
             "network", "jaal-original-physics-restore.n_intervals", ticks=1
         )
