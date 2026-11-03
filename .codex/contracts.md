@@ -10,6 +10,7 @@
 | CONTRACT-003 | CLI | `pyproject.toml`, `cli.py` |
 | CONTRACT-004 | Flask WSGI 同埠 | `integration.py`, `viewer.py` |
 | CONTRACT-005 | 四種 legacy 模式＋實驗 Louvain 社群模式／browser assets | `modes.py`, `viewer.py`, `assets/` |
+| CONTRACT-006 | 多案例展示 Gallery API | `gallery.py`, `viewer.py`, `integration.py`, `test_gallery.py` |
 
 ## CONTRACT-001 — CSV
 - 一個以上關係 CSV，UTF-8/BOM；可無 header，或 `parent,child`、`from,to`、`source,target`、`母類別,子類別`、`#母類別,子類別`；前兩欄定有向邊，額外欄位忽略。
@@ -39,6 +40,14 @@
 - 使用 `community.detect_louvain` 以有界有向圖、固定 seed=42、resolution=1、distinct directed edges、topology-only 的 NetworkX Louvain 分群；前端合成社群 node ID 僅存在顯示層，原 ID 與來源 CSV 不修改。聚合後仍區分 A→B／B→A；Search/Filter 有 hidden flags 時暫回原圖，展開/收攏不呼叫 fit。
 - 中文翻譯預設關閉；搜尋及 tooltip 用原 ID，filtered browser 檢視亦保留所選中文標籤。JS `16.jaal_visible_labels.js`、`17.jaal_structural_collapse.js`、`18.jaal_community_collapse.js` 由本套件提供。
 - Windows Hosted Chromium 可驗證實際 visdcc DataSet、同埠 iframe、搜尋與收攏的部分契約；不代表使用者 Windows Stage 4 drag/focus/Filter/Color/Size 實機完整驗收。
+
+## CONTRACT-006 — Gallery
+
+- `GalleryCase(key, title, graph, root=None, initial_mode="network")` 為已載入 Graph 的唯讀選擇條目；`create_gallery_app(cases, *, route_prefix="/cases") -> dash.Dash` 回傳第一個案例 Dash，`.server` 為同埠 Flask/WSGI host。
+- 案例數 1..20；`key` 僅限安全 ASCII slug、不可重複；每案必須有非空標題、Graph。第一案保留 `/`；其餘為 `/cases/<key>/`，由 `DispatcherMiddleware` 各自掛載。
+- `build_app` 與 `mount_flask` 新增*可選*導航參數；原有單圖參數、callback ID/JSON、中文及五模式不變。案例切換用同來源 `dcc.Location` 導向另一 URL，觸發新 Dash app 頁面載入；不以同頁 graph.data 換圖，避免原版 Jaal 搜尋/篩選 callback 保留上一案例的 Graph。
+- 初始模式需是五種受支援值；若圖形有環，不得以子樹結構收攏初始模式啟動，拒絕不安全案例；切換不回寫來源資料、不掃描磁碟、不提供檔案上傳。
+- 公開案例的 allowlist 與 CSV 於 `app.py` 中宣告；Vercel CI 不部署，僅符合條件的 Merge 可發布。
 
 ## Cross-repo
 - 消費端固定 reviewed Git SHA；上游 merge 不自動改 consumer。更動接口需同步測試，breaking change 要記錄版本與遷移方案。
