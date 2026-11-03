@@ -52,9 +52,20 @@ def to_jaal_dataframes(graph: Graph, *, root=None):
     depths = _depths(graph, root=root)
     incoming = defaultdict(int)
     outgoing = defaultdict(int)
+    sent_messages = defaultdict(int)
+    received_messages = defaultdict(int)
+    edge_set = set(graph.edges)
     for parent, child in graph.edges:
         incoming[child] += 1
         outgoing[parent] += 1
+    if graph.edge_counts:
+        if set(graph.edge_counts) != edge_set:
+            raise ValueError("Weighted email graph needs a count for every directed edge.")
+        for (sender, recipient), count in graph.edge_counts.items():
+            if type(count) is not int or count < 1 or count > 1_000_000:
+                raise ValueError("Email counts must be positive bounded integers.")
+            sent_messages[sender] += count
+            received_messages[recipient] += count
     nodes = pd.DataFrame([
         {
             "id": name,
@@ -64,6 +75,11 @@ def to_jaal_dataframes(graph: Graph, *, root=None):
             "InDegree": incoming[name],
             "OutDegree": outgoing[name],
             "Degree": incoming[name] + outgoing[name],
+            **({
+                "SentEmails": sent_messages[name],
+                "ReceivedEmails": received_messages[name],
+                "TotalEmails": sent_messages[name] + received_messages[name],
+            } if graph.edge_counts else {}),
         } for name in graph.nodes
     ])
     edges = pd.DataFrame([
@@ -220,6 +236,16 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         # Jaal's from+"__"+to edge ID collides for arbitrary string IDs.
         for index, edge in enumerate(collection["edges"]):
             edge["id"] = f"jaal-edge-{index}"
+            if graph.edge_counts:
+                directed_pair = (str(edge["from"]), str(edge["to"]))
+                count = graph.edge_counts[directed_pair]
+                # Explicit edge width and tooltip carry actual *synthetic*
+                # mail-event volume; Jaal's default "strength" is categorical
+                # and must not be mistaken for raw number of emails.
+                import math
+                edge["width"] = round(min(8.0, 1.0 + math.log2(count + 1)), 2)
+                edge["mailCount"] = count
+                edge["title"] = f"合成郵件：{count} 封（統計期間 20 個工作日）"
             if isinstance(edge.get("title"), str):
                 edge["title"] = escape_html(edge["title"], quote=True)
 
