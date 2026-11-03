@@ -122,3 +122,33 @@ jobs:
                   assert client.get("/installed-graph/assets/" + asset).status_code == 200, asset
           print("CLEAN_WHEEL_ISOLATED_HTTP_PASS", sys.platform, source)
           PY
+
+  dash-major-compat:
+    name: dash-major (${{ matrix.dash_version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        dash_version: ["2.18.2", "3.4.0", "4.5.0"]
+    env:
+      SELECTED_DASH: ${{ matrix.dash_version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install current Jaal with selected stable Dash release
+        run: python -m pip install -e . "dash==${{ matrix.dash_version }}"
+      - name: Reject dependency conflicts and verify Dash version
+        run: |
+          python -m pip check
+          python - <<'PY'
+          import os
+          from importlib.metadata import version
+          assert version('dash') == os.environ['SELECTED_DASH']
+          assert version('jaal-topology-viewer')
+          print('DASH_VERSION_SELECTED', version('dash'))
+          PY
+      - name: Test Python graph and same-port Dash contracts
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
