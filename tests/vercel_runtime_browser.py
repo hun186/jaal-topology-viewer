@@ -74,6 +74,41 @@ def check(port):
                 sidebar.click()
                 expect(sidebar).to_have_attribute("aria-expanded", "true", timeout=15000)
                 expect(panel).to_be_visible(timeout=15000)
+                # Normal scroll may carry the toolbar away; never pin it
+                # above the graph when the user wants additional space.
+                toolbar = page.locator("#jaal-compact-toolbar")
+                assert toolbar.evaluate(
+                    "(el) => getComputedStyle(el).position"
+                ) not in ("fixed", "sticky")
+                normal_canvas_height = page.locator(
+                    ".vis-network canvas"
+                ).first.bounding_box()["height"]
+                assert normal_canvas_height > 650, normal_canvas_height
+
+                focus_button = page.locator("#jaal-focus-toggle")
+                focus_button.click()
+                focus_shell = page.locator("#jaal-viewer-root")
+                expect(focus_shell).to_have_class(
+                    "jaal-viewer-shell jaal-focus-mode", timeout=15000
+                )
+                expect(focus_button).to_have_attribute(
+                    "aria-pressed", "true", timeout=15000
+                )
+                expect(focus_button).to_have_text("退出全版 ✕")
+                expect(panel).to_be_hidden()
+                expect(page.locator(".jaal-brand-row")).to_be_hidden()
+                graph_box = column.bounding_box()
+                assert graph_box["width"] > 1350, graph_box
+                focused_canvas_height = page.locator(
+                    ".vis-network canvas"
+                ).first.bounding_box()["height"]
+                assert focused_canvas_height > 900, focused_canvas_height
+                assert page.locator("#graph").count() == 1
+                focus_button.press("Escape")
+                expect(focus_shell).to_have_class("jaal-viewer-shell", timeout=15000)
+                expect(focus_button).to_have_attribute("aria-pressed", "false")
+                expect(panel).to_be_visible()
+                assert page.locator("#search_graph").count() == 1
                 help_details.locator("summary").click()
                 assert page.locator("#jaal-original-structural-hint").is_visible()
                 help_details.locator("summary").click()
