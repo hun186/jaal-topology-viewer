@@ -24,7 +24,7 @@
 | 套件 | `jaal-topology-viewer` 0.1.0；`jaal>=0.1.9`、`pandas>=1.5`、`networkx>=3.2,<4`；未見 lockfile | `pyproject.toml` |
 | UI | Jaal / Dash；可選 Flask / Werkzeug WSGI mount | `viewer.py`、`integration.py` |
 | Browser | 內含 JS 與 Bootstrap CSS；Node.js 測試、Windows Hosted Chromium 真實 iframe smoke（非 Stage 4 實機驗收） | `assets/`、`tests/browser_acceptance.py`、`ci.yml` |
-| OS | CI `ubuntu-latest` + `windows-latest` headless Chromium；使用者 Windows/Stage 4 實機仍待驗 | `ci.yml`、`README.md` |
+| OS | CI `ubuntu-latest` + `windows-latest` headless Chromium；下游 Stage 4 特定 Louvain 候選已取得 Windows 使用者實機 9 項 PASS（consumer PR #227），全 Dash/OS 矩陣仍待驗 | `ci.yml`、consumer PR #227 |
 | 遠端依賴 | 執行時無必需遠端服務；安裝可能需要取得套件 | `README.md` |
 
 ## 入口與 Repository 地圖
