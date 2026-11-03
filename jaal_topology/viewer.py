@@ -336,6 +336,14 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                 value=initial_mode, inline=True,
             ),
         ], className="jaal-mode-group"),
+        html.Div([
+            html.Span("基礎邊長／間距", title="調整非時間圖的彈簧長度；時間圖調整固定座標的空間尺度"),
+            dcc.Slider(
+                id="jaal-original-edge-length", min=60, max=300, step=20,
+                value=120, marks={60:"短", 120:"標準", 300:"長"},
+                tooltip={"placement":"bottom", "always_visible":False},
+            ),
+        ], className="jaal-edge-length-control"),
         dcc.Checklist(
             id="jaal-original-chinese-labels",
             className="jaal-language-toggle",
@@ -590,9 +598,10 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         Input("jaal-original-layout-mode", "value"),
         Input("jaal-original-physics-restore", "n_intervals"),
         Input("jaal-focus-toggle", "n_clicks"),
+        Input("jaal-original-edge-length", "value"),
         prevent_initial_call=True,
     )
-    def switch_mode(mode, _ticks, focus_clicks):
+    def switch_mode(mode, _ticks, focus_clicks, edge_length):
         if structure.has_cycle and mode in ("network-collapsed", "hierarchical-collapsed"):
             raise ValueError("Structural descendant collapse disabled for directed cycles")
         triggered = callback_context.triggered[0]["prop_id"].split(".", 1)[0]
@@ -602,6 +611,12 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         # current mode remain mounted; no second renderer is created.
         if triggered == "jaal-focus-toggle":
             return {"height": "100dvh" if focused else base["height"]}, no_update
+        if triggered == "jaal-original-edge-length":
+            if type(edge_length) is not int or not 60 <= edge_length <= 300:
+                return no_update, no_update
+            return {"edges": {"length": edge_length},
+                    "physics": {"barnesHut": {"springLength": edge_length}}},
+                   no_update
         if triggered == "jaal-original-physics-restore":
             if mode not in ("network", "network-collapsed", "network-community-collapsed"):
                 return no_update, True
@@ -702,6 +717,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             Input("jaal-temporal-labels", "value"),
             Input("jaal-temporal-community-policy", "value"),
         ])
+    graph_run_inputs.append(Input("jaal-original-edge-length", "value"))
     app.clientside_callback(
         ClientsideFunction(namespace="jaal_visible_labels",
                            function_name="apply"),
