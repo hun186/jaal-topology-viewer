@@ -286,3 +286,63 @@ test("filtered community views keep Chinese labels through Search/Filter and lan
   assert.equal(instance.__jaalCommunity.active, false);
   assert.deepEqual(source.nodes.map(n => n.label), ["A", "B", "C"]);
 });
+
+test("expanded community nodes stay near the previously drawn box and re-collapse in place", () => {
+  const source = {
+    nodes: ["A","B","C","D","E","F"].map(id => ({id,label:id})),
+    edges: [
+      ["A","D"],["B","E"],["C","F"],["A","B"],["D","E"],
+    ].map(([from,to],i) => ({id:"edge"+i,from,to})),
+  };
+  const memory = new Map(source.nodes.map((node,i) =>
+    [node.id,{...node,x:i*250-750,y:(i%2)*200}]));
+  const nn = {
+    getIds:()=>[...memory.keys()], get:()=>[...memory.values()],
+    remove:ids=>ids.forEach(id=>memory.delete(id)),
+    update:items=>items.forEach(n=>memory.set(String(n.id),{...memory.get(String(n.id)),...n})),
+  };
+  const links = new Map(source.edges.map(e=>[e.id,{...e}]));
+  const ee = {
+    getIds:()=>[...links.keys()], get:()=>[...links.values()],
+    remove:ids=>ids.forEach(id=>links.delete(id)),
+    update:items=>items.forEach(e=>links.set(String(e.id),{...links.get(String(e.id)),...e})),
+  };
+  let click;
+  const net = {
+    on:(type,cb)=>{if(type==="click")click=cb;},
+    getPositions:()=>Object.fromEntries(nn.get().map(n=>
+      [n.id,{x:n.x??0,y:n.y??0}])),
+    getViewPosition:()=>({x:100,y:50}),
+    getScale:()=>0.9, moveTo:()=>{},
+  };
+  const instance={nn,ee,props:{data:source},net};
+  community.partition={
+    A:"team-0",B:"team-0",C:"team-0",
+    D:"team-1",E:"team-1",F:"team-1",
+  };
+  community.setEdgeLength(120);
+  community.activate.call(instance);
+  const first=instance.__jaalCommunity.view;
+  const box=Object.keys(first.clusterToGroup)
+    .find(id=>first.clusterToGroup[id]==="team-0");
+  const origin=net.getPositions()[box];
+  assert.ok(origin);
+  click({nodes:[box]});
+  for(const id of ["A","B","C"]) {
+    const p=net.getPositions()[id];
+    assert.ok(Math.hypot(p.x-origin.x,p.y-origin.y)<140,
+      id+" launched far from its original group");
+  }
+  click({nodes:["A"]});
+  const restored=net.getPositions()[box];
+  assert.ok(Math.hypot(restored.x-origin.x,restored.y-origin.y)<0.01,
+    "closed box must recover its original anchor");
+  community.setEdgeLength(240);
+  community.activate.call(instance);
+  const spread=net.getPositions()[box];
+  assert.ok(Number.isFinite(spread.x)&&Number.isFinite(spread.y));
+  assert.ok(Math.hypot(spread.x-origin.x,spread.y-origin.y)>0,
+    "edge spacing should change the frozen quotient geometry");
+  community.setEdgeLength(120);
+  community.restore.call(instance);
+});

@@ -149,13 +149,10 @@ class GalleryContractTests(unittest.TestCase):
                 )
                 if has_timeline:
                     packet = frames["props"]["data"]
-                    self.assertEqual(len(packet["frames"]), 2)
+                    self.assertEqual(len(packet["frames"]), 1)
+                    self.assertEqual(packet["frames"][0]["messages"], 2)
                     self.assertEqual(
-                        [packet["frames"][0]["messages"],
-                         packet["frames"][1]["messages"]], [1, 2],
-                    )
-                    self.assertEqual(
-                        packet["frames"][1]["edges"],
+                        packet["frames"][0]["edges"],
                         [["X", "Y", 1], ["Y", "X", 1]],
                     )
                     self.assertEqual(client.get(

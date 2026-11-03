@@ -239,7 +239,9 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                 or set(graph.nodes) != set(source.nodes)
                 or graph.edge_counts != source.edge_counts):
             raise GraphInputError("Temporal event source must match this Graph")
-        temporal_frames = temporal_timeline.frames(mode="rolling", window_days=3)
+        temporal_frames = temporal_timeline.interval_frames(
+            mode="rolling", window_minutes=3*1440, step_minutes=3*1440,
+        )
     community_result = detect_louvain(graph)
     community_partition = community_result.member_to_group
     edges, nodes = to_jaal_dataframes(graph, root=root)
@@ -336,6 +338,17 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                 value=initial_mode, inline=True,
             ),
         ], className="jaal-mode-group"),
+        html.Details([
+            html.Summary("調整邊長", title="調整非時間圖的彈簧長度或時間圖固定座標的間距"),
+            html.Div([
+                html.Span("基礎邊長／間距（60–300 px）"),
+                dcc.Slider(
+                    id="jaal-original-edge-length", min=60, max=300, step=20,
+                    value=120, marks={60:"短", 120:"標準", 300:"長"},
+                    tooltip={"placement":"bottom", "always_visible":False},
+                ),
+            ], className="jaal-edge-length-control"),
+        ], className="jaal-edge-length-details"),
         dcc.Checklist(
             id="jaal-original-chinese-labels",
             className="jaal-language-toggle",
@@ -387,14 +400,20 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                      interval=300, disabled=True, n_intervals=0),
     ]
     if temporal_frames is not None:
-        from datetime import date
+        from datetime import datetime, time, timedelta, timezone
         days = temporal_timeline.days
-        last = len(days) - 1
+        total_minutes = len(days) * 1440
+        first_instant = datetime.combine(
+            days[0], time.min,
+            tzinfo=timezone.utc if temporal_timeline.timezone == "UTC" else None,
+        )
+        last_instant = first_instant + timedelta(minutes=total_minutes)
         date_marks = {
-            i: day.strftime("%m/%d")
+            i * 1440: day.strftime("%m/%d")
             for i, day in enumerate(days)
-            if i in (0, last) or day.weekday() == 0
+            if i == 0 or day.weekday() == 0
         }
+        date_marks[total_minutes] = last_instant.strftime("%m/%d")
         controls_children.append(html.Div([
             html.Div([
                 html.Strong("時間演化", className="jaal-temporal-heading"),
@@ -407,35 +426,32 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     value="rolling", inline=True,
                     className="jaal-temporal-modes",
                 ),
-                html.Span("時間窗"),
+                html.Span("時間單位"),
                 dcc.Dropdown(
-                    id="jaal-temporal-window",
+                    id="jaal-temporal-unit",
                     options=[
-                        {"label": f"{day} 天", "value": day}
-                        for day in (1, 3, 7, 14, 30)
-                    ], value=3, clearable=False, searchable=False,
+                        {"label": "1 分鐘", "value": 1},
+                        {"label": "10 分鐘", "value": 10},
+                        {"label": "1 小時", "value": 60},
+                        {"label": "3 小時", "value": 180},
+                        {"label": "1 天", "value": 1440},
+                    ], value=1440, clearable=False, searchable=False,
                     className="jaal-temporal-select",
                 ),
-                html.Span("社群演化"),
-                dcc.RadioItems(
-                    id="jaal-temporal-community-policy",
-                    options=[
-                        {"label": "固定社群（比較流量）", "value": "fixed"},
-                        {"label": "逐格重分群（實驗）", "value": "dynamic"},
-                    ], value="fixed", inline=True,
+                html.Span("區間長度"),
+                dcc.Dropdown(
+                    id="jaal-temporal-window",
+                    options=[{"label": f"{n} 單位", "value": n}
+                             for n in (1, 2, 3, 6, 12, 24, 30)],
+                    value=3, clearable=False, searchable=False,
+                    className="jaal-temporal-select",
                 ),
-                dcc.Checklist(
-                    id="jaal-temporal-labels",
-                    options=[{"label": "顯示全部節點名稱（較擁擠）", "value": "all"}],
-                    value=[], inline=True,
-                ),
-                html.Span("步長"),
+                html.Span("重疊時步長"),
                 dcc.Dropdown(
                     id="jaal-temporal-step",
-                    options=[
-                        {"label": f"{day} 天", "value": day}
-                        for day in (1, 2, 5, 7)
-                    ], value=1, clearable=False, searchable=False,
+                    options=[{"label": f"{n} 單位", "value": n}
+                             for n in (1, 2, 3, 6, 12, 24)],
+                    value=1, clearable=False, searchable=False,
                     className="jaal-temporal-select",
                 ),
                 html.Span("速度"),
@@ -449,21 +465,67 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     ], value=700, clearable=False, searchable=False,
                     className="jaal-temporal-select",
                 ),
+                html.Span("分段方式"),
+                dcc.Dropdown(
+                    id="jaal-temporal-overlap",
+                    options=[
+                        {"label": "互斥（步長＝窗長）", "value": "disjoint"},
+                        {"label": "重疊滑窗", "value": "overlap"},
+                    ], value="disjoint", clearable=False, searchable=False,
+                    className="jaal-temporal-overlap-select",
+                ),
+                html.Details([
+                    html.Summary("進階：社群與循環"),
+                    html.Div([
+                        html.Span("社群演化"),
+                        dcc.RadioItems(
+                    id="jaal-temporal-community-policy",
+                    options=[
+                        {"label": "固定社群（比較流量）", "value": "fixed"},
+                        {"label": "逐格重分群（實驗）", "value": "dynamic"},
+                    ], value="fixed", inline=True,
+                ),
+                dcc.Checklist(
+                    id="jaal-temporal-labels",
+                    options=[{"label": "顯示全部節點名稱（較擁擠）", "value": "all"}],
+                    value=[], inline=True,
+                ),
                 dcc.Checklist(
                     id="jaal-temporal-loop",
                     options=[{"label": "循環", "value": "loop"}],
                     value=["loop"], inline=True,
                 ),
+                    ], className="jaal-temporal-options"),
+                ], className="jaal-temporal-advanced"),
             ], className="jaal-temporal-options"),
             html.Div([
-                html.Span("分析區間"),
+                html.Span("分析範圍（兩端皆可拖曳）"),
                 html.Div(
                     dcc.RangeSlider(
-                        id="jaal-temporal-range", min=0, max=last, step=1,
-                        marks=date_marks, value=[0, last],
+                        id="jaal-temporal-range", min=0, max=total_minutes,
+                        step=1440, marks=date_marks, value=[0, total_minutes],
                         allowCross=False, updatemode="mouseup",
                     ), className="jaal-temporal-range",
                 ),
+                html.Details([
+                    html.Summary("精確起訖時間"),
+                    html.Div([
+                html.Span("起點"),
+                dcc.Input(
+                    id="jaal-temporal-start-text", type="text", debounce=True,
+                    value=first_instant.isoformat(timespec="minutes"),
+                    className="jaal-temporal-date-input",
+                    placeholder="YYYY-MM-DDTHH:MM",
+                ),
+                html.Span("終點（不含）"),
+                dcc.Input(
+                    id="jaal-temporal-end-text", type="text", debounce=True,
+                    value=last_instant.isoformat(timespec="minutes"),
+                    className="jaal-temporal-date-input",
+                    placeholder="YYYY-MM-DDTHH:MM",
+                ),
+                    ], className="jaal-temporal-precision-body"),
+                ], className="jaal-temporal-precision"),
                 html.Button("◀", id="jaal-temporal-back", n_clicks=0,
                             title="後退一個時間步長"),
                 html.Button("▶ 播放", id="jaal-temporal-play", n_clicks=0),
@@ -472,13 +534,30 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                 html.Span("播放進度"),
                 html.Div(
                     dcc.Slider(
-                        id="jaal-temporal-index", min=0, max=last, step=1,
-                        marks=date_marks, value=last, updatemode="mouseup",
+                        id="jaal-temporal-index", min=0,
+                        max=temporal_frames["end_index"], step=1,
+                        marks={0:"開始", temporal_frames["end_index"]:"結束"},
+                        value=temporal_frames["end_index"], updatemode="mouseup",
                     ), className="jaal-temporal-playhead",
                 ),
             ], className="jaal-temporal-navigation"),
+            html.Div([
+                html.Span("目前播放時窗（藍條隨時間移動，右端不含）"),
+                html.Div(
+                    html.Div(
+                        id="jaal-temporal-window-highlight",
+                        className="jaal-temporal-window-highlight",
+                        style={
+                            "left": f"{temporal_frames['frames'][-1]['axis_start'] * 100}%",
+                            "width": f"{(temporal_frames['frames'][-1]['axis_end'] - temporal_frames['frames'][-1]['axis_start']) * 100}%",
+                        },
+                    ),
+                    className="jaal-temporal-window-axis",
+                ),
+            ], className="jaal-temporal-live-window"),
             html.Div(
-                f"滑動時間窗｜{temporal_frames['frames'][-1]['from']} ～ {days[-1]}　"
+                f"互斥分段｜[{temporal_frames['frames'][-1]['from']}, "
+                f"{temporal_frames['frames'][-1]['to']})　"
                 f"{temporal_frames['frames'][-1]['messages']} 封信",
                 id="jaal-temporal-status", className="jaal-temporal-status",
                 role="status",
@@ -590,9 +669,10 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         Input("jaal-original-layout-mode", "value"),
         Input("jaal-original-physics-restore", "n_intervals"),
         Input("jaal-focus-toggle", "n_clicks"),
+        Input("jaal-original-edge-length", "value"),
         prevent_initial_call=True,
     )
-    def switch_mode(mode, _ticks, focus_clicks):
+    def switch_mode(mode, _ticks, focus_clicks, edge_length=120):
         if structure.has_cycle and mode in ("network-collapsed", "hierarchical-collapsed"):
             raise ValueError("Structural descendant collapse disabled for directed cycles")
         triggered = callback_context.triggered[0]["prop_id"].split(".", 1)[0]
@@ -602,6 +682,15 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         # current mode remain mounted; no second renderer is created.
         if triggered == "jaal-focus-toggle":
             return {"height": "100dvh" if focused else base["height"]}, no_update
+        if triggered == "jaal-original-edge-length":
+            if type(edge_length) is not int or not 60 <= edge_length <= 300:
+                return no_update, no_update
+            physics_enabled = (temporal_frames is None and
+                               not mode.startswith("hierarchical"))
+            return ({"edges": {"length": edge_length},
+                     "physics": {"enabled": physics_enabled,
+                                 "barnesHut": {"springLength": edge_length}}},
+                    no_update)
         if triggered == "jaal-original-physics-restore":
             if mode not in ("network", "network-collapsed", "network-community-collapsed"):
                 return no_update, True
@@ -639,26 +728,87 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         from dash.exceptions import PreventUpdate
 
         @app.callback(
+            Output("jaal-temporal-range", "value"),
+            Output("jaal-temporal-start-text", "value"),
+            Output("jaal-temporal-end-text", "value"),
+            Input("jaal-temporal-range", "value"),
+            Input("jaal-temporal-start-text", "value"),
+            Input("jaal-temporal-end-text", "value"),
+            prevent_initial_call=True,
+        )
+        def sync_analysis_bounds(bounds, start_text, end_text):
+            from datetime import datetime, timedelta
+            if (not isinstance(bounds, list) or len(bounds) != 2
+                    or not all(type(n) is int for n in bounds)):
+                raise PreventUpdate
+            triggered = callback_context.triggered[0]["prop_id"].split(".", 1)[0]
+            if triggered == "jaal-temporal-range":
+                return (
+                    no_update,
+                    (first_instant + timedelta(minutes=bounds[0])).isoformat(timespec="minutes"),
+                    (first_instant + timedelta(minutes=bounds[1])).isoformat(timespec="minutes"),
+                )
+            if triggered not in ("jaal-temporal-start-text", "jaal-temporal-end-text"):
+                raise PreventUpdate
+            try:
+                left = datetime.fromisoformat(start_text.strip().replace(" ", "T"))
+                right = datetime.fromisoformat(end_text.strip().replace(" ", "T"))
+                if ((left.utcoffset() is None) != (first_instant.utcoffset() is None)
+                        or (right.utcoffset() is None) != (first_instant.utcoffset() is None)
+                        or left.second or left.microsecond or right.second or right.microsecond):
+                    raise ValueError("Timezone or minute precision mismatch")
+                offsets = ((left - first_instant).total_seconds() / 60,
+                           (right - first_instant).total_seconds() / 60)
+                if (not all(n.is_integer() for n in offsets)
+                        or not 0 <= offsets[0] < offsets[1] <= total_minutes):
+                    raise ValueError("Invalid bounds")
+                return [int(offsets[0]), int(offsets[1])], no_update, no_update
+            except (ValueError, TypeError, AttributeError):
+                raise PreventUpdate
+
+        @app.callback(
+            Output("jaal-temporal-range", "step"),
+            Input("jaal-temporal-unit", "value"),
+        )
+        def interval_selection_granularity(unit):
+            return unit if unit in (1, 10, 60, 180, 1440) else 1
+
+        @app.callback(
             Output("jaal-temporal-frames", "data"),
             Input("jaal-temporal-range", "value"),
             Input("jaal-temporal-mode", "value"),
+            Input("jaal-temporal-unit", "value"),
             Input("jaal-temporal-window", "value"),
+            Input("jaal-temporal-overlap", "value"),
+            Input("jaal-temporal-step", "value"),
         )
-        def prepare_temporal_frames(bounds, mode, window_days):
-            if (not isinstance(bounds, (list, tuple))
-                    or len(bounds) != 2
-                    or type(bounds[0]) is not int
-                    or type(bounds[1]) is not int
+        def prepare_temporal_frames(bounds, mode, unit, window_units,
+                                    overlap, stride_units):
+            if (not isinstance(bounds, (list, tuple)) or len(bounds) != 2
+                    or any(type(n) is not int for n in bounds)
                     or mode not in ("cumulative", "rolling")
-                    or window_days not in (1, 3, 7, 14, 30)):
+                    or unit not in (1, 10, 60, 180, 1440)
+                    or window_units not in (1, 2, 3, 6, 12, 24, 30)
+                    or stride_units not in (1, 2, 3, 6, 12, 24)
+                    or overlap not in ("disjoint", "overlap")):
                 raise PreventUpdate
+            window_minutes = unit * window_units
+            stride_minutes = (window_minutes if overlap == "disjoint"
+                              else unit * stride_units)
             try:
-                return temporal_timeline.frames(
-                    first_index=bounds[0], last_index=bounds[1],
-                    mode=mode, window_days=window_days,
+                result = temporal_timeline.interval_frames(
+                    start_minute=bounds[0], end_minute=bounds[1],
+                    mode=mode, window_minutes=window_minutes,
+                    step_minutes=stride_minutes,
                 )
-            except GraphInputError:
-                raise PreventUpdate
+                result["overlap"] = overlap
+                return result
+            except GraphInputError as exc:
+                # A bad request must not leave a stale earlier packet on
+                # screen while showing incompatible granularity controls.
+                return {"frames": [], "start_index": 0, "end_index": 0,
+                        "error": str(exc), "unit_minutes": unit,
+                        "overlap": overlap}
 
         app.clientside_callback(
             ClientsideFunction(namespace="jaal_temporal", function_name="playback"),
@@ -679,7 +829,14 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             ClientsideFunction(namespace="jaal_temporal", function_name="choose"),
             Output("jaal-temporal-frame", "data"),
             Output("jaal-temporal-status", "children"),
+            Output("jaal-temporal-window-highlight", "style"),
             Input("jaal-temporal-index", "value"),
+            Input("jaal-temporal-frames", "data"),
+        )
+        app.clientside_callback(
+            ClientsideFunction(namespace="jaal_temporal", function_name="axis"),
+            Output("jaal-temporal-index", "max"),
+            Output("jaal-temporal-index", "marks"),
             Input("jaal-temporal-frames", "data"),
         )
         app.clientside_callback(
@@ -702,6 +859,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             Input("jaal-temporal-labels", "value"),
             Input("jaal-temporal-community-policy", "value"),
         ])
+    graph_run_inputs.append(Input("jaal-original-edge-length", "value"))
     app.clientside_callback(
         ClientsideFunction(namespace="jaal_visible_labels",
                            function_name="apply"),

@@ -13,6 +13,7 @@
 | ADR-0006 | 有界 Gallery 多 Dash route 取代同頁直接換 Graph | Accepted | 2026-11-03 |
 | ADR-0007 | 原版類別樹通訊示意與新合成郵件業務情境區分 | Accepted | 2026-11-03 |
 | ADR-0008 | 原事件流與時間片圖分離，先預算並以瀏覽器動畫播放 | Accepted | 2026-11-03 |
+| ADR-0009 | 精確半開區間及預設互斥分段，多粒度與 240 格硬上限 | Accepted | 2026-11-04 |
 
 ## ADR-0001 — 單一來源
 - 背景：portable 核心曾位於 `text-category-profiler/packages/jaal-topology`，下游整合 PR [#209](https://github.com/hun186/text-category-profiler/pull/209)、[#210](https://github.com/hun186/text-category-profiler/pull/210) 後搬離。
@@ -69,6 +70,14 @@
 - 兼顧資料量與安全：50,000 events/120 calendar days/180,000 frame-edge 限額；一致使用 naive local 或 normalized UTC、拒絕混用；禁止把 CSV/事件資料插入 JS 指令字串，原事件流唯讀。
 - 取捨：目前原版 Jaal Filter/Size **server callbacks** 仍基於全期間來源；時間演化部分更新可視 DataSets/統計與 Louvain，不宣稱每個 Jaal 篩選／尺寸選項已完全動態化。實時資料接入、時區 UX、分群標籤穩定性及對照雙圖另列候選工作。
 - 發布與部署不變：Vercel Push/PR auto-deploy 禁用，必須通過最新 SHA CI/Code Review 與 Merge Gate 才能考慮發布。
+
+## ADR-0009 — Minute-level disjoint-by-default interval playback
+
+- 使用者指出原先日資料藍條左端不移動、起點不易調整、區間重疊與分鐘級分析欠缺定義。
+- 增加保留原始事件分鐘時間戳的 `interval_frames(start_minute,end_minute,window_minutes,step_minutes)`；`[start,end)` 左閉右開，預設 step=window（互斥），另可設定小於窗長的 overlap，累積模式沿用單一起點。原 `snapshot()/frames()` 日層級函式保留。
+- RangeSlider 為分析起訖，另有目前播放時段藍條；兩端均可拖拉或以 ISO 時間文字編輯。避免誤將固定分析範圍當成播放窗。
+- 保留原始完整 CSV/事件，現場只算有界摘要；最多 240 個 frame、180000 frame-edges。超限回明確錯誤而非在畫面保留與控制項不一致的舊資料。永不逐格呼叫 Vercel。
+- Python minute/local-naive/UTC 事件規範延續 ADR-0008，部署、下游 consumer 發布閘門不變。
 
 ## 維護
 新決策使用遞增不重用 ID；被取代時標記 Superseded 與新決策連結；不把一般 bugfix、猜測或秘密放入。

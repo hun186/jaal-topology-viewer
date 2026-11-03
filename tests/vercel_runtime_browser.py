@@ -66,7 +66,9 @@ def check(port):
                 canvas_open = page.locator(".vis-network canvas").first.bounding_box()["width"]
                 # The timeline adds a compact second control row; other
                 # single-graph and non-temporal cases retain the small toolbar.
-                assert page.locator("#jaal-compact-toolbar").bounding_box()["height"] < 260
+                height = page.locator("#jaal-compact-toolbar").bounding_box()["height"]
+                print("TRACE_TEMPORAL_TOOLBAR_HEIGHT=" + str(height), flush=True)
+                assert height < 260, height
                 sidebar.click()
                 expect(sidebar).to_have_attribute("aria-expanded", "false", timeout=15000)
                 expect(panel).to_be_hidden(timeout=15000)
@@ -205,7 +207,11 @@ def check(port):
                     "() => ({...window.dash_clientside.jaal_temporal.frame})"
                 )
                 assert initial["mode"] == "rolling"
-                assert "滑動時間窗" in page.locator("#jaal-temporal-status").inner_text()
+                # The default rolling mode now uses mutually exclusive
+                # [start,end) bins, not the legacy overlapping-window label.
+                initial_status = page.locator("#jaal-temporal-status").inner_text()
+                assert "互斥分段" in initial_status, initial_status
+                assert "封信" in initial_status, initial_status
                 assert page.get_by_label(
                     "固定社群（比較流量）", exact=True
                 ).is_checked()
@@ -238,12 +244,13 @@ def check(port):
                 # Select by visible text inside this specific control rather
                 # than coupling the browser test to an internal CSS class.
                 page.locator("#jaal-temporal-window").get_by_text(
-                    "1 天", exact=True
+                    "1 單位", exact=True
                 ).last.click(timeout=15000)
                 page.wait_for_function(
                     "() => window.dash_clientside?.jaal_temporal?.frame?.mode === 'rolling' && " +
-                    "window.dash_clientside?.jaal_temporal?.frame?.from === " +
-                    "window.dash_clientside?.jaal_temporal?.frame?.to",
+                    "window.dash_clientside?.jaal_temporal?.frame?.window_minutes === 1440 && " +
+                    "window.dash_clientside?.jaal_temporal?.frame?.from !== " +
+                    "window.dash_clientside?.jaal_temporal?.frame?.to_exclusive",
                     timeout=30000,
                 )
                 day = page.evaluate(
@@ -257,6 +264,11 @@ def check(port):
                     "() => ({...window.dash_clientside.jaal_temporal.lastRendered})"
                 )
                 assert actual["sourceEdges"] == day["links"]
+                assert day["window_minutes"] == 1440
+                assert "互斥分段" in page.locator("#jaal-temporal-status").inner_text()
+                bar_before = page.locator("#jaal-temporal-window-highlight").evaluate(
+                    "(el) => el.style.left"
+                )
                 assert day["messages"] > 0
                 assert day["messages"] < 2000
                 assert actual["sourceEdges"] < full["sourceEdges"], (actual, full)
@@ -270,6 +282,10 @@ def check(port):
                     "window.dash_clientside?.jaal_temporal?.frame?.date",
                     timeout=30000,
                 )
+                bar_after = page.locator("#jaal-temporal-window-highlight").evaluate(
+                    "(el) => el.style.left"
+                )
+                assert bar_after != bar_before, "current-window blue bar must move with playback"
                 before_play = page.evaluate(
                     "() => window.dash_clientside.jaal_temporal.frame.date"
                 )

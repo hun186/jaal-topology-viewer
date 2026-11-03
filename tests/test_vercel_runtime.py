@@ -165,6 +165,43 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             self.assertNotIn("jaal-temporal-controls",
                              json.dumps(child_layout))
 
+    def test_precise_start_and_end_fields_synchronize_analysis_range(self):
+        from types import SimpleNamespace
+        from dash._callback_context import context_value
+        from dash import no_update
+        handler = next(
+            config["callback"].__wrapped__
+            for key, config in self.dash_app.callback_map.items()
+            if "jaal-temporal-start-text.value" in key
+            and "jaal-temporal-end-text.value" in key
+            and "jaal-temporal-range.value" in key
+        )
+        from app import _timeline
+        from datetime import datetime, time, timedelta
+        origin = datetime.combine(_timeline.first_day, time.min)
+        start = origin.isoformat(timespec="minutes")
+        end = (origin + timedelta(hours=12)).isoformat(timespec="minutes")
+        def invoke(prop, bounds, first, last):
+            token = context_value.set(SimpleNamespace(
+                triggered_inputs=[{"prop_id": prop, "value": None}]
+            ))
+            try:
+                return handler(bounds, first, last)
+            finally:
+                context_value.reset(token)
+        new_bounds, first_out, last_out = invoke(
+            "jaal-temporal-start-text.value", [0,1440], start, end,
+        )
+        self.assertEqual(new_bounds, [0, 720])
+        self.assertIs(first_out, no_update)
+        self.assertIs(last_out, no_update)
+        bounds_out, first_text, last_text = invoke(
+            "jaal-temporal-range.value", [60,120], start, end,
+        )
+        self.assertIs(bounds_out, no_update)
+        self.assertTrue(first_text.endswith("01:00"))
+        self.assertTrue(last_text.endswith("02:00"))
+
     def test_temporal_layout_changes_do_not_restart_physics(self):
         # Exercise the real registered Dash callback using Dash's own
         # request-local context variable, not a mocked product implementation.
@@ -187,6 +224,8 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             finally:
                 context_value.reset(token)
 
+        length_control = self.client.get("/_dash-layout").get_json()
+        self.assertIn("jaal-original-edge-length", json.dumps(length_control))
         for mode in ("network", "network-community-collapsed", "hierarchical"):
             with self.subTest(mode=mode):
                 options, _disabled = invoke(
@@ -194,6 +233,11 @@ class VercelJaalRuntimeTests(unittest.TestCase):
                 )
                 self.assertIs(options["physics"]["enabled"], False)
 
+        length_options, unchanged = invoke("network", "jaal-original-edge-length.value")
+        self.assertIn("length", length_options["edges"])
+        self.assertEqual(length_options["edges"]["length"], 120)
+        self.assertIs(length_options["physics"]["enabled"], False)
+        self.assertEqual(length_options["physics"]["barnesHut"]["springLength"], 120)
         restored, disabled = invoke(
             "network", "jaal-original-physics-restore.n_intervals", ticks=1
         )

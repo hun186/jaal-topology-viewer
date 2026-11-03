@@ -80,7 +80,8 @@
   }
 
   function apply(mode, graphData, selectedLanguages, translations, membership,
-                 structuralEligible, temporalFrame, labelOptions, communityPolicy) {
+                 structuralEligible, temporalFrame, labelOptions, communityPolicy,
+                 edgeLength) {
     // Only pre-authored static commands are ever evaluated by visdcc.
     // CSV contents are data in a bounded Dash Store, never executable code.
     if (!graphData || !Array.isArray(graphData.nodes)) return "";
@@ -89,6 +90,15 @@
     const state = root.dash_clientside.jaal_visible_labels;
     const community = root.dash_clientside && root.dash_clientside.jaal_community_collapse;
     const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
+    // Non-temporal callers have one fewer optional input. Keep both legacy
+    // callback signatures and fixed Git-SHA downstream consumers compatible.
+    if (Number.isInteger(temporalFrame) && edgeLength === undefined) {
+      edgeLength = temporalFrame;
+      temporalFrame = null;
+    }
+    if (community && typeof community.setEdgeLength === "function") {
+      community.setEdgeLength(edgeLength);
+    }
     if (temporal && typeof temporal.setFrame === "function") {
       temporal.setFrame(temporalFrame);
       if (typeof temporal.setLabelUniverse === "function") {
