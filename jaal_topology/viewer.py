@@ -614,9 +614,9 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         if triggered == "jaal-original-edge-length":
             if type(edge_length) is not int or not 60 <= edge_length <= 300:
                 return no_update, no_update
-            return {"edges": {"length": edge_length},
-                    "physics": {"barnesHut": {"springLength": edge_length}}},
-                   no_update
+            return ({"edges": {"length": edge_length},
+                     "physics": {"barnesHut": {"springLength": edge_length}}},
+                    no_update)
         if triggered == "jaal-original-physics-restore":
             if mode not in ("network", "network-collapsed", "network-community-collapsed"):
                 return no_update, True
