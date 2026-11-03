@@ -165,11 +165,10 @@ class VercelJaalRuntimeTests(unittest.TestCase):
                              json.dumps(child_layout))
 
     def test_temporal_layout_changes_do_not_restart_physics(self):
-        # Exercise the real registered Dash callback (not a reimplemented
-        # helper): every mode switch and delayed restore must leave temporal
-        # physics disabled so playback positions cannot drift between frames.
+        # Exercise the real registered Dash callback using Dash's own
+        # request-local context variable, not a mocked product implementation.
         from types import SimpleNamespace
-        from unittest.mock import patch
+        from dash._callback_context import context_value
 
         callback = next(
             config["callback"].__wrapped__
@@ -177,20 +176,26 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             if "graph.options" in key
             and "jaal-original-physics-restore.disabled" in key
         )
+
+        def invoke(mode, triggered, ticks=0):
+            token = context_value.set(SimpleNamespace(
+                triggered_inputs=[{"prop_id": triggered, "value": None}]
+            ))
+            try:
+                return callback(mode, ticks, 0)
+            finally:
+                context_value.reset(token)
+
         for mode in ("network", "network-community-collapsed", "hierarchical"):
             with self.subTest(mode=mode):
-                with patch("jaal_topology.viewer.callback_context",
-                           SimpleNamespace(triggered=[{
-                               "prop_id": "jaal-original-layout-mode.value"
-                           }])):
-                    options, _disabled = callback(mode, 0, 0)
+                options, _disabled = invoke(
+                    mode, "jaal-original-layout-mode.value"
+                )
                 self.assertIs(options["physics"]["enabled"], False)
 
-        with patch("jaal_topology.viewer.callback_context",
-                   SimpleNamespace(triggered=[{
-                       "prop_id": "jaal-original-physics-restore.n_intervals"
-                   }])):
-            restored, disabled = callback("network", 1, 0)
+        restored, disabled = invoke(
+            "network", "jaal-original-physics-restore.n_intervals", ticks=1
+        )
         self.assertIs(restored["physics"]["enabled"], False)
         self.assertTrue(disabled)
 
