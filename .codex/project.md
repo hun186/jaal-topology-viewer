@@ -5,7 +5,7 @@
 ## Metadata
 - 初始化狀態：`INITIALIZED`
 - 最後查證日期：2026-11-03（台灣）
-- 查證基準：PR #5 HEAD `8d9beddd1be75cb4219952cc20dbc69fe411532a`（尚未 Merge；`main` 的狀態仍另行查證）
+- 查證基準：`main` merge commit `47942ac3bd08d8cbcc615fa215c5e5eef286f486`；[PR #5](https://github.com/hun186/jaal-topology-viewer/pull/5) 已於 2026-11-03 Merge。Windows Stage 4／consumer 驗收仍另行追蹤。
 - 維護 repository：`hun186/jaal-topology-viewer`
 
 ## 一句話目的
