@@ -12,6 +12,14 @@ used by the standalone Python CLI, exposed as Flask WSGI from the root
 - Real graph-type/cycle guidance, optional CT translations and original IDs
 - Default simulated business-email workflow with reproducible fake
   events, reciprocal threads, event spikes and frequency-weighted Louvain.
+- Optional temporal playback on the **same real Jaal Canvas**: choose
+  a calendar-day interval, cumulative or rolling 1/3/7/14/30-day
+  windows, manual seek, step by 1/2/5/7 days, playback speed, pause and
+  loop. Directed links and their **per-window email frequency** as well
+  as the Louvain partition are recomputed from original synthetic events.
+  Frames are precomputed when users change settings, and browser playback
+  uses no backend requests per tick; this matters on Vercel Hobby.
+  Non-event graph cases remain static and receive no timeline controls.
   The old 77-node/169-edge taxonomy-derived communication graph remains
   an optional comparison case. Cyclic graphs disable the two DAG-only
   structural collapse controls.
