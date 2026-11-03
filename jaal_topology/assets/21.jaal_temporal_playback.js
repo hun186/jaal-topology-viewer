@@ -134,8 +134,8 @@
       date: state.frame.date,
       from: state.frame.from,
       to: state.frame.to,
-      sourceNodes: source.nodes.length,
-      sourceEdges: source.edges.length,
+      sourceNodes: source.nodes.filter(n => !n.hidden).length,
+      sourceEdges: source.edges.filter(e => !e.hidden).length,
       drawnNodes: instance.nn.get().filter(n => !n.hidden).length,
       drawnEdges: instance.ee.get().filter(e => !e.hidden).length,
     };
