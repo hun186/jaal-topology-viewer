@@ -10,10 +10,11 @@ used by the standalone Python CLI, exposed as Flask WSGI from the root
 - All five portable layout choices: network, DAG-only structural collapse,
   Louvain community collapse, hierarchy, DAG-only hierarchical collapse
 - Real graph-type/cycle guidance, optional CT translations and original IDs
-- Same original fictional corporate communication fixture: 77 nodes,
-  169 unique directed edges. Because this graph has cycles, the two
-  structural collapse controls are disabled **exactly as on localhost**.
-  Louvain mode stays available.
+- Default simulated business-email workflow with reproducible fake
+  events, reciprocal threads, event spikes and frequency-weighted Louvain.
+  The old 77-node/169-edge taxonomy-derived communication graph remains
+  an optional comparison case. Cyclic graphs disable the two DAG-only
+  structural collapse controls.
 
 The real Jaal UI now uses a compact, wrapping top toolbar and
 a toggleable original Search/Filter/Color/Size settings panel. Hidden
@@ -43,11 +44,19 @@ searchable **示範案例** dropdown with independently mounted Jaal pages:
 
 | Case | Path | Topology | Initial view |
 | --- | --- | --- | --- |
-| Company senders/recipients | `/` | 77 nodes / 169 directed edges; cyclic | Network |
+| Realistic fictional email workflows | `/` | Simulated dated events, directed pair counts, reply threads, incident and monthly-close cycles | Louvain |
+| Historical taxonomy-based mail topology | `/cases/mail-network/` | 77 nodes / 169 directed pairs; **not** email event simulation | Network |
 | Fictional organization hierarchy | `/cases/org-tree/` | 52 nodes / 51 edges; tree | Hierarchy collapsed |
 | Project dependency network | `/cases/project-dag/` | 19 nodes / 31 edges; multi-parent DAG | Hierarchy |
 
-Each case is loaded once from a reviewed, fictional local CSV file and
+The default workflow scenario is generated once at startup from a fixed
+seed; the other three demos load reviewed fictional CSVs. The viewer exposes
+read-only `/demo/mail-events.csv`, `/demo/mail-edges.csv` and
+`/demo/mail-summary` for independently checking fictional event provenance,
+counts and business-process assumptions. See
+[the simulation specification](../examples/REALISTIC_EMAIL_DEMO.md).
+
+Each case is loaded once from an explicitly reviewed source and
 served with its **own real Jaal/Dash callback graph**. Case navigation
 changes the browser path on the same origin; it does not re-deploy Vercel
 or call any API to load private/untrusted input. Original IDs, translated

@@ -24,6 +24,8 @@ class GalleryCase:
     graph: Graph
     root: str | None = None
     initial_mode: str = "network"
+    description: str = ""
+    resources: tuple[tuple[str, str], ...] = ()
 
 
 def create_gallery_app(
@@ -61,6 +63,18 @@ def create_gallery_app(
             raise GraphInputError("Each case needs a nonempty title (max 100 chars).")
         if not isinstance(case.graph, Graph):
             raise GraphInputError("Gallery cases must contain a loaded Graph.")
+        if not isinstance(case.description, str) or len(case.description) > 900:
+            raise GraphInputError("Gallery case description must be at most 900 chars.")
+        if not isinstance(case.resources, tuple) or len(case.resources) > 5:
+            raise GraphInputError("Gallery resources must be a short tuple.")
+        for resource in case.resources:
+            if (not isinstance(resource, tuple) or len(resource) != 2
+                    or not isinstance(resource[0], str)
+                    or not isinstance(resource[1], str)
+                    or not 1 <= len(resource[0]) <= 80
+                    or not re.fullmatch(r"/[a-z0-9][a-z0-9/_.-]*[a-z0-9]", resource[1])
+                    or ".." in resource[1] or "//" in resource[1]):
+                raise GraphInputError("Gallery resource URLs must be safe local paths.")
 
     paths = ["/"] + [
         route_prefix + "/" + case.key + "/" for case in cases[1:]
@@ -73,6 +87,7 @@ def create_gallery_app(
     root_app = build_app(
         first.graph, root=first.root, initial_mode=first.initial_mode,
         case_options=options, current_case_path=paths[0],
+        case_description=first.description, case_resources=first.resources,
     )
     for case, path in zip(cases[1:], paths[1:]):
         mount_flask(
@@ -80,5 +95,6 @@ def create_gallery_app(
             mount_path=path.rstrip("/"),
             case_options=options, current_case_path=path,
             initial_mode=case.initial_mode,
+            case_description=case.description, case_resources=case.resources,
         )
     return root_app

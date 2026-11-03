@@ -52,9 +52,20 @@ def to_jaal_dataframes(graph: Graph, *, root=None):
     depths = _depths(graph, root=root)
     incoming = defaultdict(int)
     outgoing = defaultdict(int)
+    sent_messages = defaultdict(int)
+    received_messages = defaultdict(int)
+    edge_set = set(graph.edges)
     for parent, child in graph.edges:
         incoming[child] += 1
         outgoing[parent] += 1
+    if graph.edge_counts:
+        if set(graph.edge_counts) != edge_set:
+            raise ValueError("Weighted email graph needs a count for every directed edge.")
+        for (sender, recipient), count in graph.edge_counts.items():
+            if type(count) is not int or count < 1 or count > 1_000_000:
+                raise ValueError("Email counts must be positive bounded integers.")
+            sent_messages[sender] += count
+            received_messages[recipient] += count
     nodes = pd.DataFrame([
         {
             "id": name,
@@ -64,6 +75,11 @@ def to_jaal_dataframes(graph: Graph, *, root=None):
             "InDegree": incoming[name],
             "OutDegree": outgoing[name],
             "Degree": incoming[name] + outgoing[name],
+            **({
+                "SentEmails": sent_messages[name],
+                "ReceivedEmails": received_messages[name],
+                "TotalEmails": sent_messages[name] + received_messages[name],
+            } if graph.edge_counts else {}),
         } for name in graph.nodes
     ])
     edges = pd.DataFrame([
@@ -148,7 +164,8 @@ def _normalize_upstream_layout(layout):
 
 def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
               case_options=None, current_case_path=None,
-              initial_mode="network"):
+              initial_mode="network", case_description="",
+              case_resources=()):
     """Build a localhost-ready Dash Jaal app; optional isolated case navigation.
 
     Original Jaal Search/Filter/Color/Size callbacks remain intact. Each
@@ -204,6 +221,10 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     if isinstance(opt, dict) and isinstance(opt.get("value"), str)
                 }):
             raise GraphInputError("Invalid case navigation options or selected path.")
+    if not isinstance(case_description, str) or len(case_description) > 900:
+        raise GraphInputError("Case description must be a short string.")
+    if not isinstance(case_resources, tuple):
+        raise GraphInputError("Case resources must be a tuple of local links.")
     community_result = detect_louvain(graph)
     community_partition = community_result.member_to_group
     edges, nodes = to_jaal_dataframes(graph, root=root)
@@ -220,6 +241,16 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         # Jaal's from+"__"+to edge ID collides for arbitrary string IDs.
         for index, edge in enumerate(collection["edges"]):
             edge["id"] = f"jaal-edge-{index}"
+            if graph.edge_counts:
+                directed_pair = (str(edge["from"]), str(edge["to"]))
+                count = graph.edge_counts[directed_pair]
+                # Explicit edge width and tooltip carry actual *synthetic*
+                # mail-event volume; Jaal's default "strength" is categorical
+                # and must not be mistaken for raw number of emails.
+                import math
+                edge["width"] = round(min(8.0, 1.0 + math.log2(count + 1)), 2)
+                edge["mailCount"] = count
+                edge["title"] = f"合成郵件：{count} 封（統計期間 20 個工作日）"
             if isinstance(edge.get("title"), str):
                 edge["title"] = escape_html(edge["title"], quote=True)
 
@@ -300,6 +331,15 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         html.Details([
             html.Summary("圖形說明", title="查看圖形結構與收攏規則"),
             html.Div([
+                *([html.Div([
+                    html.Strong("業務情境與可驗證資料"),
+                    html.P(case_description, className="jaal-case-description"),
+                    html.Div([
+                        html.A(label, href=url, target="_blank",
+                               rel="noopener noreferrer")
+                        for label, url in case_resources
+                    ], className="jaal-case-resources"),
+                ])] if case_description or case_resources else []),
                 html.Div(
                     ("原始圖無環，但 Louvain 社群彙總後產生循環；不代表分類父子關係有環。"
                      if not structure.has_cycle and community_result.quotient_has_cycle else
@@ -314,7 +354,9 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                      f"這是無環有向圖，但有 {structure.multi_parent_nodes} 個多父節點；子樹收攏計算的是可達的不同節點，不一定是獨占的下屬。"
                      if structure.multi_parent_nodes else
                      "子樹收攏：點節點逐層展開。")
-                    + " 社群收攏：點社群展開、點成員收合；分群依連線拓樸，不代表職級。",
+                    + (" 社群收攏：點社群展開、點成員收合；本案例以合成郵件收發量加權 Louvain，不代表組織職級；社群間邊數仍是不同寄收件對數，不是郵件總封數。"
+                       if graph.edge_counts else
+                       " 社群收攏：點社群展開、點成員收合；分群依連線拓樸，不代表職級。"),
                     id="jaal-original-structural-hint",
                 ),
             ], className="jaal-context-popup"),

@@ -9,7 +9,8 @@ from .data import Graph, GraphInputError
 def mount_flask(flask_server, graph: Graph, *,
                 mount_path="/jaal-topology", root=None,
                 case_options=None, current_case_path=None,
-                initial_mode="network"):
+                initial_mode="network", case_description="",
+                case_resources=()):
     """Mount a standalone Jaal app under an existing Flask host.
 
     Call before the Flask server accepts requests. Returns the child Dash
@@ -38,7 +39,8 @@ def mount_flask(flask_server, graph: Graph, *,
     child = build_app(
         graph, root=root, requests_pathname_prefix=mount_path + "/",
         case_options=case_options, current_case_path=current_case_path,
-        initial_mode=initial_mode,
+        initial_mode=initial_mode, case_description=case_description,
+        case_resources=case_resources,
     )
     flask_server.wsgi_app = DispatcherMiddleware(
         flask_server.wsgi_app, {mount_path: child.server}

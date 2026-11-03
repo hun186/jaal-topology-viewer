@@ -1,8 +1,9 @@
-"""Deterministic topology-only Louvain groups for bounded directed graphs.
+"""Deterministic Louvain groups for bounded directed graphs.
 
-The current CSV reader deduplicates (sender, recipient) edges and ignores
-extra columns: the groups and directed counts are *not* email frequency.
-Original graph IDs, edges and translations remain untouched.
+Ordinary CSV graphs retain original topology-only, unit-weight semantics.
+Explicit synthetic email graphs can additionally carry directed event counts:
+Louvain uses event frequency as weight, while quotient directed-pair counts
+remain the original number of *unique pairs*, not number of mail events.
 """
 from __future__ import annotations
 
@@ -61,11 +62,22 @@ def detect_louvain(graph: Graph, *, resolution: float = 1.0,
 
     directed = nx.DiGraph()
     directed.add_nodes_from(sorted(graph.nodes))
-    # The graph is topology-only: each distinct directed pair has weight 1.
-    directed.add_edges_from(graph.edges)
+    if graph.edge_counts:
+        if set(graph.edge_counts) != set(graph.edges):
+            raise GraphInputError("Weighted community graph needs every directed pair")
+        for (sender, recipient), count in graph.edge_counts.items():
+            if type(count) is not int or not 1 <= count <= 1_000_000:
+                raise GraphInputError("Message frequency must be a positive bounded integer")
+            directed.add_edge(sender, recipient, weight=count)
+        weight_field = "weight"
+    else:
+        # Original taxonomy and network semantics remain topology-only:
+        # every distinct directed pair has an equal unit contribution.
+        directed.add_edges_from(graph.edges)
+        weight_field = None
     if directed.number_of_edges():
         raw_groups = nx.community.louvain_communities(
-            directed, weight=None, resolution=float(resolution), seed=seed,
+            directed, weight=weight_field, resolution=float(resolution), seed=seed,
         )
     else:
         raw_groups = [{node} for node in directed.nodes]
@@ -99,4 +111,6 @@ def detect_louvain(graph: Graph, *, resolution: float = 1.0,
         ordered, memberships, dict(sorted(between.items())),
         dict(sorted(within.items())), quotient_has_cycle=quotient_cyclic,
         seed=seed, resolution=float(resolution),
+        method=("directed-louvain-message-count-weighted" if graph.edge_counts
+                else "directed-louvain-topology-only"),
     )

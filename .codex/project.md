@@ -30,11 +30,12 @@
 ## 入口與 Repository 地圖
 | 路徑 | 作用 |
 | --- | --- |
-| `app.py`, `requirements.txt`, `vercel.json` | Vercel Flask WSGI 真正 Jaal/Dash 三案例展示（寄收件、組織樹、DAG），只載入虛構固定 CSV，不改本機 CLI |
+| `app.py`, `requirements.txt`, `vercel.json` | Vercel Flask WSGI 真正 Jaal/Dash 四案例展示（新增固定種子的企業郵件業務情境，保留原拓樸示意／組織樹／DAG）；唯讀 CSV 下載供驗證，不改本機 CLI |
 | `jaal_topology/__init__.py`, `data.py` | `Graph`、`GraphInputError`、`load_graph`、`select_subgraph` |
 | `cli.py`, `__main__.py` | `jaal-topology` 與 `python -m jaal_topology` |
 | `viewer.py`, `modes.py` | `build_app`、五種模式、原版 Jaal Search/Filter/Color/Size；左側可收合、頂部工具列可捲動、全版繪圖（可按 Esc 恢復）、可展開說明，不卸載原版 Network |
-| `community.py` | 定種子、保留方向的 Louvain 拓樸分群與方向計數 |
+| `community.py` | 原有拓樸分群保持不變；僅具明確逐邊郵件數的示範圖使用事件量加權 Louvain，社群邊數仍是獨立寄收件對數 |
+| `email_simulation.py` | 固定種子、20 工作天的虛構業務流程發信事件與收發量彙總（人名／帳號／信件內容皆非真實） |
 | `assets/` | Browser JS（包含社群投影／收攏）、Bootstrap CSS、專用精簡工具列 CSS（19.jaal_compact_layout.css、20.jaal_focus_escape.js），從套件直接提供 |
 | `integration.py` | `mount_flask`；Flask 同來源、同 port |
 | `gallery.py` | 新的可選多案例 registry：1..20 明確登記的 GalleryCase，以同來源不同路徑各自掛載真實 Jaal/Dash，搜尋／收攏 callback 狀態隔離 |

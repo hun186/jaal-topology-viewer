@@ -1,5 +1,13 @@
 # Interactive company communication demo
 
+> **Historical topology example, not a realistic email event simulation.**
+> This 77-node graph was originally mapped from a taxonomy. It has no
+> individual email timestamps, threads or observed send volumes. For the
+> newly developed **workflow-driven fictional corporate email case** (with
+> reproducible event-level data, incident spikes, reply threads and weighted
+> Louvain), see [REALISTIC_EMAIL_DEMO.md](REALISTIC_EMAIL_DEMO.md).
+
+
 This example is a **fictional, reproducible graph**, not real people or real corporate emails. Its 77 synthetic roles originate from a one-to-one rename of the `TW Affairs` taxonomy subtree (82 internal source edge records / 81 distinct directed pairs); invented reply, peer and cross-department links create a 169-edge directed network.
 
 ## Launch in one command

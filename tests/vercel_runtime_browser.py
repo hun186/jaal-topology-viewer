@@ -173,10 +173,22 @@ def check(port):
                 expect(page.get_by_label("階層（全展開）", exact=True)).to_be_checked()
                 assert "無環 DAG" in page.locator("#jaal-original-graph-profile").inner_text()
                 assert page.get_by_label("階層（收攏）", exact=True).is_enabled()
-                choose_case("公司寄收件網路（一般有環）", "/")
+                choose_case("舊版通訊拓樸（類別樹改編）", "/cases/mail-network/")
                 assert page.get_by_label("階層（收攏）", exact=True).is_disabled()
                 assert page.get_by_label("網狀（社群收攏・Louvain）", exact=True).is_enabled()
+                choose_case("企業郵件實務模擬（業務與事件）", "/")
+                expect(page.get_by_label(
+                    "網狀（社群收攏・Louvain）", exact=True
+                )).to_be_checked()
                 assert page.locator("#jaal-case-picker").is_visible()
+                page.locator("#jaal-original-help-details summary").click()
+                assert "合成郵件收發量加權" in page.locator(
+                    "#jaal-original-structural-hint"
+                ).inner_text()
+                assert page.get_by_role(
+                    "link", name="下載模擬郵件事件 CSV"
+                ).get_attribute("href") == "/demo/mail-events.csv"
+                page.locator("#jaal-original-help-details summary").click()
 
                 if errors:
                     raise AssertionError("Dash browser errors: " + repr(errors))
