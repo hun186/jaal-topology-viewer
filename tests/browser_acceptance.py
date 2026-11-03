@@ -363,12 +363,14 @@ def check(port: int, evidence: Path) -> None:
                 assert latest and latest["shown"] == 1, latest
                 assert latest["total"] == 77
                 assert frame.locator(".vis-network canvas").first.is_visible()
-                # Clear the selector in-place and recover the full graph.
-                # Dash 4 uses a Radix clear button with an accessible label;
-                # Dash 2/3 use react-select's legacy clear zone instead.
-                clear_button = frame.get_by_role("button", name="Clear selection")
-                if clear_button.count():
-                    clear_button.click()
+                # Clear in-place and recover the full source graph.
+                # Dash 4 renders an <a> with an accessible Clear selection
+                # label (NOT a button); Dash 2/3 use react-select's clear zone.
+                modern_clear = frame.locator(
+                    '#jaal-local-root [aria-label="Clear selection"]'
+                )
+                if modern_clear.count():
+                    modern_clear.click()
                 else:
                     legacy_clear = frame.locator(
                         "#jaal-local-root .Select-clear-zone"
