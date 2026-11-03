@@ -1,0 +1,7 @@
+# Isolated Vercel runtime. Does not replace the portable library's dependencies.
+# Keep Dash in the exact version already covered by upstream Hosted CI.
+Flask>=3.0,<4
+dash==3.4.0
+jaal==0.1.9
+pandas>=2.0,<3
+networkx>=3.2,<4
