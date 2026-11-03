@@ -5,11 +5,11 @@
 ## Metadata
 - 初始化狀態：`INITIALIZED`
 - 最後查證日期：2026-11-03（台灣）
-- 查證基準：`main` merge commit `47942ac3bd08d8cbcc615fa215c5e5eef286f486`；[PR #5](https://github.com/hun186/jaal-topology-viewer/pull/5) 已於 2026-11-03 Merge。下游 [text-category-profiler PR #227](https://github.com/hun186/text-category-profiler/pull/227) 已合併，將 consumer pin 更新到同一 SHA；使用者 Stage 4 候選實機驗收 9 項 PASS、consumer Hosted Windows/Ubuntu CI PASS，但 Dash 2/3/4 全矩陣及乾淨外部環境仍未證明。
+- 查證基準：`main` merge commit `b62a6b0f97767ca81e86f5b647c45d28786e5296`；[PR #14](https://github.com/hun186/jaal-topology-viewer/pull/14) 已 Merge，四案例包含固定種子的虛構企業郵件事件與頻次加權網路。下游 [text-category-profiler PR #227](https://github.com/hun186/text-category-profiler/pull/227) 僅釘舊版 `47942ac3bd08d8cbcc615fa215c5e5eef286f486`，不代表新案例／時間演化已通過 consumer 驗證。Vercel Python 公網仍因 HTTP 402／部署授權未驗證。
 - 維護 repository：`hun186/jaal-topology-viewer`
 
 ## 一句話目的
-以獨立 Python 套件將關係 CSV（與可選名稱 metadata）轉為唯讀、大小有界的 Jaal 有向圖檢視器，可用 localhost CLI 啟動或於 Flask 同埠掛載。
+以獨立 Python 套件將關係 CSV（或可選的有時間戳合成事件）轉為唯讀、大小有界的 Jaal 有向圖檢視器，可用 localhost CLI 啟動或於 Flask 同埠掛載。
 
 ## 使用者、輸入、輸出
 - 使用者：檢視分類樹或其他有向關係的 Python 開發者，以及下游 `text-category-profiler`。
@@ -36,7 +36,7 @@
 | `viewer.py`, `modes.py` | `build_app`、五種模式、原版 Jaal Search/Filter/Color/Size；左側可收合、頂部工具列可捲動、全版繪圖（可按 Esc 恢復）、可展開說明，不卸載原版 Network |
 | `community.py` | 原有拓樸分群保持不變；僅具明確逐邊郵件數的示範圖使用事件量加權 Louvain，社群邊數仍是獨立寄收件對數 |
 | `email_simulation.py` | 固定種子、20 工作天的虛構業務流程發信事件與收發量彙總（人名／帳號／信件內容皆非真實） |
-| `assets/` | Browser JS（包含社群投影／收攏）、Bootstrap CSS、專用精簡工具列 CSS（19.jaal_compact_layout.css、20.jaal_focus_escape.js），從套件直接提供 |
+| `assets/` | Browser JS（包含社群投影／收攏與可選 clientside 時間片動畫）、Bootstrap CSS、專用精簡工具列 CSS（19.jaal_compact_layout.css、20.jaal_focus_escape.js），從套件直接提供 |
 | `integration.py` | `mount_flask`；Flask 同來源、同 port |
 | `gallery.py` | 新的可選多案例 registry：1..20 明確登記的 GalleryCase，以同來源不同路徑各自掛載真實 Jaal/Dash，搜尋／收攏 callback 狀態隔離 |
 | `tests/`, `examples/` | Python/Node 測試、最小 CSV fixture |
