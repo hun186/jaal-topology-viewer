@@ -14,9 +14,11 @@
 
 - 已 Merge PR #10–#14：同一 Jaal/Dash WSGI、非 sticky/全版視野、四案例切換、可重現且明確虛構的企業郵件事件及收發量加權；Vercel 真正 Python 公網實際部署仍因先前 HTTP 402、merge-only 設定未驗證，**不得宣稱 READY**。
 - [PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 已 Merge (`8fddffa1c94edeab0dce4cedafdd44a2ceeb1ac0`)：可選事件時間片與 clientside 播放，已修正時間圖切換佈局時重新啟用 physics 問題，現有 CSV API 不變。獨立外部 consumer 的時間軸 Wheel 驗證仍列 BL-002。
+- [PR #16](https://github.com/hun186/jaal-topology-viewer/pull/16) 已 Merge (`1b9cd893531b3777b80f7efabb7bea170cbf5a85`)：從 checkout 外、Ubuntu/Windows clean Wheel 安裝驗證外部時間軸 Consumer 的 rolling frames、same-port Flask callbacks/assets；完整下游 Stage 4 仍未驗證。
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
+| 2026-11-03 | [PR #16](https://github.com/hun186/jaal-topology-viewer/pull/16) 已 Merge | HEAD `b2029b4111fc585273f3e12708642cc334b44f69` [Hosted CI 41660449981](https://github.com/hun186/jaal-topology-viewer/actions/runs/41660449981) 8/8 PASS，正式 Codex Review completed/0 Finding；Squash merge `1b9cd893531b3777b80f7efabb7bea170cbf5a85`，Linux/Windows 的獨立 Wheel 時間序列 consumer smoke PASS，不代表完整 Stage 4 驗收。 |
 | 2026-11-03 | [PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 已 Merge | HEAD `9e835cba849426d0bc2b23e5f806891a33d7998f` [Hosted CI 41659077144](https://github.com/hun186/jaal-topology-viewer/actions/runs/41659077144) 8/8 PASS，正式 Codex Review 完成 0 未解決 Finding，Squash merge `8fddffa1c94edeab0dce4cedafdd44a2ceeb1ac0`。動態時間片與佈局 physics 回歸測試已併入；不代表外部 consumer／公網部署完成。 |
 | 2026-11-03 | [PR #14](https://github.com/hun186/jaal-topology-viewer/pull/14) 已 Merge | `main` merge `b62a6b0f97767ca81e86f5b647c45d28786e5296`；新增固定種子的虛構企業郵件事件與明確頻次加權，保留 legacy 拓樸圖；不得誤認真實郵件／公網已部署。 |
 | 2026-11-03 | [PR #13](https://github.com/hun186/jaal-topology-viewer/pull/13) 已 Merge | `main` merge `dced7b5027ea565830de8630d5d900e72552e163`；獨立 GalleryCase、多路同埠 Jaal 案例隔離切換，舊單圖 API 不變。 |
@@ -31,7 +33,7 @@
 - Windows browser：PR #5 upstream Windows Hosted Chromium PASS；consumer [PR #227](https://github.com/hun186/text-category-profiler/pull/227) 已 Merge，使用者提供的 Stage 4 候選實機驗收九項 PASS、該 PR Hosted 九項工作流程 PASS；不得外推至全部 Windows／Dash 版本及 ML 工況。
 - 下游依賴更新：目前 consumer `requirements.txt` 已釘 `47942ac3bd08d8cbcc615fa215c5e5eef286f486`；PR #227 已透過受控 provenance 與第五模式預設啟用、四模式 rollback 驗證，不得重做既有升級。
 - Issue #4 替代演算法、加權郵件完整對外契約與跨版本 consumer 相容仍須額外驗收；PR #14 的合成權重、PR #15 的時間片不可視為真實郵件資料接入。
-- BL-002：本次後續 PR 將於 Ubuntu/Windows 的獨立 Wheel clean venv、離開 checkout 的外部 consumer 腳本中驗證可選 TemporalTimeline、同埠 Flask callback/assets；未經完整外部 Stage 4 工作流程的驗證，不標記為全面完成。
+- BL-002：PR #16 已取得 Ubuntu/Windows clean Wheel time-series consumer 及同埠 Flask callback/assets 的 Hosted CI 證據。剩餘完整外部 Stage 4 與更多版本／真實瀏覽器組合仍未驗收；本次新增非首頁 GalleryCase 時間軸隔離回歸，仍需當次 HEAD Hosted CI／Review 確認。
 
 ## Archive Index
 - `.codex/archive/README.md`；日常任務不主動讀 archive。

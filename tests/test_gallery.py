@@ -100,6 +100,77 @@ class GalleryContractTests(unittest.TestCase):
                 self.assertIsNotNone(_get_id(root, "jaal-case-location"))
         self.assertIn("jaal-case-location.href", self.gallery.callback_map)
 
+    def test_temporal_case_on_nonroot_route_keeps_other_cases_untouched(self):
+        # The public demo currently uses a timeline only at '/', but the
+        # reusable gallery must support a time-aware case in ANY slot.
+        from jaal_topology.email_simulation import EmailEvent
+        from jaal_topology.temporal import TemporalTimeline
+
+        timeline = TemporalTimeline(self.cycle, (
+            EmailEvent("m1", "2026-10-05T09:00", "thread",
+                       "X", "Y", "team-routine", "hello"),
+            EmailEvent("m2", "2026-10-06T10:00", "thread",
+                       "Y", "X", "team-routine", "reply", reply_to="m1"),
+        ))
+        gallery = create_gallery_app([
+            GalleryCase("tree", "Non-temporal root", self.tree,
+                        initial_mode="hierarchical"),
+            GalleryCase("timed", "Temporal child", self.cycle,
+                        initial_mode="network-community-collapsed",
+                        temporal_timeline=timeline),
+            GalleryCase("dag", "Non-temporal DAG", self.dag),
+        ])
+        client = gallery.server.test_client()
+
+        for route, has_timeline in (
+            ("/", False),
+            ("/cases/timed/", True),
+            ("/cases/dag/", False),
+        ):
+            with self.subTest(route=route):
+                layout_response = client.get(route + "_dash-layout")
+                self.assertEqual(layout_response.status_code, 200)
+                payload = layout_response.get_json()
+                frames = _get_id(payload, "jaal-temporal-frames")
+                self.assertEqual(frames is not None, has_timeline)
+                self.assertEqual(
+                    _get_id(payload, "jaal-temporal-controls") is not None,
+                    has_timeline,
+                )
+                self.assertEqual(
+                    _get_id(payload, "jaal-case-picker")["props"]["value"],
+                    route,
+                )
+                deps = client.get(route + "_dash-dependencies")
+                self.assertEqual(deps.status_code, 200)
+                self.assertEqual(
+                    "jaal-temporal-" in json.dumps(deps.get_json()),
+                    has_timeline,
+                )
+                if has_timeline:
+                    packet = frames["props"]["data"]
+                    self.assertEqual(len(packet["frames"]), 2)
+                    self.assertEqual(
+                        [packet["frames"][0]["messages"],
+                         packet["frames"][1]["messages"]], [1, 2],
+                    )
+                    self.assertEqual(
+                        packet["frames"][1]["edges"],
+                        [["X", "Y", 1], ["Y", "X", 1]],
+                    )
+                    self.assertEqual(client.get(
+                        route + "assets/21.jaal_temporal_playback.js"
+                    ).status_code, 200)
+        mounted = gallery.server._jaal_topology_mounts
+        self.assertEqual(set(mounted), {"/cases/timed", "/cases/dag"})
+        self.assertIsNot(mounted["/cases/timed"], mounted["/cases/dag"])
+        # A timeline is bound to its own graph, never shared across cases.
+        with self.assertRaisesRegex(GraphInputError, "must match this Graph"):
+            create_gallery_app([
+                GalleryCase("bad", "Unrelated", self.tree,
+                            temporal_timeline=timeline),
+            ])
+
     def test_original_single_graph_ui_is_unchanged(self):
         independent = build_app(self.tree)
         payload = independent.server.test_client().get("/_dash-layout").get_json()
