@@ -210,9 +210,13 @@ def check(port):
 
                 page.get_by_label("滑動時間窗", exact=True).check()
                 page.locator("#jaal-temporal-window").click()
-                page.locator(
-                    "#jaal-temporal-window .Select-menu-outer .Select-option"
-                ).filter(has_text="1 天").first.click(timeout=15000)
+                # Dash's dropdown virtualizes option rows (often rendered as
+                # VirtualizedSelectOption, not the legacy .Select-option).
+                # Select by visible text inside this specific control rather
+                # than coupling the browser test to an internal CSS class.
+                page.locator("#jaal-temporal-window").get_by_text(
+                    "1 天", exact=True
+                ).last.click(timeout=15000)
                 page.wait_for_function(
                     "() => window.dash_clientside?.jaal_temporal?.frame?.mode === 'rolling' && " +
                     "window.dash_clientside?.jaal_temporal?.frame?.from === " +
