@@ -8,7 +8,8 @@
 | ADR-0001 | 可攜核心獨立 repository 單一來源 | Accepted | 2026-11-03 |
 | ADR-0002 | 下游 exact Git SHA pin 與分開驗收 | Accepted | 2026-11-03 |
 | ADR-0003 | 唯讀、有界圖、loopback-only 預設 | Accepted | 2026-11-03 |
-| ADR-0004 | Vercel 靜態 PoC 與 Merge-only 釋出 | Accepted | 2026-11-03 |
+| ADR-0004 | Vercel 靜態 PoC 與 Merge-only 釋出 | Superseded by ADR-0005 (static only) | 2026-11-03 |
+| ADR-0005 | 公開 PoC 共用真正 Jaal/Dash，維持 Merge-only | Accepted | 2026-11-03 |
 
 ## ADR-0001 — 單一來源
 - 背景：portable 核心曾位於 `text-category-profiler/packages/jaal-topology`，下游整合 PR [#209](https://github.com/hun186/text-category-profiler/pull/209)、[#210](https://github.com/hun186/text-category-profiler/pull/210) 後搬離。
@@ -32,6 +33,14 @@
 - vercel.json 關閉所有 Git 自動部署。GitHub Actions 必須滿足 PR closed、merged、base main、相關檔案變更、顯式 enable，並檢查同 merge SHA 是否已部署。
 - 需獨立的 Vercel project、最小權限 GitHub environment secret 和固定 CLI 版本；憑證不存在則不部署。
 - CI/正式 Review 與 Vercel READY 分開驗證，不推定 merge 就等於上線。
+
+## ADR-0005 — Shared Jaal/Dash Flask PoC instead of separate SVG
+
+- 使用者指出 Vercel 靜態 SVG 與本機原版的外觀、功能差異過大。
+- 決策：在 `app.py` 使用原本 `build_app()`、完整 Jaal/visdcc、五種模式與 callback，而非維護平行視覺引擎。
+- 僅允許公網展示 `examples/company_communications.csv` 與 `company_people.csv`，固定 77/169；不支援外部 CSV 上傳、不暴露私人 Stage 4 或模型資料。
+- 保留 ADR-0004 的部署預算控制：Vercel Git 自動部署永遠關閉、僅相關 PR Merge + 明確 enable；每次部署還需真實 READY/HTTP 驗證。
+- 代價：Flask/Dash serverless 需處理冷啟動、Python 套件體積、資源消耗，不能等同靜態站；未驗證前不得宣稱在 Vercel 與 Windows CLI 完全相同。
 
 ## 維護
 新決策使用遞增不重用 ID；被取代時標記 Superseded 與新決策連結；不把一般 bugfix、猜測或秘密放入。
