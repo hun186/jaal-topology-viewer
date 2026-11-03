@@ -49,6 +49,7 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             "17.jaal_structural_collapse.js",
             "18.jaal_community_collapse.js",
             "bootstrap.min.css",
+            "19.jaal_compact_layout.css",
         ):
             result = self.client.get("/assets/" + name)
             self.assertEqual(result.status_code, 200, name)
