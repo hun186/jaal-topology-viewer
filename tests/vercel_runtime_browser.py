@@ -66,7 +66,9 @@ def check(port):
                 canvas_open = page.locator(".vis-network canvas").first.bounding_box()["width"]
                 # The timeline adds a compact second control row; other
                 # single-graph and non-temporal cases retain the small toolbar.
-                assert page.locator("#jaal-compact-toolbar").bounding_box()["height"] < 260
+                height = page.locator("#jaal-compact-toolbar").bounding_box()["height"]
+                print("TRACE_TEMPORAL_TOOLBAR_HEIGHT=" + str(height), flush=True)
+                assert height < 260, height
                 sidebar.click()
                 expect(sidebar).to_have_attribute("aria-expanded", "false", timeout=15000)
                 expect(panel).to_be_hidden(timeout=15000)
