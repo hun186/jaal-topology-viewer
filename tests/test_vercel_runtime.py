@@ -149,6 +149,7 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             "jaal-temporal-forward", "jaal-temporal-loop",
             "jaal-temporal-index", "jaal-temporal-status",
             "jaal-temporal-frames", "jaal-temporal-frame",
+            "jaal-temporal-labels", "jaal-temporal-community-policy",
         ):
             self.assertIn(control, serialized)
         self.assertGreater(len(_timeline.days), 20)
