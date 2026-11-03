@@ -165,7 +165,7 @@ def _normalize_upstream_layout(layout):
 def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
               case_options=None, current_case_path=None,
               initial_mode="network", case_description="",
-              case_resources=()):
+              case_resources=(), temporal_timeline=None):
     """Build a localhost-ready Dash Jaal app; optional isolated case navigation.
 
     Original Jaal Search/Filter/Color/Size callbacks remain intact. Each
@@ -195,7 +195,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         )
 
     from dash import (
-        Dash, Input, Output, ClientsideFunction, callback_context,
+        Dash, Input, Output, State, ClientsideFunction, callback_context,
         dcc, html, no_update,
     )
     from jaal import Jaal
@@ -225,6 +225,21 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         raise GraphInputError("Case description must be a short string.")
     if not isinstance(case_resources, tuple):
         raise GraphInputError("Case resources must be a tuple of local links.")
+    # Time-aware playback is opt-in and must represent precisely this same
+    # graph. The ordinary CSV/Graph API and all existing Jaal Dash callbacks
+    # remain unchanged for non-temporal callers.
+    temporal_frames = None
+    if temporal_timeline is not None:
+        from .temporal import TemporalTimeline
+
+        if not isinstance(temporal_timeline, TemporalTimeline):
+            raise GraphInputError("temporal_timeline must be a TemporalTimeline")
+        source = temporal_timeline.graph
+        if (tuple(graph.edges) != tuple(source.edges)
+                or set(graph.nodes) != set(source.nodes)
+                or graph.edge_counts != source.edge_counts):
+            raise GraphInputError("Temporal event source must match this Graph")
+        temporal_frames = temporal_timeline.frames(mode="cumulative", window_days=7)
     community_result = detect_louvain(graph)
     community_partition = community_result.member_to_group
     edges, nodes = to_jaal_dataframes(graph, root=root)
@@ -371,6 +386,100 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         dcc.Interval(id="jaal-original-physics-restore",
                      interval=300, disabled=True, n_intervals=0),
     ]
+    if temporal_frames is not None:
+        from datetime import date
+        days = temporal_timeline.days
+        last = len(days) - 1
+        date_marks = {
+            i: day.strftime("%m/%d")
+            for i, day in enumerate(days)
+            if i in (0, last) or day.weekday() == 0
+        }
+        controls_children.append(html.Div([
+            html.Div([
+                html.Strong("時間演化", className="jaal-temporal-heading"),
+                dcc.RadioItems(
+                    id="jaal-temporal-mode",
+                    options=[
+                        {"label": "累積至目前", "value": "cumulative"},
+                        {"label": "滑動時間窗", "value": "rolling"},
+                    ],
+                    value="cumulative", inline=True,
+                    className="jaal-temporal-modes",
+                ),
+                html.Span("時間窗"),
+                dcc.Dropdown(
+                    id="jaal-temporal-window",
+                    options=[
+                        {"label": f"{day} 天", "value": day}
+                        for day in (1, 3, 7, 14, 30)
+                    ], value=7, clearable=False, searchable=False,
+                    className="jaal-temporal-select",
+                ),
+                html.Span("步長"),
+                dcc.Dropdown(
+                    id="jaal-temporal-step",
+                    options=[
+                        {"label": f"{day} 天", "value": day}
+                        for day in (1, 2, 5, 7)
+                    ], value=1, clearable=False, searchable=False,
+                    className="jaal-temporal-select",
+                ),
+                html.Span("速度"),
+                dcc.Dropdown(
+                    id="jaal-temporal-speed",
+                    options=[
+                        {"label": "快", "value": 350},
+                        {"label": "標準", "value": 700},
+                        {"label": "慢", "value": 1400},
+                        {"label": "極慢", "value": 2500},
+                    ], value=700, clearable=False, searchable=False,
+                    className="jaal-temporal-select",
+                ),
+                dcc.Checklist(
+                    id="jaal-temporal-loop",
+                    options=[{"label": "循環", "value": "loop"}],
+                    value=["loop"], inline=True,
+                ),
+            ], className="jaal-temporal-options"),
+            html.Div([
+                html.Span("分析區間"),
+                html.Div(
+                    dcc.RangeSlider(
+                        id="jaal-temporal-range", min=0, max=last, step=1,
+                        marks=date_marks, value=[0, last],
+                        allowCross=False, updatemode="mouseup",
+                    ), className="jaal-temporal-range",
+                ),
+                html.Button("◀", id="jaal-temporal-back", n_clicks=0,
+                            title="後退一個時間步長"),
+                html.Button("▶ 播放", id="jaal-temporal-play", n_clicks=0),
+                html.Button("▶", id="jaal-temporal-forward", n_clicks=0,
+                            title="前進一個時間步長"),
+                html.Span("播放進度"),
+                html.Div(
+                    dcc.Slider(
+                        id="jaal-temporal-index", min=0, max=last, step=1,
+                        marks=date_marks, value=last, updatemode="mouseup",
+                    ), className="jaal-temporal-playhead",
+                ),
+            ], className="jaal-temporal-navigation"),
+            html.Div(
+                f"{days[0]} ～ {days[-1]}　全期間",
+                id="jaal-temporal-status", className="jaal-temporal-status",
+                role="status",
+            ),
+            dcc.Store(id="jaal-temporal-frames", data=temporal_frames,
+                      storage_type="memory"),
+            dcc.Store(
+                id="jaal-temporal-frame",
+                data=temporal_frames["frames"][-1], storage_type="memory",
+            ),
+            dcc.Interval(
+                id="jaal-temporal-tick", interval=700, n_intervals=0,
+                disabled=True,
+            ),
+        ], id="jaal-temporal-controls", className="jaal-temporal-controls"))
     if case_options is not None:
         # A normal URL change deliberately creates a clean Dash instance per
         # graph. Using graph.data alone would leave upstream Jaal callbacks
@@ -504,15 +613,73 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             return options, mode.startswith("hierarchical")
         raise ValueError("Unsupported Jaal layout mode")
 
-    app.clientside_callback(
-        ClientsideFunction(namespace="jaal_visible_labels",
-                           function_name="apply"),
-        Output("graph", "run"),
+    if temporal_frames is not None:
+        from dash.exceptions import PreventUpdate
+
+        @app.callback(
+            Output("jaal-temporal-frames", "data"),
+            Input("jaal-temporal-range", "value"),
+            Input("jaal-temporal-mode", "value"),
+            Input("jaal-temporal-window", "value"),
+        )
+        def prepare_temporal_frames(bounds, mode, window_days):
+            if (not isinstance(bounds, (list, tuple))
+                    or len(bounds) != 2
+                    or type(bounds[0]) is not int
+                    or type(bounds[1]) is not int
+                    or mode not in ("cumulative", "rolling")
+                    or window_days not in (1, 3, 7, 14, 30)):
+                raise PreventUpdate
+            try:
+                return temporal_timeline.frames(
+                    first_index=bounds[0], last_index=bounds[1],
+                    mode=mode, window_days=window_days,
+                )
+            except GraphInputError:
+                raise PreventUpdate
+
+        app.clientside_callback(
+            ClientsideFunction(namespace="jaal_temporal", function_name="playback"),
+            Output("jaal-temporal-index", "value"),
+            Output("jaal-temporal-tick", "disabled"),
+            Output("jaal-temporal-play", "children"),
+            Input("jaal-temporal-play", "n_clicks"),
+            Input("jaal-temporal-back", "n_clicks"),
+            Input("jaal-temporal-forward", "n_clicks"),
+            Input("jaal-temporal-tick", "n_intervals"),
+            Input("jaal-temporal-frames", "data"),
+            State("jaal-temporal-index", "value"),
+            State("jaal-temporal-tick", "disabled"),
+            State("jaal-temporal-step", "value"),
+            State("jaal-temporal-loop", "value"),
+        )
+        app.clientside_callback(
+            ClientsideFunction(namespace="jaal_temporal", function_name="choose"),
+            Output("jaal-temporal-frame", "data"),
+            Output("jaal-temporal-status", "children"),
+            Input("jaal-temporal-index", "value"),
+            Input("jaal-temporal-frames", "data"),
+        )
+        app.clientside_callback(
+            ClientsideFunction(namespace="jaal_temporal", function_name="speed"),
+            Output("jaal-temporal-tick", "interval"),
+            Input("jaal-temporal-speed", "value"),
+        )
+
+    graph_run_inputs = [
         Input("jaal-original-layout-mode", "value"),
         Input("graph", "data"),
         Input("jaal-original-chinese-labels", "value"),
         Input("jaal-original-ct-translations", "data"),
         Input("jaal-community-membership", "data"),
         Input("jaal-structural-eligible", "data"),
+    ]
+    if temporal_frames is not None:
+        graph_run_inputs.append(Input("jaal-temporal-frame", "data"))
+    app.clientside_callback(
+        ClientsideFunction(namespace="jaal_visible_labels",
+                           function_name="apply"),
+        Output("graph", "run"),
+        *graph_run_inputs,
     )
     return app
