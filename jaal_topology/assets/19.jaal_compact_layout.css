@@ -141,6 +141,8 @@
   padding-left: 20px;
   padding-right: 20px;
 }
+/* Grey is the editable analysis selection; only the live window is blue. */
+#jaal-temporal-range .rc-slider-track { background: #9baabb; }
 .jaal-temporal-range .rc-slider-handle {
   width: 18px;
   height: 18px;
