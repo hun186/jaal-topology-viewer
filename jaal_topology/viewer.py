@@ -200,11 +200,11 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
             if isinstance(edge.get("title"), str):
                 edge["title"] = escape_html(edge["title"], quote=True)
 
-    # A CSS viewport-relative height avoids the old 600px canvas surrounded
-    # by unused document space. vis.js accepts CSS height values and resizes
-    # its backing canvas as the window layout changes.
+    # Vis Network officially supports percentage heights and autoResize.
+    # CSS sets an explicit height on the graph column; the original canvas
+    # follows ordinary and viewport-focused layouts without reinitializing.
     original_app = network.create(directed=True, vis_opts={
-        "height": "calc(100dvh - 150px)",
+        "height": "100%",
         "interaction": {"hover": True},
         "physics": {"enabled": True, "stabilization": {"iterations": 100}},
     })
@@ -366,18 +366,12 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
         Output("jaal-original-physics-restore", "disabled"),
         Input("jaal-original-layout-mode", "value"),
         Input("jaal-original-physics-restore", "n_intervals"),
-        Input("jaal-focus-toggle", "n_clicks"),
         prevent_initial_call=True,
     )
-    def switch_mode(mode, _ticks, focus_clicks):
+    def switch_mode(mode, _ticks):
         if structure.has_cycle and mode in ("network-collapsed", "hierarchical-collapsed"):
             raise ValueError("Structural descendant collapse disabled for directed cycles")
         triggered = callback_context.triggered[0]["prop_id"].split(".", 1)[0]
-        focused = bool((focus_clicks or 0) % 2)
-        # A partial options change preserves mode, cluster membership and
-        # camera. The component's vis-network.setOptions resizes the canvas.
-        if triggered == "jaal-focus-toggle":
-            return {"height": "100dvh" if focused else base["height"]}, no_update
         if triggered == "jaal-original-physics-restore":
             if mode not in ("network", "network-collapsed", "network-community-collapsed"):
                 return no_update, True
@@ -397,10 +391,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
             "network", "network-collapsed", "network-community-collapsed",
             "hierarchical", "hierarchical-collapsed",
         ):
-            options = layout_options(base, mode)
-            if focused:
-                options["height"] = "100dvh"
-            return options, mode.startswith("hierarchical")
+            return layout_options(base, mode), mode.startswith("hierarchical")
         raise ValueError("Unsupported Jaal layout mode")
 
     app.clientside_callback(
