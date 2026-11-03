@@ -196,19 +196,35 @@
   font-weight: 600;
   white-space: nowrap;
 }
-.jaal-edge-length-control {
-  flex: 0 0 180px;
-  min-width: 130px;
-  padding: 0 8px 3px;
+.jaal-edge-length-details {
+  position: relative;
+  flex: 0 0 auto;
   font-size: 12px;
   color: #35516e;
 }
-.jaal-edge-length-control .rc-slider {
-  margin: 0 2px 3px;
+.jaal-edge-length-details > summary {
+  cursor: pointer;
+  border: 1px solid #d0dde9;
+  background: #fff;
+  padding: 3px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
 }
-.jaal-edge-length-control .rc-slider-mark-text {
-  font-size: 10px;
+.jaal-edge-length-control {
+  position: absolute;
+  z-index: 95;
+  top: calc(100% + 5px);
+  right: 0;
+  width: 240px;
+  padding: 10px 18px 22px;
+  background: #fff;
+  border: 1px solid #d0dde9;
+  box-shadow: 0 7px 22px rgba(15,23,42,.16);
+  border-radius: 7px;
+  font-size: 12px;
 }
+.jaal-edge-length-control .rc-slider { margin: 6px 3px; }
+.jaal-edge-length-control .rc-slider-mark-text { font-size: 10px; }
 
 .jaal-mode-options {
   min-width: 0;
