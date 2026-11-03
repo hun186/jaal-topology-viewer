@@ -446,30 +446,6 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     value=3, clearable=False, searchable=False,
                     className="jaal-temporal-select",
                 ),
-                dcc.RadioItems(
-                    id="jaal-temporal-overlap",
-                    options=[
-                        {"label": "互斥分段（步長＝窗長）", "value": "disjoint"},
-                        {"label": "重疊滑窗（自訂步長）", "value": "overlap"},
-                    ], value="disjoint", inline=True,
-                    className="jaal-temporal-modes",
-                ),
-                html.Details([
-                    html.Summary("進階：社群、步長、速度"),
-                    html.Div([
-                        html.Span("社群演化"),
-                        dcc.RadioItems(
-                    id="jaal-temporal-community-policy",
-                    options=[
-                        {"label": "固定社群（比較流量）", "value": "fixed"},
-                        {"label": "逐格重分群（實驗）", "value": "dynamic"},
-                    ], value="fixed", inline=True,
-                ),
-                dcc.Checklist(
-                    id="jaal-temporal-labels",
-                    options=[{"label": "顯示全部節點名稱（較擁擠）", "value": "all"}],
-                    value=[], inline=True,
-                ),
                 html.Span("重疊時步長"),
                 dcc.Dropdown(
                     id="jaal-temporal-step",
@@ -488,6 +464,30 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                         {"label": "極慢", "value": 2500},
                     ], value=700, clearable=False, searchable=False,
                     className="jaal-temporal-select",
+                ),
+                dcc.RadioItems(
+                    id="jaal-temporal-overlap",
+                    options=[
+                        {"label": "互斥分段（步長＝窗長）", "value": "disjoint"},
+                        {"label": "重疊滑窗（自訂步長）", "value": "overlap"},
+                    ], value="disjoint", inline=True,
+                    className="jaal-temporal-modes",
+                ),
+                html.Details([
+                    html.Summary("進階：社群與循環"),
+                    html.Div([
+                        html.Span("社群演化"),
+                        dcc.RadioItems(
+                    id="jaal-temporal-community-policy",
+                    options=[
+                        {"label": "固定社群（比較流量）", "value": "fixed"},
+                        {"label": "逐格重分群（實驗）", "value": "dynamic"},
+                    ], value="fixed", inline=True,
+                ),
+                dcc.Checklist(
+                    id="jaal-temporal-labels",
+                    options=[{"label": "顯示全部節點名稱（較擁擠）", "value": "all"}],
+                    value=[], inline=True,
                 ),
                 dcc.Checklist(
                     id="jaal-temporal-loop",
