@@ -133,6 +133,47 @@
   height: 29px;
   border-color: #bcd0e4;
 }
+.jaal-temporal-overlap-select {
+  flex: 0 0 150px;
+  min-width: 0;
+  font-size: 12px;
+}
+.jaal-temporal-overlap-select .Select-control,
+.jaal-temporal-overlap-select .Select__control {
+  min-height: 29px;
+  height: 29px;
+  border-color: #bcd0e4;
+}
+.jaal-temporal-precision {
+  position: relative;
+  flex: 0 0 auto;
+  font-size: 12px;
+}
+.jaal-temporal-precision > summary {
+  cursor: pointer;
+  padding: 4px 7px;
+  border: 1px solid #abc0d5;
+  background: #fff;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.jaal-temporal-precision-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  position: absolute;
+  z-index: 150;
+  top: calc(100% + 4px);
+  right: 0;
+  padding: 11px;
+  width: min(400px, calc(100vw - 30px));
+  border: 1px solid #bcd0e4;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15,23,42,.2);
+}
+
 .jaal-temporal-navigation > button {
   border: 1px solid #90a8c4;
   background: #fff;
