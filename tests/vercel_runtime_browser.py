@@ -56,6 +56,28 @@ def check(port):
                 page.locator(".vis-network canvas").first.wait_for(
                     state="visible", timeout=90000,
                 )
+                sidebar = page.locator("#jaal-sidebar-toggle")
+                panel = page.locator(".jaal-settings-col")
+                column = page.locator(".jaal-graph-col")
+                help_details = page.locator("#jaal-original-help-details")
+                assert sidebar.is_visible() and panel.is_visible()
+                assert not help_details.evaluate("(el) => el.open")
+                width_open = column.bounding_box()["width"]
+                canvas_open = page.locator(".vis-network canvas").first.bounding_box()["width"]
+                assert page.locator("#jaal-compact-toolbar").bounding_box()["height"] < 105
+                sidebar.click()
+                assert not panel.is_visible()
+                assert sidebar.get_attribute("aria-expanded") == "false"
+                page.wait_for_timeout(700)
+                assert column.bounding_box()["width"] > width_open + 180
+                assert page.locator(".vis-network canvas").first.bounding_box()["width"] > canvas_open + 150
+                sidebar.click()
+                assert panel.is_visible()
+                assert sidebar.get_attribute("aria-expanded") == "true"
+                help_details.locator("summary").click()
+                assert page.locator("#jaal-original-structural-hint").is_visible()
+                help_details.locator("summary").click()
+                assert not help_details.evaluate("(el) => el.open")
                 assert page.locator(
                     "#jaal-original-layout-mode input[type=radio]"
                 ).count() == 5
