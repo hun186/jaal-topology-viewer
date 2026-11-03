@@ -266,11 +266,18 @@
     const last = Math.max(0, rows.length - 1);
     const stride = Math.max(1, Math.ceil(rows.length / 6));
     const marks = {};
+    const labelAt = (row) => {
+      // Cumulative frames all start at the same analysis boundary; show
+      // their advancing exclusive cutoff, not that repeated start.
+      const boundary = row.mode === "cumulative"
+        ? (row.to_exclusive || row.to || row.from) : row.from;
+      return String(boundary || "").replace("T", " ").slice(5, 16);
+    };
     for (let i = 0; i < rows.length; i += stride) {
-      marks[i] = String(rows[i].from || "").replace("T", " ").slice(5, 16);
+      marks[i] = labelAt(rows[i]);
     }
     if (rows.length) {
-      marks[last] = String(rows[last].from || "").replace("T", " ").slice(5, 16);
+      marks[last] = labelAt(rows[last]);
     }
     return [last, marks];
   }
