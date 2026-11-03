@@ -327,17 +327,17 @@ def check(port: int, evidence: Path) -> None:
                 # variant changes input nesting; never mutate Dash state.
                 root_picker = frame.locator("#jaal-local-root")
                 root_picker.click()
-                print("TRACE_ROOT_PICKER=" + root_picker.evaluate(
+                print("TRACE_ROOT_PICKER=" + ascii(root_picker.evaluate(
                     "(el) => el.outerHTML.slice(0, 1400)"
-                ), flush=True)
+                )), flush=True)
                 search_input = root_picker.locator("input")
                 if search_input.count():
                     search_input.fill(candidate)
                 else:
                     page.keyboard.insert_text(candidate)
-                print("TRACE_ROOT_SEARCH=" + root_picker.evaluate(
+                print("TRACE_ROOT_SEARCH=" + ascii(root_picker.evaluate(
                     "(el) => el.outerHTML.slice(0, 1400)"
-                ), flush=True)
+                )), flush=True)
                 # Select the visible menu option rather than assuming the
                 # Enter key chooses the intended (possibly virtualized) row.
                 frame.get_by_text(candidate, exact=False).last.click(
