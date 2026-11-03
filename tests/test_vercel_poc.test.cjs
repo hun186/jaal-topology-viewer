@@ -31,8 +31,12 @@ test("builds fictional directed graph and original IDs", () => {
 test("Vercel Git integration cannot automatically deploy any branch", () => {
   const cfg = JSON.parse(readFileSync(resolve(root, "vercel.json")));
   assert.equal(cfg.git.deploymentEnabled, false);
-  assert.equal(cfg.buildCommand, "node vercel-poc/build.mjs");
-  assert.equal(cfg.outputDirectory, "vercel-poc/dist");
+  assert.equal(cfg.framework, "flask");
+  assert.equal(cfg.buildCommand, undefined);
+  assert.equal(cfg.outputDirectory, undefined);
+  const app = readFileSync(resolve(root, "app.py"), "utf8");
+  assert.match(app, /build_app\(_graph\)/);
+  assert.match(app, /app = dash_app\.server/);
   assert.ok(cfg.headers[0].headers.some(x => x.key === "Content-Security-Policy"));
 });
 test("deployment only on merged and relevant PRs", () => {
