@@ -26,6 +26,7 @@ class GalleryCase:
     initial_mode: str = "network"
     description: str = ""
     resources: tuple[tuple[str, str], ...] = ()
+    temporal_timeline: object | None = None
 
 
 def create_gallery_app(
@@ -63,6 +64,10 @@ def create_gallery_app(
             raise GraphInputError("Each case needs a nonempty title (max 100 chars).")
         if not isinstance(case.graph, Graph):
             raise GraphInputError("Gallery cases must contain a loaded Graph.")
+        if case.temporal_timeline is not None:
+            from .temporal import TemporalTimeline
+            if not isinstance(case.temporal_timeline, TemporalTimeline):
+                raise GraphInputError("Gallery timeline must be a TemporalTimeline")
         if not isinstance(case.description, str) or len(case.description) > 900:
             raise GraphInputError("Gallery case description must be at most 900 chars.")
         if not isinstance(case.resources, tuple) or len(case.resources) > 5:
@@ -88,6 +93,7 @@ def create_gallery_app(
         first.graph, root=first.root, initial_mode=first.initial_mode,
         case_options=options, current_case_path=paths[0],
         case_description=first.description, case_resources=first.resources,
+        temporal_timeline=first.temporal_timeline,
     )
     for case, path in zip(cases[1:], paths[1:]):
         mount_flask(
@@ -96,5 +102,6 @@ def create_gallery_app(
             case_options=options, current_case_path=path,
             initial_mode=case.initial_mode,
             case_description=case.description, case_resources=case.resources,
+            temporal_timeline=case.temporal_timeline,
         )
     return root_app
