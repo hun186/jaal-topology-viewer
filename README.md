@@ -5,6 +5,20 @@ one or more relationship CSV files, plus optional node display metadata CSV.
 This package has no import from `BertScript`, `ClassesTree`, `TCFMain`, model
 training, or WorkPool. It **never writes** either source CSV.
 
+## Optional public Vercel proof of concept
+
+The [Vercel public PoC](vercel-poc/README.md) is a browser-only, read-only
+SVG visualization of the 77-node / 169-link fictional communication demo.
+It supports directed link inspection, search, Chinese labels, pan/zoom,
+network/hierarchy layouts and fictional department-based collapse.
+It is **not** the Python Dash/Jaal runtime or Louvain.
+
+To conserve Vercel daily deployments, automatic Git deployments are disabled
+on **all branches**. A separately enabled GitHub Action can deploy only when
+a relevant PR has **merged into main**. PR updates and CI runs never deploy;
+Vercel credentials and activation must be configured separately. See
+vercel-poc/README.md.
+
 ## Install and use in another Python project
 
 This repository **is the standalone package root**. With Python 3.10+
