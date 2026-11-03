@@ -48,14 +48,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install portable Jaal and Chromium automation
-        run: python -m pip install -e . playwright
+      - name: Install portable Jaal and Chromium automation (pinned Dash 4)
+        run: python -m pip install -e . playwright "dash==4.5.0"
       - name: Install pinned Playwright Chromium browser
         run: python -m playwright install chromium
       - name: Validate real Windows browser / same-port iframe
         run: python tests/browser_acceptance.py --evidence browser-evidence
       - name: Align standalone runtime with Vercel dependency versions
         run: python -m pip install -r requirements.txt
+      - name: Verify Dash 3.4 local scope and reset in real Windows Chromium
+        run: |
+          python -m pip check
+          python -c "from importlib.metadata import version; assert version('dash') == '3.4.0'"
+          python tests/browser_acceptance.py --port 8098 --evidence browser-evidence/dash3
       - name: Validate deployed Flask entry through real Windows Chromium
         run: python tests/vercel_runtime_browser.py
       - name: Build read-only static Vercel PoC without deploying

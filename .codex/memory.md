@@ -23,11 +23,12 @@
 
 - [PR #19](https://github.com/hun186/jaal-topology-viewer/pull/19) 已 Merge（`46cb4365cb543aa33338193c350c815eec4e3ae1`）：Louvain anchored 展開、60–300px 間距，分鐘／小時／日的互斥預設 [start,end) 及重疊滑窗、可編輯分析範圍與移動藍條；最後 HEAD `cca22c5` Hosted CI 8/8 PASS、正式 Codex Review completed/0 unresolved。Windows 人工視覺驗收仍待執行。
 
-- 2026-11-04 使用者新增獨立 Jaal searchable root/radius 需求：本候選實作 `neighborhood.py` + `22.jaal_local_focus.js` + Dash 搜尋選單，對 DAG 和一般有環有向圖提供 out/in/both 最短 0..10 hop 或全部可達、誘導子圖；根節點清空恢復全圖。需以 PR 最新 CI/Review 及 Windows 實機證據確認，未自動升級 consumer pin。
+- [PR #20](https://github.com/hun186/jaal-topology-viewer/pull/20) 已 Merge（`fcb980d3c68465321987bc082dfca1f1943eb421`）：新增 `neighborhood.py` + `22.jaal_local_focus.js`，支援原 ID／中文別名 root、out/in/both 0..10 hop 或全部可達、循環安全誘導子圖與還原全圖；最終 HEAD `0a8c724` Hosted 8/8、正式 Codex Review 0 findings。僅當次 Windows Chromium 測試通過，不代表全部 Dash 版本／Stage 4 人工視覺驗收；consumer exact pin 未變。
 
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
+| 2026-11-04 | [PR #20](https://github.com/hun186/jaal-topology-viewer/pull/20) 已 Merge | HEAD `0a8c724` [Hosted CI 41741363056](https://github.com/hun186/jaal-topology-viewer/actions/runs/41741363056) 8/8 PASS、正式 Codex Review completed／0 Finding，Squash merge `fcb980d3c68465321987bc082dfca1f1943eb421`；支援局部子圖選取與還原。 |
 | 2026-11-04 | [PR #19](https://github.com/hun186/jaal-topology-viewer/pull/19) 已 Merge | HEAD `cca22c5` [Hosted CI 41739326857](https://github.com/hun186/jaal-topology-viewer/actions/runs/41739326857) 8/8 PASS，正式 Codex Review completed／0 unresolved，Squash merge `46cb4365cb543aa33338193c350c815eec4e3ae1`。|
 | 2026-11-03 | [PR #17](https://github.com/hun186/jaal-topology-viewer/pull/17) 已 Merge | 8/8 Hosted CI、Codex Review completed/0 Finding；Squash merge `e680b473ab52f5197b3eb1e5bd654685c342a080`，nonroot graph gallery temporal control 隔離驗證。 |
 | 2026-11-03 | [PR #16](https://github.com/hun186/jaal-topology-viewer/pull/16) 已 Merge | HEAD `b2029b4111fc585273f3e12708642cc334b44f69` [Hosted CI 41660449981](https://github.com/hun186/jaal-topology-viewer/actions/runs/41660449981) 8/8 PASS，正式 Codex Review completed/0 Finding；Squash merge `1b9cd893531b3777b80f7efabb7bea170cbf5a85`，Linux/Windows 的獨立 Wheel 時間序列 consumer smoke PASS，不代表完整 Stage 4 驗收。 |
@@ -37,9 +38,6 @@
 | 2026-11-03 | [PR #12](https://github.com/hun186/jaal-topology-viewer/pull/12) 已 Merge | Latest HEAD `e0b5822e77ad4acc840661fc4a79119f346c3cfb` Hosted CI [41618971626](https://github.com/hun186/jaal-topology-viewer/actions/runs/41618971626) 8/8 PASS；Windows 真 Canvas viewport height、Esc 還原驗證；Codex Review 0 Finding，merge `2562cd741203de2cdab0fd5f414a8a41ef49a038`；Vercel 仍因先前 HTTP402 未部署 Python。 |
 | 2026-11-03 | [PR #7](https://github.com/hun186/jaal-topology-viewer/pull/7) 已 Merge | Latest HEAD `9f699ef45994267e5f19039b5187da503ed2461f` Hosted [41591382206](https://github.com/hun186/jaal-topology-viewer/actions/runs/41591382206) 四項工作 PASS，正式 Codex Review completed/0 findings；merge commit `744bcdba684d3bbfd5bf87190ec9ed13b4569130`；Ubuntu／Windows clean Wheel install + same-port assets 驗證。 |
 | 2026-11-03 | [PR #6](https://github.com/hun186/jaal-topology-viewer/pull/6) 已 Merge | Latest HEAD `b4d50af8b8501763d22a2ebee6cf5d29abeaad5e` Hosted [41590709918](https://github.com/hun186/jaal-topology-viewer/actions/runs/41590709918) Ubuntu／Windows PASS，正式 Codex Review completed/0 findings；merge commit `c1642147c40fa4e9907161ab7c64ceb02ff4b667`，新增 Louvain Seed/Resolution 與 3k/5k 邊界測試。 |
-| 2026-11-03 | [Consumer PR #227](https://github.com/hun186/text-category-profiler/pull/227) 已 Merge | 受控升級 Jaal exact pin 至 `47942ac3bd08d8cbcc615fa215c5e5eef286f486`；使用者 Stage 4 候選九項實機 PASS，consumer PR #227 九項 Hosted workflow success；保留舊四模式 rollback。未驗證全部外部環境。 |
-| 2026-11-03 | [PR #5](https://github.com/hun186/jaal-topology-viewer/pull/5) 已 Merge | GitHub 確認 merge commit `47942ac3bd08d8cbcc615fa215c5e5eef286f486`；既有 Hosted [41494602192](https://github.com/hun186/jaal-topology-viewer/actions/runs/41494602192) Ubuntu／Windows Chromium PASS，已驗證 real visdcc quotient、Search hidden、中文 CT、77/169 還原；不代表 Stage 4/consumer 完整驗收。 |
-| 2026-11-02 | 主線 CI 基準 | `main` `fc49c0d2559c71df79f438e070ef3610e7093e5a` [Hosted CI success](https://github.com/hun186/jaal-topology-viewer/actions/runs/41480969808)；未宣稱本次本機重跑或 Windows 視覺驗收。 |
 
 ## Open Handoffs
 - Windows browser：PR #5 upstream Windows Hosted Chromium PASS；consumer [PR #227](https://github.com/hun186/text-category-profiler/pull/227) 已 Merge，使用者提供的 Stage 4 候選實機驗收九項 PASS、該 PR Hosted 九項工作流程 PASS；不得外推至全部 Windows／Dash 版本及 ML 工況。

@@ -4,8 +4,8 @@
 
 ## Metadata
 - 初始化狀態：`INITIALIZED`
-- 最後查證日期：2026-11-03（台灣）
-- 查證基準：`main` Squash merge commit `1b9cd893531b3777b80f7efabb7bea170cbf5a85`；[PR #16](https://github.com/hun186/jaal-topology-viewer/pull/16) 的 Ubuntu/Windows isolated Wheel 時間演化 Consumer smoke 已於 2026-11-03 Merge、Hosted CI 8/8 PASS；[PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 的可選事件時間片／前端播放已 Merge；先前 [PR #14](https://github.com/hun186/jaal-topology-viewer/pull/14) 提供四案例與虛構郵件頻次加權。下游 [text-category-profiler PR #227](https://github.com/hun186/text-category-profiler/pull/227) 仍釘舊版 `47942ac3bd08d8cbcc615fa215c5e5eef286f486`，不代表新時間功能已通過 consumer 驗證。Vercel 公網 Python 仍未證實 READY（先前 HTTP 402／部署需另行授權）。
+- 最後查證日期：2026-11-04（台灣）
+- 查證基準：`main` Squash merge commit `fcb980d3c68465321987bc082dfca1f1943eb421`；[PR #16](https://github.com/hun186/jaal-topology-viewer/pull/16) 的 Ubuntu/Windows isolated Wheel 時間演化 Consumer smoke 已於 2026-11-03 Merge、Hosted CI 8/8 PASS；[PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 的可選事件時間片／前端播放已 Merge；先前 [PR #14](https://github.com/hun186/jaal-topology-viewer/pull/14) 提供四案例與虛構郵件頻次加權。下游 [text-category-profiler PR #227](https://github.com/hun186/text-category-profiler/pull/227) 仍釘舊版 `47942ac3bd08d8cbcc615fa215c5e5eef286f486`，不代表新時間功能已通過 consumer 驗證。Vercel 公網 Python 仍未證實 READY（先前 HTTP 402／部署需另行授權）。
 - 維護 repository：`hun186/jaal-topology-viewer`
 
 ## 一句話目的
@@ -33,13 +33,13 @@
 | `app.py`, `requirements.txt`, `vercel.json` | Vercel Flask WSGI 真正 Jaal/Dash 四案例展示（新增固定種子的企業郵件業務情境，保留原拓樸示意／組織樹／DAG）；唯讀 CSV 下載供驗證，不改本機 CLI |
 | `jaal_topology/__init__.py`, `data.py` | `Graph`、`GraphInputError`、`load_graph`、`select_subgraph` |
 | `cli.py`, `__main__.py` | `jaal-topology` 與 `python -m jaal_topology` |
-| `viewer.py`, `modes.py` | `build_app`、五種模式、原版 Jaal Search/Filter/Color/Size；左側可收合、頂部工具列可捲動、全版繪圖（可按 Esc 恢復）、可展開說明，不卸載原版 Network |
+| `viewer.py`, `modes.py`, `neighborhood.py` | `build_app`、五種模式、原版 Jaal Search/Filter/Color/Size；可搜尋原 ID／中文別名根節點，依 out/in/both 0–10 hop 或全部可達顯示唯讀局部誘導子圖，清除選擇還原全圖；左側可收合、非 sticky 工具列、Esc 全版退出，原版 Network 不卸載 |
 | `community.py` | 原有拓樸分群保持不變；僅具明確逐邊郵件數的示範圖使用事件量加權 Louvain，社群邊數仍是獨立寄收件對數 |
 | `email_simulation.py` | 固定種子、20 工作天的虛構業務流程發信事件與收發量彙總（人名／帳號／信件內容皆非真實） |
-| `assets/` | Browser JS（包含社群投影／收攏與可選 clientside 時間片動畫）、Bootstrap CSS、專用精簡工具列 CSS（19.jaal_compact_layout.css、20.jaal_focus_escape.js），從套件直接提供 |
+| `assets/` | Browser JS（包含社群投影／收攏、時間片動畫與 22.jaal_local_focus.js 局部子圖投影）、Bootstrap CSS、精簡工具列 CSS，直接由套件提供 |
 | `integration.py` | `mount_flask`；Flask 同來源、同 port |
 | `gallery.py` | 新的可選多案例 registry：1..20 明確登記的 GalleryCase，以同來源不同路徑各自掛載真實 Jaal/Dash，搜尋／收攏 callback 狀態隔離 |
-| `tests/`, `examples/` | Python/Node 測試、最小 CSV fixture |
+| `tests/`, `examples/` | Python/Node 測試、合成 CSV fixture、Windows Chromium 下真實 Jaal/visdcc 的根節點局部子圖互動驗證 |
 | `vercel-poc/`, `vercel.json`, `.github/workflows/vercel-poc-merge-only.yml` | Vercel 真實 Python Jaal PoC；舊 SVG 留作歷史對照；Git 自動部署禁止、相關 PR 合併後才可依 opt-in workflow 發布（預設關閉） |
 | `.github/workflows/ci.yml` | Hosted CI；Ubuntu Python／Node／Dash 與 Windows Chromium 互動／iframe smoke，留存瀏覽器截圖 |
 | `REPOSITORY_SETUP.md` | 唯一原始碼來源、下游 exact SHA 升級 |
