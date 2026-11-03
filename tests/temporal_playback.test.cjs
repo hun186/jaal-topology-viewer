@@ -129,10 +129,17 @@ test("frame selection reports actual window boundaries and message counts", () =
   assert.equal(temporal.speed(-1), 700);
 });
 
-test("temporal network only labels top traffic participants unless explicitly expanded", () => {
+test("temporal network only labels stable high-volume participants unless expanded", () => {
+  temporal.setLabelUniverse({
+    nodes: source.nodes,
+    edges: [{id: "ab", from: "A", to: "B", mailCount: 30}],
+  });
   temporal.setFrame({...frame, edges: [["A", "B", 3]]});
   temporal.setDisplayOptions([]);
   assert.equal(temporal.displayLabel("A", "Sales / A"), "Sales / A");
+  assert.equal(temporal.displayLabel("C", "Finance / C"), "");
+  temporal.setFrame({...frame, edges: [["B", "C", 7]]});
+  // Incoming activity changes but stable full-period label ranking does not.
   assert.equal(temporal.displayLabel("C", "Finance / C"), "");
   temporal.setDisplayOptions(["all"]);
   assert.equal(temporal.displayLabel("C", "Finance / C"), "Finance / C");
