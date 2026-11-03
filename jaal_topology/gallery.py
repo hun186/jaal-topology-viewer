@@ -72,7 +72,8 @@ def create_gallery_app(
                     or not isinstance(resource[0], str)
                     or not isinstance(resource[1], str)
                     or not 1 <= len(resource[0]) <= 80
-                    or not re.fullmatch(r"/[a-z0-9][a-z0-9/_-]*[a-z0-9]", resource[1])):
+                    or not re.fullmatch(r"/[a-z0-9][a-z0-9/_.-]*[a-z0-9]", resource[1])
+                    or ".." in resource[1] or "//" in resource[1]):
                 raise GraphInputError("Gallery resource URLs must be safe local paths.")
 
     paths = ["/"] + [
