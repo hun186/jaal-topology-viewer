@@ -59,6 +59,10 @@
     );
   }).call(this);`;
 
+  const COMMUNITY_RUN = String.raw`(function () {
+    globalThis.dash_clientside.jaal_community_collapse.activate.call(this);
+  }).call(this);`;
+
   function resolve(id, preferChinese) {
     const label = String(id);
     const state = root.dash_clientside.jaal_visible_labels;
@@ -69,13 +73,16 @@
       ? translated.trim() : label;
   }
 
-  function apply(mode, graphData, selectedLanguages, translations) {
+  function apply(mode, graphData, selectedLanguages, translations, membership,
+                 structuralEligible) {
     // Only pre-authored static commands are ever evaluated by visdcc.
     // CSV contents are data in a bounded Dash Store, never executable code.
     if (!graphData || !Array.isArray(graphData.nodes)) return "";
     const preferChinese = Array.isArray(selectedLanguages) &&
       selectedLanguages.includes("zh");
     const state = root.dash_clientside.jaal_visible_labels;
+    const community = root.dash_clientside && root.dash_clientside.jaal_community_collapse;
+    if (community) community.partition = membership || {};
     state.translations = translations && typeof translations === "object" &&
       !Array.isArray(translations) ? translations : {};
     const hierarchy = HIERARCHICAL_RUN.replace(
@@ -90,7 +97,19 @@
         ? "globalThis.dash_clientside.jaal_visible_labels.resolve(node.id, true)"
         : "String(node.id)"
     );
-    const restorePrefix = "if (globalThis.dash_clientside && globalThis.dash_clientside.jaal_structural_collapse) globalThis.dash_clientside.jaal_structural_collapse.restore.call(this); var ds = this.nn;";
+    const restorePrefix = "if (globalThis.dash_clientside && globalThis.dash_clientside.jaal_community_collapse) globalThis.dash_clientside.jaal_community_collapse.restore.call(this); if (globalThis.dash_clientside && globalThis.dash_clientside.jaal_structural_collapse) globalThis.dash_clientside.jaal_structural_collapse.restore.call(this); var ds = this.nn;";
+    // The server and the actual visdcc callback have separate Dash inputs.
+    // Disabling radio choices or rejecting the server options callback alone
+    // cannot prevent a directly injected value from activating JS collapse.
+    // Keep the optional sixth argument backwards compatible for consumers
+    // still pinned to the original four-mode asset/callback signature.
+    if (structuralEligible === false &&
+        (mode === "network-collapsed" || mode === "hierarchical-collapsed")) {
+      return network.replace("var ds = this.nn;", restorePrefix);
+    }
+    if (mode === "network-community-collapsed") {
+      return preferChinese ? COMMUNITY_RUN.replace("activate.call(this)", "activate.call(this, true)") : COMMUNITY_RUN;
+    }
     if (mode === "hierarchical-collapsed") {
       return preferChinese ? HIERARCHICAL_COLLAPSED_RUN.replace(
         '"hierarchical-collapsed"',

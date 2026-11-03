@@ -70,8 +70,9 @@ jaal-topology --edges links.csv --metadata names.csv \
 
 The web UI provides a live, **off-by-default** Chinese label checkbox;
 English IDs remain authoritative in Search and node tooltips. It also retains
-the original Jaal Search/Filter/Color/Size controls plus **four**
+the original Jaal Search/Filter/Color/Size controls plus **four legacy**
 layout modes (network/hierarchy, fully shown/structurally collapsed),
+and an independent experimental **網狀（社群收攏・Louvain）** mode,
 click-to-expand/collapse and the existing smooth hierarchy expansion animation.
 Changing display labels never rewrites graph data.
 
@@ -117,17 +118,45 @@ port and resolve data paths relative to the repository root. The detailed
 [interactive demonstration guide](examples/COMPANY_DEMO.md) includes suggested
 Search, Chinese labels and cross-team exploration steps.
 
-Choose **網狀（全展開） / network** for this general directed graph. The current
-`網狀（收攏）` mode implements **taxonomy descendant collapse**, not
-social-network clustering, and is unsuitable as a meaningful collapse for
-emails. Hierarchical positioning likewise does not assert an organization chart.
+Start with **網狀（全展開） / network** for this general directed graph.
+Try **網狀（社群收攏・Louvain）** for experimental topology-based
+communities (seed 42, resolution 1; unweighted distinct directed pairs).
+Click a community to open it; click one of its members to collapse it.
+The viewer labels the selected directed graph as **tree** (one root and no
+shared children), **forest** (multiple disconnected rooted trees), **DAG**
+(acyclic shared descendants/multiple parents), or **cyclic network** (at least
+one directed cycle, including self-loops or cycles in disconnected components).
+Classification is structural only: an email arrow never becomes an org chart.
+The classification and descendant-mode safety gate use the same selected
+graph without changing nodes, edges, or their identifiers.
+
+The four legacy mode codes stay supported: **網狀（收攏）** still uses taxonomy
+descendants, *not* communities. For **directed cyclic graphs**, the two
+structural-descendant collapsed radio choices are **disabled with an explanation**,
+because cyclic reachability makes many nodes appear to have nearly all others
+as descendants. Full network/hierarchy and Louvain remain available. For
+acyclic DAGs with multiple parents, structural collapse remains available
+with a warning that reachable descendants are not exclusive subordinates. The quotient can have a **new directed cycle even when the input is a
+directed acyclic taxonomy DAG**. The UI reports the quotient-cycle status
+separately from the original graph; it is never presented as a cycle in the
+source taxonomy. Selecting a community link will expose the underlying
+unmodified directed source relations (no invented reverse edge).
+
+The community partition is an analytical
+grouping, **not** an organization chart. The renderer preserves independent
+directional totals; edge count labels are unique source pairs, not emails.
+Search/Filter temporarily restores uncollapsed source visualization while
+active. The Hosted Windows Chromium headless browser smoke verifies a real
+same-port iframe, canvas, mode selectors, language toggle and Search, and
+uploads screenshots as evidence. Drag/camera/Color/Size and the Windows
+Stage 4 consumer remain separately unverified.
 
 The auditable one-to-one taxonomy→fictional-role mapping is in
 [`examples/company_communications_source_mapping.csv`](examples/company_communications_source_mapping.csv).
 See [general graph community-collapse design](docs/general_graph_community_collapse.md)
-for the proposed Louvain/Leiden-based community abstraction, directed
-aggregation, restore rules and testing gate. **This is a proposal, not a
-shipped community-clustering feature.**
+for the implemented experimental directed Louvain mode, alternative Leiden
+research proposals, directed aggregation, restore rules and testing gate.
+**Leiden remains a proposal; the separate Louvain mode is implemented.**
 
 ## Known difference from the Stage 4 customized Jaal viewer
 

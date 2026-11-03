@@ -10,7 +10,7 @@ from copy import deepcopy
 from html import escape as escape_html
 from collections import defaultdict, deque
 
-from .data import Graph
+from .data import Graph, assess_structural_collapse
 
 
 def _depths(graph: Graph, root=None):
@@ -118,13 +118,14 @@ def _normalize_upstream_layout(layout):
 
 
 def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
-    """Build an independent localhost-ready Dash Jaal app, with all four modes.
+    """Build an independent localhost-ready Dash Jaal app, including community mode.
 
     The original Jaal Search/Filter/Color/Size callbacks are preserved.
     JavaScript is installed from THIS package, not from the calling project.
     """
     from .data import GraphInputError
     from .modes import layout_options
+    from .community import detect_louvain
     from . import ASSETS_DIR
 
     prefix = requests_pathname_prefix
@@ -150,6 +151,9 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
     )
     from jaal import Jaal
 
+    structure = assess_structural_collapse(graph)
+    community_result = detect_louvain(graph)
+    community_partition = community_result.member_to_group
     edges, nodes = to_jaal_dataframes(graph, root=root)
     network = Jaal(edges, nodes)
     network._callback_search_graph = _search_english_id
@@ -183,15 +187,39 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
     graph_network.options = deepcopy(base)
     _normalize_upstream_layout(original_app.layout)
 
+    type_labels = {
+        "tree": "樹狀階層（單一起點）",
+        "forest": "樹狀森林（多個起點）",
+        "dag": "無環 DAG（共享後代／多父節點）",
+        "cyclic": "一般有環網路（不適合子樹收攏）",
+    }
     controls = html.Div([
+        html.Span("圖形類型：" + type_labels[structure.graph_kind],
+                  id="jaal-original-graph-profile",
+                  style={"fontSize": "12px", "fontWeight": 600,
+                         "color": "#9A3412" if structure.has_cycle else "#334155"}),
+        html.Span(
+            ("原始圖無環，但 Louvain 社群彙總後產生循環；不代表分類父子關係有環。"
+             if not structure.has_cycle and community_result.quotient_has_cycle else
+             "原始圖含有向迴路，社群彙總圖也有循環。"
+             if structure.has_cycle and community_result.quotient_has_cycle else
+             "社群彙總圖無循環；原始關係與社群彙總屬不同層級。"),
+            id="jaal-original-community-cycle-hint",
+            style={"fontSize": "12px",
+                   "color": "#9A3412" if community_result.quotient_has_cycle
+                   else "#475569"},
+        ),
         html.Span("顯示模式："),
         dcc.RadioItems(
             id="jaal-original-layout-mode",
             options=[
                 {"label": "網狀（全展開）", "value": "network"},
-                {"label": "網狀（收攏）", "value": "network-collapsed"},
+                {"label": "網狀（收攏）", "value": "network-collapsed",
+                 "disabled": structure.has_cycle},
+                {"label": "網狀（社群收攏・Louvain）", "value": "network-community-collapsed"},
                 {"label": "階層（全展開）", "value": "hierarchical"},
-                {"label": "階層（收攏）", "value": "hierarchical-collapsed"},
+                {"label": "階層（收攏）", "value": "hierarchical-collapsed",
+                 "disabled": structure.has_cycle},
             ],
             value="network", inline=True,
         ),
@@ -203,10 +231,24 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
         ),
         dcc.Store(id="jaal-original-ct-translations",
                   data=graph.translations, storage_type="memory"),
+        dcc.Store(id="jaal-community-membership",
+                  data=community_partition, storage_type="memory"),
+        # Same immutable selected-graph assessment guards the browser callback.
+        dcc.Store(id="jaal-structural-eligible",
+                  data=not structure.has_cycle, storage_type="memory"),
         dcc.Interval(id="jaal-original-physics-restore",
                      interval=300, disabled=True, n_intervals=0),
-        html.Span("收攏模式：點擊節點展開／收合一層；數字為不同子孫數。",
-                  style={"fontSize": "12px", "color": "#475569"}),
+        html.Span(
+            ("已檢測到有向迴路：子樹收攏會把循環可達的節點誤當階層後代，故停用網狀／階層的「收攏」選項；請改用網狀（社群收攏・Louvain）。"
+             if structure.has_cycle else
+             f"這是無環有向圖，但有 {structure.multi_parent_nodes} 個多父節點；子樹收攏計算的是可達的不同節點，不一定是獨占的下屬。"
+             if structure.multi_parent_nodes else
+             "子樹收攏：點節點逐層展開。")
+            + " 社群收攏：點社群展開、點成員收合；分群依連線拓樸，不代表職級。",
+            id="jaal-original-structural-hint",
+            style={"fontSize": "12px",
+                   "color": "#9A3412" if structure.has_cycle else "#475569"},
+        ),
     ], style={"display": "flex", "alignItems": "center", "gap": "12px",
               "flexWrap": "wrap", "padding": "8px 4px",
               "position": "sticky", "top": "0",
@@ -241,9 +283,11 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
         prevent_initial_call=True,
     )
     def switch_mode(mode, _ticks):
+        if structure.has_cycle and mode in ("network-collapsed", "hierarchical-collapsed"):
+            raise ValueError("Structural descendant collapse disabled for directed cycles")
         triggered = callback_context.triggered[0]["prop_id"].split(".", 1)[0]
         if triggered == "jaal-original-physics-restore":
-            if mode not in ("network", "network-collapsed"):
+            if mode not in ("network", "network-collapsed", "network-community-collapsed"):
                 return no_update, True
             reset = layout_options(base, mode)
             physics = base.get("physics", {})
@@ -258,7 +302,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
                 )},
             }, True
         if mode in (
-            "network", "network-collapsed",
+            "network", "network-collapsed", "network-community-collapsed",
             "hierarchical", "hierarchical-collapsed",
         ):
             return layout_options(base, mode), mode.startswith("hierarchical")
@@ -272,5 +316,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/"):
         Input("graph", "data"),
         Input("jaal-original-chinese-labels", "value"),
         Input("jaal-original-ct-translations", "data"),
+        Input("jaal-community-membership", "data"),
+        Input("jaal-structural-eligible", "data"),
     )
     return app

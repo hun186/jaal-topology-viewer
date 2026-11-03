@@ -5,7 +5,7 @@
 ## Current Focus
 - `INITIALIZED`（2026-11-03）；啟動任務固定讀 `project.md` 和本檔 Current Focus／Recent Outcomes。
 - 本 repo 是通用 `jaal_topology` Python/JS 核心**唯一來源**；不得回複製到 `text-category-profiler`。
-- 維持唯讀 CSV、原始有向圖 IDs、匯入／顯示上限、四模式與同 port Flask mount。
+- 維持唯讀 CSV、原始有向圖 IDs、匯入／顯示上限、四個 legacy 模式及獨立實驗 Louvain 模式、同 port Flask mount。
 - 下游使用 reviewed exact Git SHA，更新必須另行修訂 consumer pin、執行 consumer CI/Review。
 - Windows 實機視覺、Dash 2/3/4 及乾淨外部 consumer 尚不能視為已驗收。
 - 本 repo 的通用圖 viewer 與 consumer Stage 4 專屬 root picker、sidebar、iframe autoheight 分工不同。
@@ -13,13 +13,14 @@
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
+| 2026-11-03 | PR #5 hosted browser acceptance 部分完成 | 上游 HEAD `8d9beddd1be75cb4219952cc20dbc69fe411532a` Hosted run [41494602192](https://github.com/hun186/jaal-topology-viewer/actions/runs/41494602192) Ubuntu／Windows Chromium PASS，正式 Codex Review completed/0 findings；真實 visdcc DataSet 驗證 Louvain quotient、Search hidden flags、中文 CT、77/169 還原。Stage 4/consumer 仍 pending，未 Merge。 |
 | 2026-11-03 | Codex memory bootstrap | 由 `main` `fc49c0d2559c71df79f438e070ef3610e7093e5a` 的程式、manifest、CI、README 建立 project/workflows/architecture/contracts/decisions/backlog 與 Quickstart；此次僅文件，不修改產品程式碼或測試。 |
 | 2026-11-02 | 獨立核心歸屬文件 | [PR #1](https://github.com/hun186/jaal-topology-viewer/pull/1) 已 merged；README／REPOSITORY_SETUP 明確說明 source of truth、下游 exact SHA 更新。 |
 | 2026-11-02 | 主線 CI 基準 | `main` `fc49c0d2559c71df79f438e070ef3610e7093e5a` [Hosted CI success](https://github.com/hun186/jaal-topology-viewer/actions/runs/41480969808)；未宣稱本次本機重跑或 Windows 視覺驗收。 |
 
 ## Open Handoffs
-- Windows browser：root selector、Jaal Search/Filter/Color/Size、四模式、中文 fallback、收攏動畫、focus、same-port iframe 的 consumer 驗證。
-- 下游依賴更新：provenance、Stage 4 相容測試、最新 HEAD CI 與正式 Review；上游 merge 不自動影響下游。
+- Windows browser：PR #5 upstream Windows Hosted Chromium headless smoke PASS；Stage 4 consumer root selector、Filter/Color/Size、收攏動畫／drag／focus 等實機驗收仍待完成。
+- 下游依賴更新：consumer 現釘 `7a7d8ba1f847b2f95a620c61a0c5a94f0523e255`；其 `test_jaal_topology_portable.py` 仍嚴格斷言四個 mode，升級五模式需先更新 consumer contract/test 再驗證完整 Stage 4，不能靜默改 pin。
 - 本次文件 PR 合併狀態以 GitHub 為準；不能在此預先宣告正式 review 或 merge 已完成。
 
 ## Archive Index

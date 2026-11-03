@@ -315,6 +315,8 @@
   }
 
   function activate(mode, preferChinese) {
+    const community = root.dash_clientside && root.dash_clientside.jaal_community_collapse;
+    if (community && typeof community.restore === "function") community.restore.call(this);
     if (!COLLAPSED.has(mode) || !this.nn || !this.ee || !this.net) return;
     const source = this.props && this.props.data;
     if (!source || !Array.isArray(source.nodes) || !Array.isArray(source.edges)) return;

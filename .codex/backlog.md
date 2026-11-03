@@ -13,4 +13,6 @@
 
 ## 維護
 - BL-001／BL-002 的原始追蹤依據：`README.md`、`REPOSITORY_SETUP.md`；未執行不代表失敗。
+- PR #5 在 Hosted Windows Chromium（GitHub Actions run 41494602192）驗證了 standalone same-port iframe、visdcc quotient、Search hidden、中文 CT 和 77/169 還原；**不等於**使用者 Windows Stage 4 完整驗收，BL-001 不標 Done。
+- 下游 `text-category-profiler` 的 `test_jaal_topology_portable.py` 固定期待四種模式，若將 consumer exact pin 升到新版五模式，須同步更新測試契約、執行 Stage 4 consumer CI 與 formal review；BL-002 不標 Done。
 - 新增需要採納來源與驗證完成條件；Done/Dropped 保留簡短驗證或理由，不悄悄刪除。

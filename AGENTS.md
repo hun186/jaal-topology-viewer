@@ -16,7 +16,7 @@
 
 <!-- BEGIN CODEX PROJECT QUICKSTART -->
 - 初始化狀態：`INITIALIZED`（2026-11-03；依 `main` `fc49c0d2559c71df79f438e070ef3610e7093e5a` 盤點）
-- 專案目的：獨立、唯讀地顯示 CSV 有向關係圖；保留原始節點 ID，支援中文顯示、四種 Jaal 網狀／階層與收攏模式。
+- 專案目的：獨立、唯讀地顯示 CSV 有向關係圖；保留原始節點 ID，支援中文顯示、四種既有 Jaal 網狀／階層模式與獨立的實驗 Louvain 社群收攏模式。
 - 主要技術：Python 3.10+、Jaal、pandas、Dash／Flask／Werkzeug、內含 JavaScript/CSS；Node.js 執行 JS 測試。
 - 主要入口：`jaal-topology`、`python -m jaal_topology`、`load_graph/select_subgraph`、`mount_flask`。
 - 最快驗證：`python -m unittest discover -s tests -p "test_*.py" -v` 與 `node --test tests/*.test.cjs`；HTTP smoke 見 `.github/workflows/ci.yml`。
