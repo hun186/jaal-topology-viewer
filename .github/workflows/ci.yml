@@ -61,3 +61,64 @@ jobs:
           name: jaal-windows-browser-evidence
           path: browser-evidence/
           if-no-files-found: warn
+
+  clean-wheel:
+    name: clean-wheel (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build non-editable wheel
+        run: python -m pip wheel --no-deps --wheel-dir wheelhouse .
+      - name: Smoke isolated wheel away from checkout
+        shell: bash
+        run: |
+          python -m venv .wheel-venv
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            PYTHON="$PWD/.wheel-venv/Scripts/python.exe"
+          else
+            PYTHON="$PWD/.wheel-venv/bin/python"
+          fi
+          "$PYTHON" -m pip install --no-cache-dir wheelhouse/*.whl
+          cd "$HOME"
+          "$PYTHON" - <<'PY'
+          import sys
+          import tempfile
+          from pathlib import Path
+          from flask import Flask
+          import jaal_topology
+          from jaal_topology import ASSETS_DIR, load_graph
+          from jaal_topology.community import detect_louvain
+          from jaal_topology.integration import mount_flask
+          from jaal_topology.viewer import build_app
+          
+          # Run outside the checkout; importing the editable source would be a false PASS.
+          source = Path(jaal_topology.__file__).resolve()
+          assert source.is_relative_to(Path(sys.prefix).resolve()), (source, sys.prefix)
+          assert ASSETS_DIR.is_dir()
+          with tempfile.TemporaryDirectory() as scratch:
+              edges = Path(scratch) / "edges.csv"
+              edges.write_text("source,target\nRoot,Child\nChild,Root\n", encoding="utf-8")
+              graph = load_graph(edges)
+              assert set(graph.nodes) == {"Root", "Child"}
+              assert set(detect_louvain(graph).member_to_group) == set(graph.nodes)
+              standalone = build_app(graph)
+              assert standalone.server.test_client().get("/_dash-layout").status_code == 200
+              host = Flask("clean_wheel_smoke")
+              mount_flask(host, graph, mount_path="/installed-graph")
+              client = host.test_client()
+              assert client.get("/installed-graph/_dash-layout").status_code == 200
+              for asset in (
+                  "16.jaal_visible_labels.js", "17.jaal_structural_collapse.js",
+                  "18.jaal_community_collapse.js", "bootstrap.min.css",
+              ):
+                  assert client.get("/installed-graph/assets/" + asset).status_code == 200, asset
+          print("CLEAN_WHEEL_ISOLATED_HTTP_PASS", sys.platform, source)
+          PY

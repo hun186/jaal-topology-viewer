@@ -17,6 +17,7 @@
 | 手動啟動 viewer | `jaal-topology --edges examples/relationships.csv --metadata examples/metadata.csv --root Root` | README；會持續提供 localhost server，非快速測試 |
 | 替代啟動 | `python -m jaal_topology --edges examples/relationships.csv --root Root -p 8059` | README |
 | Dash HTTP/asset smoke | `build_app` + Flask test_client，驗證 `/_dash-layout`、`16.jaal_visible_labels.js`、`17.jaal_structural_collapse.js`、`18.jaal_community_collapse.js`、`bootstrap.min.css` 皆回傳 200 | `.github/workflows/ci.yml` 有完整可複製程式 |
+| Clean Wheel 兩系統隔離驗證 | CI `clean-wheel` matrix（ubuntu-latest／windows-latest）：`python -m pip wheel --no-deps --wheel-dir wheelhouse .`，fresh venv 裝 Wheel 後切出 checkout，實際驗證 Python import／Louvain／Dash HTML/JS/CSS／Flask same-port | `.github/workflows/ci.yml`；只驗套件 Wheel，不等於外部 consumer 全組合或 Stage 4 實機 |
 | Windows Chromium smoke | `python -m pip install playwright`, `python -m playwright install chromium`, `python tests/browser_acceptance.py --evidence browser-evidence` | `ci.yml` browser-windows job；使用虛構資料、同埠 iframe、截圖；**不是** Stage 4 完整手動驗收 |
 | Lint、format、typecheck、build | 沒有已確認 canonical 指令 | 不擅自捏造 |
 
