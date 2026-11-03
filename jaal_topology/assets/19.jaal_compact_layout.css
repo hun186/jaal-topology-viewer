@@ -196,6 +196,20 @@
   font-weight: 600;
   white-space: nowrap;
 }
+.jaal-edge-length-control {
+  flex: 0 0 180px;
+  min-width: 130px;
+  padding: 0 8px 3px;
+  font-size: 12px;
+  color: #35516e;
+}
+.jaal-edge-length-control .rc-slider {
+  margin: 0 2px 3px;
+}
+.jaal-edge-length-control .rc-slider-mark-text {
+  font-size: 10px;
+}
+
 .jaal-mode-options {
   min-width: 0;
   display: flex;
