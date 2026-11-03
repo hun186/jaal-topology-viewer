@@ -128,9 +128,17 @@ def check(port: int, evidence: Path) -> None:
                 )
                 expect(focus_toggle).to_have_attribute("aria-pressed", "true")
                 expect(frame.locator(".jaal-settings-col")).to_be_hidden()
-                focused_canvas_height = frame.locator(
-                    ".vis-network canvas"
-                ).first.bounding_box()["height"]
+                # The class callback and graph.options resize callback run
+                # independently; wait for the actual vis.js Canvas redraw.
+                focused_canvas_height = 0
+                deadline = time.monotonic() + 20
+                while time.monotonic() < deadline:
+                    focused_canvas_height = frame.locator(
+                        ".vis-network canvas"
+                    ).first.bounding_box()["height"]
+                    if focused_canvas_height > 940:
+                        break
+                    page.wait_for_timeout(200)
                 assert focused_canvas_height > 940, focused_canvas_height
                 page.screenshot(path=str(evidence / "05-full-viewport.png"),
                                 full_page=True)
