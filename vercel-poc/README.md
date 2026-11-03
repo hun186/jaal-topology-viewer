@@ -1,50 +1,65 @@
-# Vercel Topology PoC — public, static and read-only
+# Public Vercel PoC — genuine Jaal/Dash runtime
 
-This is a client-only SVG concept demonstrator, **not** the Python Dash/Jaal server.
-It uses the repository's fictional 77-role / 169-directed-pair example.
-No real email, production database, login, telemetry, uploaded CSV, model or API key.
-The department collapse is a fictional role grouping, **not Louvain**.
-Original node IDs and directed relationships are preserved in source-derived graph.json.
+The public endpoint now runs the **same** `jaal_topology.viewer.build_app()`
+used by the standalone Python CLI, exposed as Flask WSGI from the root
+`app.py`. It is not the earlier independent SVG reproduction.
 
-## Build and verify
+## Demonstrated behavior
 
-Run from repository root on Node 22:
+- Real Jaal/visdcc Search, Filter, Color, Size and interactive graph physics
+- All five portable layout choices: network, DAG-only structural collapse,
+  Louvain community collapse, hierarchy, DAG-only hierarchical collapse
+- Real graph-type/cycle guidance, optional CT translations and original IDs
+- Same original fictional corporate communication fixture: 77 nodes,
+  169 unique directed edges. Because this graph has cycles, the two
+  structural collapse controls are disabled **exactly as on localhost**.
+  Louvain mode stays available.
 
-~~~sh
-node vercel-poc/build.mjs
-node --test tests/test_vercel_poc.test.cjs
-~~~
+The old static SVG prototype remains in `vercel-poc/` as an explicitly
+**unpublished historical comparison**; it is *not* the deployed viewer.
+The public runtime does not support arbitrary file uploads, secrets,
+private datasets, databases or model training.
 
-Serve the generated vercel-poc/dist folder as static files. Existing Windows
-Chromium CI also executes python tests/vercel_poc_browser.py after the build.
-The static builder is deterministic and rejects unexpected CSV schema/size.
+## Run a deployment-equivalent local instance
 
-## Strict merge-only quota policy
+```sh
+python -m pip install -r requirements.txt
+python -m unittest discover -s tests -p 'test_vercel_runtime.py' -v
+python -c "from app import app; app.run(host='127.0.0.1', port=8099)"
+```
 
-The root vercel.json explicitly sets git.deploymentEnabled=false. This disables
-Vercel's automatic Git-based deployments for all branches, even if someone links
-the project to the GitHub repository later. Do not enable Git auto-deploy in UI.
+The rendered app is then available at `http://127.0.0.1:8099/`.
+`/healthz` exposes only the fixture mode/count identity. The existing
+portable CLI remains independent and does not import `app.py`.
 
-The only release automation is .github/workflows/vercel-poc-merge-only.yml.
-It has only a trusted pull_request_target closed trigger, then strictly requires merged=true
-and base=main, a relevant changed-file path, and an explicit deployment switch.
-Ordinary pushes, new or updated PRs, CI/Review reruns, unrelated merges and
-workflow_dispatch never create a Vercel deployment. Concurrency serializes
-releases. Before deploying, it checks the Vercel API for an existing
-production deployment with the same merge SHA, and fails closed on API errors.
+CI verifies this entry at Python 3.12, original Dash assets and callbacks,
+plus a Windows Chromium browser that uses the actual Vercel WSGI entry.
+Live Vercel function cold starts, bundle contents, and routing require
+an **additional post-Merge production HTTP check**, not merely CI PASS.
 
-## Required initial setup — authorized operator only
+## Strict deployment quota policy
 
-1. Create dedicated Vercel project jaal-topology-poc, with no automatic Git
-   deployment and no existing production app/domain/secret reuse.
-2. In GitHub repository Settings > Secrets and variables > Actions, set
-   **variables** VERCEL_ORG_ID, VERCEL_PROJECT_ID, VERCEL_CLI_VERSION
-   (a reviewed exact x.y.z version).
-3. Create GitHub Environment vercel-poc restricted to main, with an
-   **environment secret** VERCEL_TOKEN. Never paste token into source or chat.
-4. Only after configuration is verified, set repository **variable**
-   JAAL_VERCEL_POC_ENABLED to true. Until then deploy job is skipped.
+`vercel.json` **still** disables Git deployment for every branch.
+There is no pull-request preview deployment. The optional
+`.github/workflows/vercel-poc-merge-only.yml` only runs for a
+`pull_request_target.closed` event when the PR was successfully merged
+into `main` and touched relevant runtime/PoC files. It checks that the
+merge commit is an ancestor of `main`, serializes deployments and
+queries Vercel for the same commit before deploying; API errors fail
+closed. It cannot deploy on Push, review, CI rerun, or manual dispatch.
 
-A one-time, separately authorized deployment after a reviewed merge does not
-prove that the GitHub variables and secrets are configured for future merges.
-Public site is static-only; the full Python Jaal and Louvain remain local.
+The initial bootstrap was explicitly done **after** merging; future
+automated releases are OFF until GitHub is explicitly configured:
+
+- Repository variables: `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`,
+  `VERCEL_CLI_VERSION` (a reviewed exact x.y.z version).
+- GitHub Environment `vercel-poc` restricted to `main`, holding only
+  the `VERCEL_TOKEN` secret.
+- Only after all values have been verified, set the repository variable
+  `JAAL_VERCEL_POC_ENABLED=true`.
+
+The same public Vercel Hobby project runs a **serverless function** now,
+so requests consume execution resources instead of pure static serving.
+Never claim it is a full, unlimited or identical production-grade
+Stage 4 deployment. The optional public demo retains no private state,
+and its runtime and limits must be rechecked after any release.
