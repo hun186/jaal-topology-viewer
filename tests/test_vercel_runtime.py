@@ -202,6 +202,36 @@ class VercelJaalRuntimeTests(unittest.TestCase):
         self.assertTrue(first_text.endswith("01:00"))
         self.assertTrue(last_text.endswith("02:00"))
 
+    def test_root_picker_supports_search_and_induced_local_neighborhood(self):
+        from app import _timeline
+        payload = self.client.get("/_dash-layout").get_json()
+        serialized = json.dumps(payload)
+        for component in ("jaal-local-root", "jaal-local-hops",
+                          "jaal-local-direction", "jaal-local-status",
+                          "jaal-local-scope"):
+            self.assertIn(component, serialized)
+        self.assertEqual(self.client.get(
+            "/assets/22.jaal_local_focus.js").status_code, 200)
+        callback = next(
+            config["callback"].__wrapped__
+            for key, config in self.dash_app.callback_map.items()
+            if "jaal-local-scope.data" in key
+            and "jaal-local-status.children" in key
+        )
+        node = _timeline.graph.nodes[0]
+        before = repr(_timeline.graph)
+        packet, label = callback(node, 0, "out")
+        self.assertEqual(packet["root"], node)
+        self.assertEqual(packet["ids"], [node])
+        self.assertIn("1 節點、0 有向邊", label)
+        whole, whole_status = callback(None, 2, "both")
+        self.assertEqual(whole, {"root": None})
+        self.assertIn("全圖", whole_status)
+        invalid, status = callback("UNKNOWN_NODE", 2, "out")
+        self.assertEqual(invalid["root"], None)
+        self.assertIn("無效", status)
+        self.assertEqual(repr(_timeline.graph), before)
+
     def test_temporal_layout_changes_do_not_restart_physics(self):
         # Exercise the real registered Dash callback using Dash's own
         # request-local context variable, not a mocked product implementation.
