@@ -13,10 +13,11 @@
 - Issue #4 已由 [PR #6](https://github.com/hun186/jaal-topology-viewer/pull/6) 合併驗證 Louvain resolution/seed 與 3000-node／5000-edge 邊界；BL-002 的隔離 Wheel smoke 由 PR #7 Hosted CI 通過，Dash 2/3/4 固定版本矩陣以其 PR 最新 HEAD CI/Review 為準，不外推至 consumer 全組合。
 
 - 已 Merge PR #10–#14：同一 Jaal/Dash WSGI、非 sticky/全版視野、四案例切換、可重現且明確虛構的企業郵件事件及收發量加權；Vercel 真正 Python 公網實際部署仍因先前 HTTP 402、merge-only 設定未驗證，**不得宣稱 READY**。
-- 目前 [PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 為 Ready、尚未 Merge：可選事件時間片與 clientside 播放，不影響一般 CSV API。先前 HEAD `8c830cc` Hosted test/browser 兩類 FAIL；已修正 Node 測試穩定 DataSet 期望與 Windows Dropdown selector；**最新 HEAD CI/正式 Codex Review 尚未完成**，禁止依舊 SHA Review/CI Merge。
+- [PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 已 Merge (`8fddffa1c94edeab0dce4cedafdd44a2ceeb1ac0`)：可選事件時間片與 clientside 播放，已修正時間圖切換佈局時重新啟用 physics 問題，現有 CSV API 不變。獨立外部 consumer 的時間軸 Wheel 驗證仍列 BL-002。
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
+| 2026-11-03 | [PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 已 Merge | HEAD `9e835cba849426d0bc2b23e5f806891a33d7998f` [Hosted CI 41659077144](https://github.com/hun186/jaal-topology-viewer/actions/runs/41659077144) 8/8 PASS，正式 Codex Review 完成 0 未解決 Finding，Squash merge `8fddffa1c94edeab0dce4cedafdd44a2ceeb1ac0`。動態時間片與佈局 physics 回歸測試已併入；不代表外部 consumer／公網部署完成。 |
 | 2026-11-03 | [PR #14](https://github.com/hun186/jaal-topology-viewer/pull/14) 已 Merge | `main` merge `b62a6b0f97767ca81e86f5b647c45d28786e5296`；新增固定種子的虛構企業郵件事件與明確頻次加權，保留 legacy 拓樸圖；不得誤認真實郵件／公網已部署。 |
 | 2026-11-03 | [PR #13](https://github.com/hun186/jaal-topology-viewer/pull/13) 已 Merge | `main` merge `dced7b5027ea565830de8630d5d900e72552e163`；獨立 GalleryCase、多路同埠 Jaal 案例隔離切換，舊單圖 API 不變。 |
 | 2026-11-03 | [PR #12](https://github.com/hun186/jaal-topology-viewer/pull/12) 已 Merge | Latest HEAD `e0b5822e77ad4acc840661fc4a79119f346c3cfb` Hosted CI [41618971626](https://github.com/hun186/jaal-topology-viewer/actions/runs/41618971626) 8/8 PASS；Windows 真 Canvas viewport height、Esc 還原驗證；Codex Review 0 Finding，merge `2562cd741203de2cdab0fd5f414a8a41ef49a038`；Vercel 仍因先前 HTTP402 未部署 Python。 |
@@ -30,7 +31,7 @@
 - Windows browser：PR #5 upstream Windows Hosted Chromium PASS；consumer [PR #227](https://github.com/hun186/text-category-profiler/pull/227) 已 Merge，使用者提供的 Stage 4 候選實機驗收九項 PASS、該 PR Hosted 九項工作流程 PASS；不得外推至全部 Windows／Dash 版本及 ML 工況。
 - 下游依賴更新：目前 consumer `requirements.txt` 已釘 `47942ac3bd08d8cbcc615fa215c5e5eef286f486`；PR #227 已透過受控 provenance 與第五模式預設啟用、四模式 rollback 驗證，不得重做既有升級。
 - Issue #4 替代演算法、加權郵件完整對外契約與跨版本 consumer 相容仍須額外驗收；PR #14 的合成權重、PR #15 的時間片不可視為真實郵件資料接入。
-- PR #15 最新 Head：需 Hosted 全部 CI（尤其 Node、Windows Chromium）及涵蓋最新 Commit 的正式 Codex Review。先前 Reviewed SHA `c302536` 的 P2 fixture Finding 已另行修正/解決，但非對後續 Head 的複審。
+- BL-002：本次後續 PR 將於 Ubuntu/Windows 的獨立 Wheel clean venv、離開 checkout 的外部 consumer 腳本中驗證可選 TemporalTimeline、同埠 Flask callback/assets；未經完整外部 Stage 4 工作流程的驗證，不標記為全面完成。
 
 ## Archive Index
 - `.codex/archive/README.md`；日常任務不主動讀 archive。
