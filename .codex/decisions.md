@@ -12,6 +12,7 @@
 | ADR-0005 | 公開 PoC 共用真正 Jaal/Dash，維持 Merge-only | Accepted | 2026-11-03 |
 | ADR-0006 | 有界 Gallery 多 Dash route 取代同頁直接換 Graph | Accepted | 2026-11-03 |
 | ADR-0007 | 原版類別樹通訊示意與新合成郵件業務情境區分 | Accepted | 2026-11-03 |
+| ADR-0008 | 原事件流與時間片圖分離，先預算並以瀏覽器動畫播放 | Accepted | 2026-11-03 |
 
 ## ADR-0001 — 單一來源
 - 背景：portable 核心曾位於 `text-category-profiler/packages/jaal-topology`，下游整合 PR [#209](https://github.com/hun186/text-category-profiler/pull/209)、[#210](https://github.com/hun186/text-category-profiler/pull/210) 後搬離。
@@ -59,6 +60,15 @@
 - 原版仍為 Gallery 獨立舊案例；新業務情境成為預設案例，提供可重現的 read-only 逐封事件 CSV 與有向彙總 CSV。無真實郵件串接／任意上傳／資料寫回。
 - 保留一般 `Graph(edges,nodes,translations)` API；僅附帶明確 `edge_counts` 的圖會加權 Louvain 與顯示郵件線寬，避免偷偷更改分類樹或舊示例的拓樸語義。社群聚合邊數仍是獨立有向關係數，不等同郵件封數。
 - 這只是具業務合理性的示範假設，未由真實企業資料校準；公開站改版仍需 Merge Gate 與 Vercel API 額度恢復後獨立驗證。
+
+## ADR-0008 — Temporal event windows without per-tick server calls
+
+- 需求：有向收發網路可任選時間範圍、累積／滑動窗口、步長、速度、手動跳格、自動輪轉，展示真實拓樸變化。
+- 決策：`Graph` 保留單時間片內的去重有向邊和選用封數；`TemporalTimeline` 另存 ISO 事件時間，按窗口重新產出 Graph 和加權 Louvain，不將「某個時間」硬塞給一條累積邊。
+- 在分析設定變更時由 Python 有界計算多個日片，交給同來源瀏覽器 `dcc.Store`；`dcc.Interval` 由純 clientside JS 播放，不作逐格 HTTP。切換沿用同一 visdcc Network/Camera，原版單圖 `build_app(graph)` 不帶時間 UI。
+- 兼顧資料量與安全：50,000 events/120 calendar days/180,000 frame-edge 限額；一致使用 naive local 或 normalized UTC、拒絕混用；禁止把 CSV/事件資料插入 JS 指令字串，原事件流唯讀。
+- 取捨：目前原版 Jaal Filter/Size **server callbacks** 仍基於全期間來源；時間演化部分更新可視 DataSets/統計與 Louvain，不宣稱每個 Jaal 篩選／尺寸選項已完全動態化。實時資料接入、時區 UX、分群標籤穩定性及對照雙圖另列候選工作。
+- 發布與部署不變：Vercel Push/PR auto-deploy 禁用，必須通過最新 SHA CI/Code Review 與 Merge Gate 才能考慮發布。
 
 ## 維護
 新決策使用遞增不重用 ID；被取代時標記 Superseded 與新決策連結；不把一般 bugfix、猜測或秘密放入。
