@@ -72,7 +72,7 @@ def main():
             # CEO is a singleton and expanding it does not change the count.
             # Assert a multi-member department expands instead.
             cluster = page.locator('svg .graph-node.cluster[data-id="team:Client Partnerships"]')
-            assert int(cluster.locator(".cluster-count").inner_text()) > 1
+            assert int(cluster.locator(".cluster-count").text_content()) > 1
             cluster.locator("circle").click()
             assert int(page.locator("#visibleNodes").inner_text()) > collapsed
             assert page.locator("#edgeTotal").inner_text() == "169"
