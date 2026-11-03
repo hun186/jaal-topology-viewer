@@ -54,6 +54,10 @@ jobs:
         run: python -m playwright install chromium
       - name: Validate real Windows browser / same-port iframe
         run: python tests/browser_acceptance.py --evidence browser-evidence
+      - name: Align standalone runtime with Vercel dependency versions
+        run: python -m pip install -r requirements.txt
+      - name: Validate deployed Flask entry through real Windows Chromium
+        run: python tests/vercel_runtime_browser.py
       - name: Build read-only static Vercel PoC without deploying
         run: node vercel-poc/build.mjs
       - name: Exercise real PoC graph interactions in Windows Chromium
@@ -156,3 +160,20 @@ jobs:
           PY
       - name: Test Python graph and same-port Dash contracts
         run: python -m unittest discover -s tests -p 'test_*.py' -v
+
+  vercel-flask:
+    name: vercel-flask (python 3.12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install exact Vercel Flask and Dash sample dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Verify installed runtime contract
+        run: |
+          python -m pip check
+          python -m unittest discover -s tests -p 'test_vercel_runtime.py' -v
+
