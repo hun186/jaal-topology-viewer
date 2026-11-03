@@ -164,13 +164,13 @@ def check(port):
                     assert page.locator("#search_graph").count() == 1
 
                 choose_case("公司組織階層樹（無環）", "/cases/org-tree/")
-                expect(page.locator("#jaal-original-layout-mode input[value='hierarchical-collapsed']")).to_be_checked()
+                expect(page.get_by_label("階層（收攏）", exact=True)).to_be_checked()
                 assert page.get_by_label("階層（收攏）", exact=True).is_enabled()
                 assert page.get_by_label("網狀（收攏）", exact=True).is_enabled()
                 assert page.locator("#jaal-original-graph-profile").inner_text().find("樹狀階層") >= 0
                 # Restores from the old mail-network without leaking its modes.
                 choose_case("專案相依網路（多父 DAG）", "/cases/project-dag/")
-                expect(page.locator("#jaal-original-layout-mode input[value='hierarchical']")).to_be_checked()
+                expect(page.get_by_label("階層（全展開）", exact=True)).to_be_checked()
                 assert "無環 DAG" in page.locator("#jaal-original-graph-profile").inner_text()
                 assert page.get_by_label("階層（收攏）", exact=True).is_enabled()
                 choose_case("公司寄收件網路（一般有環）", "/")
