@@ -111,13 +111,27 @@ taxonomy, DAG and historical cases retain their original non-temporal
 behavior.
 
 - Select any start/end **calendar-day** interval with the range slider.
+  The email example now **starts in a 3-day rolling window**, rather than
+  showing the accumulated full-period hairball.
 - **累積至目前** includes events since the chosen start through the
   playhead. **滑動時間窗** includes only the last 1, 3, 7, 14 or 30 days.
+  The status line explicitly identifies the selected mode, from/to dates,
+  live messages, active people and active directed links; rolling windows
+  can *lose* old relationships as the playhead advances.
+- **固定社群（比較流量）** is the default: the full-period weighted Louvain
+  partition stays anchored while real per-window traffic, active groups
+  and pair weights change. Opened groups remain opened, and group/link IDs
+  remain stable between frames. **逐格重分群（實驗）** is still available,
+  but changes community identity and resets expanded groups on purpose.
+- Dense **網狀（全展開）** defaults to labels for the 12 highest-volume
+  active participants. All identities, arrows and hover titles remain;
+  check **顯示全部節點名稱** to restore every label.
 - Scrub manually, step 1/2/5/7 days, Play/Pause, loop, and choose
   playback speed 350/700/1400/2500 milliseconds per step.
-- Each frame recomputes real directed-pair message counts, active
-  nodes/edges and **Louvain weighted for that time slice**; the current
-  calendar window and message/node/link counts appear on screen.
+- Each frame recomputes actual directed-pair message counts, active nodes
+  and edges, plus an optional **time-slice Louvain partition**. The default
+  baseline grouping is fixed for visual comparison; selecting dynamic
+  grouping explicitly switches to the per-frame partition.
 - The Python server precomputes a bounded batch after a date/mode/window
   change. Subsequent playback is entirely **in the browser**, without
   a Flask/Vercel HTTP request for each animation tick.

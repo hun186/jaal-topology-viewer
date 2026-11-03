@@ -8,12 +8,39 @@
  */
 (function (root) {
   "use strict";
-  const state = {frame: null};
+  const state = {frame: null, fullLabels: false, keyLabels: new Set()};
 
   function key(a, b) { return JSON.stringify([String(a), String(b)]); }
 
   function setFrame(frame) {
     state.frame = frame && Array.isArray(frame.edges) ? frame : null;
+  }
+
+  function setLabelUniverse(source) {
+    // Pick leaders from the immutable full-period graph, not the current
+    // rolling slice. Otherwise label identities flicker every animation tick.
+    if (!source || !Array.isArray(source.edges)) return;
+    const totals = new Map();
+    for (const edge of source.edges) {
+      const count = Number.isSafeInteger(edge.mailCount) && edge.mailCount > 0
+        ? edge.mailCount : 1;
+      for (const id of [String(edge.from), String(edge.to)]) {
+        totals.set(id, (totals.get(id) || 0) + count);
+      }
+    }
+    state.keyLabels = new Set([...totals].sort(
+      (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+    ).slice(0, 12).map(pair => pair[0]));
+  }
+
+  function setDisplayOptions(values) {
+    state.fullLabels = Array.isArray(values) && values.includes("all");
+  }
+
+  function displayLabel(id, label) {
+    if (!state.frame || state.fullLabels ||
+        state.keyLabels.has(String(id))) return String(label);
+    return "";
   }
 
   function projectSource(source) {
@@ -112,8 +139,8 @@
       date: state.frame.date,
       from: state.frame.from,
       to: state.frame.to,
-      sourceNodes: source.nodes.length,
-      sourceEdges: source.edges.length,
+      sourceNodes: source.nodes.filter(n => !n.hidden).length,
+      sourceEdges: source.edges.filter(e => !e.hidden).length,
       drawnNodes: instance.nn.get().filter(n => !n.hidden).length,
       drawnEdges: instance.ee.get().filter(e => !e.hidden).length,
     };
@@ -209,7 +236,8 @@
       Math.max(lo, Math.min(index, hi)) : hi;
     const frame = packet.frames[selected - lo];
     if (!frame) return [null, "時間片不存在"];
-    const summary = frame.from + " ～ " + frame.to + "　" +
+    const period = frame.mode === "rolling" ? "滑動時間窗" : "累積至目前";
+    const summary = period + "｜" + frame.from + " ～ " + frame.to + "　" +
       frame.messages + " 封信、" + frame.nodes + " 位參與者、" +
       frame.links + " 條有向關係";
     return [frame, summary];
@@ -222,7 +250,8 @@
 
   root.dash_clientside = root.dash_clientside || {};
   Object.assign(state, {
-    setFrame, projectSource, stableSource, freezePhysics,
+    setFrame, setLabelUniverse, setDisplayOptions, displayLabel,
+    projectSource, stableSource, freezePhysics,
     apply, noteRender, playback, choose, speed,
   });
   root.dash_clientside.jaal_temporal = state;

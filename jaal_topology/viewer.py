@@ -239,7 +239,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                 or set(graph.nodes) != set(source.nodes)
                 or graph.edge_counts != source.edge_counts):
             raise GraphInputError("Temporal event source must match this Graph")
-        temporal_frames = temporal_timeline.frames(mode="cumulative", window_days=7)
+        temporal_frames = temporal_timeline.frames(mode="rolling", window_days=3)
     community_result = detect_louvain(graph)
     community_partition = community_result.member_to_group
     edges, nodes = to_jaal_dataframes(graph, root=root)
@@ -404,7 +404,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                         {"label": "累積至目前", "value": "cumulative"},
                         {"label": "滑動時間窗", "value": "rolling"},
                     ],
-                    value="cumulative", inline=True,
+                    value="rolling", inline=True,
                     className="jaal-temporal-modes",
                 ),
                 html.Span("時間窗"),
@@ -413,8 +413,21 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     options=[
                         {"label": f"{day} 天", "value": day}
                         for day in (1, 3, 7, 14, 30)
-                    ], value=7, clearable=False, searchable=False,
+                    ], value=3, clearable=False, searchable=False,
                     className="jaal-temporal-select",
+                ),
+                html.Span("社群演化"),
+                dcc.RadioItems(
+                    id="jaal-temporal-community-policy",
+                    options=[
+                        {"label": "固定社群（比較流量）", "value": "fixed"},
+                        {"label": "逐格重分群（實驗）", "value": "dynamic"},
+                    ], value="fixed", inline=True,
+                ),
+                dcc.Checklist(
+                    id="jaal-temporal-labels",
+                    options=[{"label": "顯示全部節點名稱（較擁擠）", "value": "all"}],
+                    value=[], inline=True,
                 ),
                 html.Span("步長"),
                 dcc.Dropdown(
@@ -465,7 +478,8 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                 ),
             ], className="jaal-temporal-navigation"),
             html.Div(
-                f"{days[0]} ～ {days[-1]}　全期間",
+                f"滑動時間窗｜{temporal_frames['frames'][-1]['from']} ～ {days[-1]}　"
+                f"{temporal_frames['frames'][-1]['messages']} 封信",
                 id="jaal-temporal-status", className="jaal-temporal-status",
                 role="status",
             ),
@@ -683,7 +697,11 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         Input("jaal-structural-eligible", "data"),
     ]
     if temporal_frames is not None:
-        graph_run_inputs.append(Input("jaal-temporal-frame", "data"))
+        graph_run_inputs.extend([
+            Input("jaal-temporal-frame", "data"),
+            Input("jaal-temporal-labels", "value"),
+            Input("jaal-temporal-community-policy", "value"),
+        ])
     app.clientside_callback(
         ClientsideFunction(namespace="jaal_visible_labels",
                            function_name="apply"),

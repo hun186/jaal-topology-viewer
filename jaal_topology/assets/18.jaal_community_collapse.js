@@ -21,7 +21,7 @@
     ]);
   }
 
-  function makeView(source, membership, opened, preferChinese) {
+  function makeView(source, membership, opened, preferChinese, retainHidden = false) {
     if (!source || !Array.isArray(source.nodes) || !Array.isArray(source.edges)) {
       throw new Error("Community view expects the original Jaal graph");
     }
@@ -31,6 +31,7 @@
     let edgePrefix = "__jaal_internal_link__";
     while ([...allIds].some(id => id.startsWith(nodePrefix))) nodePrefix += "_";
     while ([...allEdgeIds].some(id => id.startsWith(edgePrefix))) edgePrefix += "_";
+    const activeIds = new Set(source.nodes.filter(n => !n.hidden).map(n => String(n.id)));
     const members = new Map();
     for (const node of source.nodes) {
       const id = String(node.id);
@@ -66,25 +67,30 @@
       const clusterId = collapsed.get(group);
       if (!clusterId) continue;
       const count = members.get(group).length;
+      const live = members.get(group).filter(id => activeIds.has(id)).length;
       nodes.push({
         id: clusterId, shape: "box",
-        label: "社群 " + (sorted.indexOf(group) + 1) + "\n" + count + " 個節點",
+        label: "社群 " + (sorted.indexOf(group) + 1) + "\n" +
+          (retainHidden ? live + " 活躍 / " : "") + count + " 個節點",
         title: "Louvain 社群；" + count + " 個節點（拓樸分群，非上下級）",
         color: {background: "#dbeafe", border: "#3b82f6"},
         margin: 12,
+        hidden: retainHidden && live === 0,
       });
     }
     const pairs = new Map(), internal = new Map();
     const syntheticIds = new Set(collapsed.values());
     for (const edge of source.edges) {
-      if (edge.hidden) continue;
+      // Keep the complete edge universe while animating. A rolling window
+      // only hides edges; changing endpoints/IDs every tick causes re-layout.
+      if (edge.hidden && !retainHidden) continue;
       const from = String(edge.from), to = String(edge.to);
       if (!allIds.has(from) || !allIds.has(to)) continue;
       const a = representative[from], b = representative[to];
       if (a === b && syntheticIds.has(a)) {
         // Hide only edges wholly inside a collapsed synthetic community.
         // A real self-loop must remain inspectable when its node is visible.
-        internal.set(a, (internal.get(a) || 0) + 1);
+        if (!edge.hidden) internal.set(a, (internal.get(a) || 0) + 1);
         continue;
       }
       const key = JSON.stringify([a, b]);
@@ -95,23 +101,34 @@
     const edges = [];
     const edgeSources = Object.create(null);
     for (const pair of pairs.values()) {
-      const originals = pair.originals, count = originals.length;
-      const stillOriginal = count === 1 &&
+      const originals = pair.originals;
+      const active = originals.filter(edge => !edge.hidden);
+      const count = retainHidden ? active.length : originals.length;
+      const volume = active.reduce((sum, edge) =>
+        sum + (Number.isSafeInteger(edge.mailCount) ? edge.mailCount : 1), 0);
+      const stillOriginal = originals.length === 1 &&
         representative[String(originals[0].from)] === String(originals[0].from) &&
         representative[String(originals[0].to)] === String(originals[0].to);
       const drawn = stillOriginal ? {...originals[0]} : {
-        id: edgePrefix + (ordinal++),
+        // A pair-derived ID is stable across temporal frames even when
+        // another pair has zero activity, unlike a changing ordinal.
+        id: retainHidden
+          ? edgePrefix + JSON.stringify([pair.from, pair.to])
+          : edgePrefix + (ordinal++),
         from: pair.from, to: pair.to, arrows: "to",
-        width: Math.min(8, 1 + Math.log2(count + 1)),
+        width: Math.min(8, 1 + Math.log2((retainHidden ? volume : count) + 1)),
         label: count > 1 ? String(count) : undefined,
-        title: "原始有向關係數：" + count,
+        title: retainHidden
+          ? "本時間窗：" + volume + " 封信、" + count + " 條有向關係"
+          : "原始有向關係數：" + count,
+        hidden: retainHidden && count === 0,
       };
       edges.push(drawn);
-      // Every visible quotient edge carries its exact input relations.
-      // The two directions of a reciprocal community pair stay separate.
-      edgeSources[String(drawn.id)] = originals.map(edge => ({
-        id: String(edge.id), from: String(edge.from), to: String(edge.to),
-      }));
+      // The inspector identifies source relations, not invented reversals.
+      edgeSources[String(drawn.id)] = (retainHidden ? active : originals)
+        .map(edge => ({
+          id: String(edge.id), from: String(edge.from), to: String(edge.to),
+        }));
     }
     return {nodes, edges, internal, clusterToGroup, representative,
             aggregated: pairs, members, edgeSources};
@@ -206,8 +223,10 @@
   function sourceData(instance) {
     const source = instance.props && instance.props.data;
     const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
-    return temporal && typeof temporal.projectSource === "function" ?
-      temporal.projectSource(source) : source;
+    // A temporal slice is NOT a Search/Filter. Its inactive nodes and edges
+    // stay present with hidden=true so communities keep their identities.
+    return temporal && typeof temporal.stableSource === "function" ?
+      temporal.stableSource(source) : source;
   }
 
   function project(instance) {
@@ -217,8 +236,13 @@
     if (!source || !Array.isArray(source.nodes) || !Array.isArray(source.edges)) return;
     // Search and Filter can change the upstream DataSet. Temporarily display
     // the exact filtered source instead of showing stale synthetic communities.
-    const filtered = source.nodes.some(n => n.hidden) ||
-      source.edges.some(e => e.hidden);
+    const original = instance.props && instance.props.data;
+    const filtered = Boolean(original && (
+      original.nodes.some(n => n.hidden) ||
+      original.edges.some(e => e.hidden)
+    ));
+    const timeline = root.dash_clientside && root.dash_clientside.jaal_temporal;
+    const temporalActive = Boolean(timeline && timeline.frame);
     if (filtered) closeInspector();
     const view = filtered ? {
       nodes: source.nodes.map(node => ({
@@ -228,7 +252,7 @@
       })),
       edges: source.edges.map(edge => ({...edge, hidden: Boolean(edge.hidden)})),
       clusterToGroup: {},
-    } : makeView(source, state.partition, state.opened, state.zh);
+    } : makeView(source, state.partition, state.opened, state.zh, temporalActive);
     const net = instance.net;
     const camera = net && typeof net.getViewPosition === "function" &&
       typeof net.getScale === "function"
@@ -284,17 +308,42 @@
           }
           continue;
         }
-        const positions = view.members.get(group).map(id => nodePositions[id])
-          .filter(p => p && Number.isFinite(p.x) && Number.isFinite(p.y));
-        if (positions.length) {
-          node.x = positions.reduce((s, p) => s + p.x, 0) / positions.length;
-          node.y = positions.reduce((s, p) => s + p.y, 0) / positions.length;
+        const cachedCluster = state.clusterPositions &&
+          state.clusterPositions[String(node.id)];
+        if (cachedCluster) {
+          node.x = cachedCluster.x; node.y = cachedCluster.y;
+        } else if (temporalActive) {
+          // Stable, legible constellation for the mail demo. A member centroid
+          // often places every synthetic group on top of the same dense core.
+          const groups = [...view.members.keys()].sort();
+          const angle = 2 * Math.PI * groups.indexOf(group) / groups.length;
+          const radius = Math.max(290, groups.length * 65);
+          node.x = radius * Math.cos(angle);
+          node.y = radius * Math.sin(angle);
+        } else {
+          const positions = view.members.get(group).map(id => nodePositions[id])
+            .filter(p => p && Number.isFinite(p.x) && Number.isFinite(p.y));
+          if (positions.length) {
+            node.x = positions.reduce((s, p) => s + p.x, 0) / positions.length;
+            node.y = positions.reduce((s, p) => s + p.y, 0) / positions.length;
+          }
         }
       }
     }
-    // No new fit() call: preserve the user's camera and zoom.
-    const presentEdges = instance.ee.getIds();
-    if (presentEdges.length) instance.ee.remove(presentEdges);
+    // Keep users' manually dragged cluster coordinates across open/close.
+    state.clusterPositions = state.clusterPositions || Object.create(null);
+    for (const id of Object.keys(state.view?.clusterToGroup || {})) {
+      const pos = oldPos[id];
+      if (pos && Number.isFinite(pos.x) && Number.isFinite(pos.y)) {
+        state.clusterPositions[id] = pos;
+      }
+    }
+    // No new fit() call. The temporal quotient keeps all IDs and only
+    // updates hidden/weight fields. Normal static mode retains legacy reset.
+    if (!temporalActive) {
+      const presentEdges = instance.ee.getIds();
+      if (presentEdges.length) instance.ee.remove(presentEdges);
+    }
     reconcile(instance.nn, view.nodes);
     reconcile(instance.ee, view.edges);
     if (camera && net && typeof net.moveTo === "function") {
@@ -333,16 +382,22 @@
       structural.restore.call(this);
     }
     const timeline = root.dash_clientside && root.dash_clientside.jaal_temporal;
-    const windowKey = timeline && timeline.frame
-      ? JSON.stringify([timeline.frame.from, timeline.frame.to]) : "";
-    const currentKey = graphSignature(source) + windowKey;
+    if (timeline && timeline.frame && typeof timeline.freezePhysics === "function") {
+      timeline.freezePhysics(this);
+    }
     const partition = stateAPI.partition && typeof stateAPI.partition === "object"
       ? stateAPI.partition : {};
+    // An unchanged grouping must NOT close an expanded community at every
+    // date tick. Only a deliberate dynamic repartition changes the key.
+    const currentKey = graphSignature(source) +
+      JSON.stringify(Object.entries(partition).sort());
     let state = this.__jaalCommunity;
     if (!state || state.key !== currentKey) {
       state = {
         key: currentKey, opened: new Set(),
         positions: state && state.positions ? state.positions : Object.create(null),
+        clusterPositions: state && state.clusterPositions
+          ? state.clusterPositions : Object.create(null),
       };
       this.__jaalCommunity = state;
     }

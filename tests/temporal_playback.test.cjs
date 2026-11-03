@@ -128,3 +128,111 @@ test("frame selection reports actual window boundaries and message counts", () =
   assert.equal(temporal.speed(350), 350);
   assert.equal(temporal.speed(-1), 700);
 });
+
+test("temporal network only labels stable high-volume participants unless expanded", () => {
+  temporal.setLabelUniverse({
+    nodes: source.nodes,
+    edges: [{id: "ab", from: "A", to: "B", mailCount: 30}],
+  });
+  temporal.setFrame({...frame, edges: [["A", "B", 3]]});
+  temporal.setDisplayOptions([]);
+  assert.equal(temporal.displayLabel("A", "Sales / A"), "Sales / A");
+  assert.equal(temporal.displayLabel("C", "Finance / C"), "");
+  temporal.setFrame({...frame, edges: [["B", "C", 7]]});
+  // Incoming activity changes but stable full-period label ranking does not.
+  assert.equal(temporal.displayLabel("C", "Finance / C"), "");
+  temporal.setDisplayOptions(["all"]);
+  assert.equal(temporal.displayLabel("C", "Finance / C"), "Finance / C");
+  temporal.setFrame(null);
+  temporal.setDisplayOptions([]);
+  assert.equal(temporal.displayLabel("C", "Finance / C"), "Finance / C");
+});
+
+test("temporal community holds one partition and open state across rolling ticks", () => {
+  require("../jaal_topology/assets/16.jaal_visible_labels.js");
+  const api = require("../jaal_topology/assets/18.jaal_community_collapse.js");
+  const members = ["A", "B", "C", "D", "E", "F"];
+  const graph = {
+    nodes: members.map(id => ({id, label: id})),
+    edges: [
+      {id: "ab", from: "A", to: "B"},
+      {id: "ad", from: "A", to: "D"},
+      {id: "ce", from: "C", to: "E"},
+      {id: "de", from: "D", to: "E"},
+    ],
+  };
+  api.partition = Object.fromEntries(members.map((id, i) =>
+    [id, i < 3 ? "team-0" : "team-1"]));
+  const first = {
+    ...frame, edges: [["A", "B", 3], ["A", "D", 2]],
+  };
+  const second = {
+    ...frame, date: "2026-10-06", from: "2026-10-06", to: "2026-10-06",
+    edges: [["C", "E", 4], ["D", "E", 1]],
+  };
+  const positions = Object.fromEntries(members.map((id,i) =>
+    [id, {x: i * 10, y: i * 20}]));
+  let click = null;
+  const instance = {
+    nn: new DataSet(graph.nodes), ee: new DataSet(graph.edges),
+    props: {data: graph},
+    net: {
+      on: (name, fn) => {if (name === "click") click = fn;},
+      getPositions: () => positions,
+      getViewPosition: () => ({x: 10, y: 20}),
+      getScale: () => 1.2,
+      moveTo: () => {},
+      setOptions: () => {},
+    },
+  };
+  temporal.setFrame(first);
+  api.activate.call(instance);
+  const firstView = instance.__jaalCommunity.view;
+  assert.equal(instance.__jaalCommunity.filtered, false);
+  assert.equal(temporal.lastRendered.sourceEdges, 2);
+  const group = Object.keys(firstView.clusterToGroup).find(
+    k => firstView.clusterToGroup[k] === "team-0");
+  assert.ok(group);
+  click({nodes:[group]});
+  assert.ok(instance.__jaalCommunity.opened.has("team-0"));
+  const stable = instance.__jaalCommunity;
+  const firstIds = [...instance.ee.getIds()].sort();
+  temporal.setFrame(second);
+  api.activate.call(instance);
+  assert.strictEqual(instance.__jaalCommunity, stable);
+  assert.ok(instance.__jaalCommunity.opened.has("team-0"));
+  assert.deepEqual([...instance.ee.getIds()].sort(), firstIds);
+  assert.equal(temporal.lastRendered.sourceEdges, 2);
+  assert.equal(instance.nn.rows.get("A").hidden, true);
+  assert.equal(instance.nn.rows.get("C").hidden, false);
+  const otherGroup = Object.keys(instance.__jaalCommunity.view.clusterToGroup)
+    .find(k => instance.__jaalCommunity.view.clusterToGroup[k] === "team-1");
+  assert.ok(otherGroup && !instance.nn.rows.get(otherGroup).hidden);
+  temporal.setFrame(null);
+  api.restore.call(instance);
+  assert.deepEqual([...instance.nn.getIds()].sort(), members);
+  assert.equal(instance.ee.getIds().length, graph.edges.length);
+});
+
+test("temporal community retains quotient IDs even when whole groups go silent", () => {
+  const community = require("../jaal_topology/assets/18.jaal_community_collapse.js");
+  const nodes = ["A","B","C","D","E","F"].map(id => ({id,hidden:false}));
+  const edges = [
+    {id:"ad",from:"A",to:"D",hidden:false,mailCount:8},
+    {id:"bd",from:"B",to:"D",hidden:true,mailCount:2},
+    {id:"de",from:"D",to:"E",hidden:true},
+  ];
+  const membership = Object.fromEntries(nodes.map((n,i) =>
+    [n.id, i<3?"group-0":"group-1"]));
+  const first = community.makeView({nodes,edges},membership,new Set(),false,true);
+  const quiet = community.makeView({
+    nodes:nodes.map(n=>({...n,hidden:["A","B","C"].includes(n.id)})),
+    edges:edges.map(e=>({...e,hidden:true})),
+  },membership,new Set(),false,true);
+  assert.deepEqual(first.nodes.map(n=>n.id),quiet.nodes.map(n=>n.id));
+  assert.deepEqual(first.edges.map(e=>e.id),quiet.edges.map(e=>e.id));
+  assert.equal(first.edges[0].hidden,false);
+  assert.equal(quiet.edges[0].hidden,true);
+  assert.equal(quiet.nodes[0].hidden,true);
+  assert.match(first.edges[0].title,/8 封信/);
+});

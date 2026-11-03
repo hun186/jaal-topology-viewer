@@ -15,9 +15,13 @@
 - 已 Merge PR #10–#14：同一 Jaal/Dash WSGI、非 sticky/全版視野、四案例切換、可重現且明確虛構的企業郵件事件及收發量加權；Vercel 真正 Python 公網實際部署仍因先前 HTTP 402、merge-only 設定未驗證，**不得宣稱 READY**。
 - [PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 已 Merge (`8fddffa1c94edeab0dce4cedafdd44a2ceeb1ac0`)：可選事件時間片與 clientside 播放，已修正時間圖切換佈局時重新啟用 physics 問題，現有 CSV API 不變。獨立外部 consumer 的時間軸 Wheel 驗證仍列 BL-002。
 - [PR #16](https://github.com/hun186/jaal-topology-viewer/pull/16) 已 Merge (`1b9cd893531b3777b80f7efabb7bea170cbf5a85`)：從 checkout 外、Ubuntu/Windows clean Wheel 安裝驗證外部時間軸 Consumer 的 rolling frames、same-port Flask callbacks/assets；完整下游 Stage 4 仍未驗證。
+- [PR #17](https://github.com/hun186/jaal-topology-viewer/pull/17) 已 Merge（`e680b473ab52f5197b3eb1e5bd654685c342a080`）；多案例 nonroot temporal WSGI 隔離，Hosted CI 8/8 PASS，Codex Review 0 Findings。此結果仍非 Windows 人工動畫視覺驗收。
+- 2026-11-04 Windows 使用者在「企業郵件實務模擬」觀察：全展開標籤擁擠、滾動窗看似累積、逐格 Louvain 使展開失效、畫面不穩。已定位前端將 temporal hidden 狀態誤判為 Search/Filter，與每 frame 用 active 子集及時窗 key 重建社群；本修復分支以 fixed-universe、固定群組預設、稀疏標籤及顯式視窗摘要處理，CI/實機仍須以 PR 最新 HEAD 驗證。
+
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
+| 2026-11-03 | [PR #17](https://github.com/hun186/jaal-topology-viewer/pull/17) 已 Merge | 8/8 Hosted CI、Codex Review completed/0 Finding；Squash merge `e680b473ab52f5197b3eb1e5bd654685c342a080`，nonroot graph gallery temporal control 隔離驗證。 |
 | 2026-11-03 | [PR #16](https://github.com/hun186/jaal-topology-viewer/pull/16) 已 Merge | HEAD `b2029b4111fc585273f3e12708642cc334b44f69` [Hosted CI 41660449981](https://github.com/hun186/jaal-topology-viewer/actions/runs/41660449981) 8/8 PASS，正式 Codex Review completed/0 Finding；Squash merge `1b9cd893531b3777b80f7efabb7bea170cbf5a85`，Linux/Windows 的獨立 Wheel 時間序列 consumer smoke PASS，不代表完整 Stage 4 驗收。 |
 | 2026-11-03 | [PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 已 Merge | HEAD `9e835cba849426d0bc2b23e5f806891a33d7998f` [Hosted CI 41659077144](https://github.com/hun186/jaal-topology-viewer/actions/runs/41659077144) 8/8 PASS，正式 Codex Review 完成 0 未解決 Finding，Squash merge `8fddffa1c94edeab0dce4cedafdd44a2ceeb1ac0`。動態時間片與佈局 physics 回歸測試已併入；不代表外部 consumer／公網部署完成。 |
 | 2026-11-03 | [PR #14](https://github.com/hun186/jaal-topology-viewer/pull/14) 已 Merge | `main` merge `b62a6b0f97767ca81e86f5b647c45d28786e5296`；新增固定種子的虛構企業郵件事件與明確頻次加權，保留 legacy 拓樸圖；不得誤認真實郵件／公網已部署。 |
