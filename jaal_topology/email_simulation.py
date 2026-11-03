@@ -235,7 +235,7 @@ def simulate_company_email(seed: int = SEED) -> MailSimulation:
         # HR onboarding happens once per week to several *different* roles.
         if day % 5 == 0:
             hr = dept_people["People"][2]
-            for person in rng.sample(all_staff, 4):
+            for person in rng.sample([x for x in all_staff if x != hr], 4):
                 exchange(day, hr, person, "onboarding",
                          "新人帳號／教育訓練", 0.36, thread_id=thread("HR"))
         # Executive briefings are periodic and target division heads only.
