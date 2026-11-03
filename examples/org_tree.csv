@@ -1,0 +1,52 @@
+parent,child
+Root Office,HQ Committee
+HQ Committee,Engineering
+Engineering,Engineering / Platform
+Engineering / Platform,Engineering / Platform / Lead
+Engineering / Platform,Engineering / Platform / Specialist
+Engineering,Engineering / Data Systems
+Engineering / Data Systems,Engineering / Data Systems / Lead
+Engineering / Data Systems,Engineering / Data Systems / Specialist
+Engineering,Engineering / Quality
+Engineering / Quality,Engineering / Quality / Lead
+Engineering / Quality,Engineering / Quality / Specialist
+HQ Committee,Operations
+Operations,Operations / Procurement
+Operations / Procurement,Operations / Procurement / Lead
+Operations / Procurement,Operations / Procurement / Specialist
+Operations,Operations / Logistics
+Operations / Logistics,Operations / Logistics / Lead
+Operations / Logistics,Operations / Logistics / Specialist
+Operations,Operations / Customer Support
+Operations / Customer Support,Operations / Customer Support / Lead
+Operations / Customer Support,Operations / Customer Support / Specialist
+HQ Committee,Commercial
+Commercial,Commercial / Sales
+Commercial / Sales,Commercial / Sales / Lead
+Commercial / Sales,Commercial / Sales / Specialist
+Commercial,Commercial / Marketing
+Commercial / Marketing,Commercial / Marketing / Lead
+Commercial / Marketing,Commercial / Marketing / Specialist
+Commercial,Commercial / Partnerships
+Commercial / Partnerships,Commercial / Partnerships / Lead
+Commercial / Partnerships,Commercial / Partnerships / Specialist
+HQ Committee,Finance
+Finance,Finance / Accounting
+Finance / Accounting,Finance / Accounting / Lead
+Finance / Accounting,Finance / Accounting / Specialist
+Finance,Finance / Planning
+Finance / Planning,Finance / Planning / Lead
+Finance / Planning,Finance / Planning / Specialist
+Finance,Finance / Compliance
+Finance / Compliance,Finance / Compliance / Lead
+Finance / Compliance,Finance / Compliance / Specialist
+HQ Committee,People
+People,People / Recruiting
+People / Recruiting,People / Recruiting / Lead
+People / Recruiting,People / Recruiting / Specialist
+People,People / Learning
+People / Learning,People / Learning / Lead
+People / Learning,People / Learning / Specialist
+People,People / Employee Care
+People / Employee Care,People / Employee Care / Lead
+People / Employee Care,People / Employee Care / Specialist
