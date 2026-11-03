@@ -37,12 +37,13 @@ test("Vercel Git integration cannot automatically deploy any branch", () => {
 });
 test("deployment only on merged and relevant PRs", () => {
   const yaml = readFileSync(resolve(root, ".github/workflows/vercel-poc-merge-only.yml"), "utf8");
-  assert.match(yaml, /^\s+pull_request:\s*$/m);
+  assert.match(yaml, /^\s+pull_request_target:\s*$/m);
   assert.match(yaml, /types: \[closed\]/);
   assert.match(yaml, /github\.event\.pull_request\.merged == true/);
   assert.match(yaml, /github\.event\.pull_request\.base\.ref == 'main'/);
   assert.match(yaml, /vars\.JAAL_VERCEL_POC_ENABLED == 'true'/);
   assert.match(yaml, /mergeCommitSha/);
+  assert.match(yaml, /git merge-base --is-ancestor/);
   assert.doesNotMatch(yaml, /^\s+push:\s*$/m);
   assert.doesNotMatch(yaml, /^\s+workflow_dispatch:\s*$/m);
 });
