@@ -331,6 +331,15 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         html.Details([
             html.Summary("圖形說明", title="查看圖形結構與收攏規則"),
             html.Div([
+                *([html.Div([
+                    html.Strong("業務情境與可驗證資料"),
+                    html.P(case_description, className="jaal-case-description"),
+                    html.Div([
+                        html.A(label, href=url, target="_blank",
+                               rel="noopener noreferrer")
+                        for label, url in case_resources
+                    ], className="jaal-case-resources"),
+                ])] if case_description or case_resources else []),
                 html.Div(
                     ("原始圖無環，但 Louvain 社群彙總後產生循環；不代表分類父子關係有環。"
                      if not structure.has_cycle and community_result.quotient_has_cycle else
@@ -362,17 +371,6 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         dcc.Interval(id="jaal-original-physics-restore",
                      interval=300, disabled=True, n_intervals=0),
     ]
-    if case_description or case_resources:
-        controls_children.insert(0, html.Details([
-            html.Summary("案例情境／資料", title="查看模擬規則與來源檔案"),
-            html.Div([
-                html.P(case_description, className="jaal-case-description"),
-                html.Div([
-                    html.A(label, href=url, target="_blank", rel="noopener noreferrer")
-                    for label, url in case_resources
-                ], className="jaal-case-resources"),
-            ], className="jaal-context-popup"),
-        ], id="jaal-case-story", className="jaal-context-details jaal-case-story"))
     if case_options is not None:
         # A normal URL change deliberately creates a clean Dash instance per
         # graph. Using graph.data alone would leave upstream Jaal callbacks
