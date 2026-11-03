@@ -30,6 +30,9 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             "hierarchical", "hierarchical-collapsed",
         ):
             self.assertIn(f'"value": "{mode}"', serialized)
+        self.assertIn("jaal-sidebar-toggle", serialized)
+        self.assertIn("jaal-original-help-details", serialized)
+        self.assertIn("jaal-original-app-shell", serialized)
         self.assertIn("jaal-original-chinese-labels", serialized)
         self.assertIn("search_graph", serialized)
 
