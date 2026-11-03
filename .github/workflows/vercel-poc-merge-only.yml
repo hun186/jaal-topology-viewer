@@ -8,6 +8,11 @@ on:
     types: [closed]
     paths:
       - "vercel-poc/**"
+      - "app.py"
+      - "requirements.txt"
+      - ".python-version"
+      - "jaal_topology/**"
+      - "pyproject.toml"
       - "vercel.json"
       - ".github/workflows/vercel-poc-merge-only.yml"
       - "examples/company_communications.csv"
@@ -43,7 +48,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Verify exact merge and build fictional public assets
+      - name: Verify exact merge and accept only committed fictional sample
         shell: bash
         run: |
           set -euo pipefail
@@ -105,7 +110,7 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: vercel pull --yes --environment=production
-      - name: Build static site
+      - name: Build real Jaal/Flask serverless function
         if: steps.dedupe.outputs.skip != 'true'
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
