@@ -717,26 +717,87 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         from dash.exceptions import PreventUpdate
 
         @app.callback(
+            Output("jaal-temporal-range", "value"),
+            Output("jaal-temporal-start-text", "value"),
+            Output("jaal-temporal-end-text", "value"),
+            Input("jaal-temporal-range", "value"),
+            Input("jaal-temporal-start-text", "value"),
+            Input("jaal-temporal-end-text", "value"),
+            prevent_initial_call=True,
+        )
+        def sync_analysis_bounds(bounds, start_text, end_text):
+            from datetime import datetime, timedelta
+            if (not isinstance(bounds, list) or len(bounds) != 2
+                    or not all(type(n) is int for n in bounds)):
+                raise PreventUpdate
+            triggered = callback_context.triggered[0]["prop_id"].split(".", 1)[0]
+            if triggered == "jaal-temporal-range":
+                return (
+                    no_update,
+                    (first_instant + timedelta(minutes=bounds[0])).isoformat(timespec="minutes"),
+                    (first_instant + timedelta(minutes=bounds[1])).isoformat(timespec="minutes"),
+                )
+            if triggered not in ("jaal-temporal-start-text", "jaal-temporal-end-text"):
+                raise PreventUpdate
+            try:
+                left = datetime.fromisoformat(start_text.strip().replace(" ", "T"))
+                right = datetime.fromisoformat(end_text.strip().replace(" ", "T"))
+                if ((left.utcoffset() is None) != (first_instant.utcoffset() is None)
+                        or (right.utcoffset() is None) != (first_instant.utcoffset() is None)
+                        or left.second or left.microsecond or right.second or right.microsecond):
+                    raise ValueError("Timezone or minute precision mismatch")
+                offsets = ((left - first_instant).total_seconds() / 60,
+                           (right - first_instant).total_seconds() / 60)
+                if (not all(n.is_integer() for n in offsets)
+                        or not 0 <= offsets[0] < offsets[1] <= total_minutes):
+                    raise ValueError("Invalid bounds")
+                return [int(offsets[0]), int(offsets[1])], no_update, no_update
+            except (ValueError, TypeError, AttributeError):
+                raise PreventUpdate
+
+        @app.callback(
+            Output("jaal-temporal-range", "step"),
+            Input("jaal-temporal-unit", "value"),
+        )
+        def interval_selection_granularity(unit):
+            return unit if unit in (1, 10, 60, 180, 1440) else 1
+
+        @app.callback(
             Output("jaal-temporal-frames", "data"),
             Input("jaal-temporal-range", "value"),
             Input("jaal-temporal-mode", "value"),
+            Input("jaal-temporal-unit", "value"),
             Input("jaal-temporal-window", "value"),
+            Input("jaal-temporal-overlap", "value"),
+            Input("jaal-temporal-step", "value"),
         )
-        def prepare_temporal_frames(bounds, mode, window_days):
-            if (not isinstance(bounds, (list, tuple))
-                    or len(bounds) != 2
-                    or type(bounds[0]) is not int
-                    or type(bounds[1]) is not int
+        def prepare_temporal_frames(bounds, mode, unit, window_units,
+                                    overlap, stride_units):
+            if (not isinstance(bounds, (list, tuple)) or len(bounds) != 2
+                    or any(type(n) is not int for n in bounds)
                     or mode not in ("cumulative", "rolling")
-                    or window_days not in (1, 3, 7, 14, 30)):
+                    or unit not in (1, 10, 60, 180, 1440)
+                    or window_units not in (1, 2, 3, 6, 12, 24, 30)
+                    or stride_units not in (1, 2, 3, 6, 12, 24)
+                    or overlap not in ("disjoint", "overlap")):
                 raise PreventUpdate
+            window_minutes = unit * window_units
+            stride_minutes = (window_minutes if overlap == "disjoint"
+                              else unit * stride_units)
             try:
-                return temporal_timeline.frames(
-                    first_index=bounds[0], last_index=bounds[1],
-                    mode=mode, window_days=window_days,
+                result = temporal_timeline.interval_frames(
+                    start_minute=bounds[0], end_minute=bounds[1],
+                    mode=mode, window_minutes=window_minutes,
+                    step_minutes=stride_minutes,
                 )
-            except GraphInputError:
-                raise PreventUpdate
+                result["overlap"] = overlap
+                return result
+            except GraphInputError as exc:
+                # A bad request must not leave a stale earlier packet on
+                # screen while showing incompatible granularity controls.
+                return {"frames": [], "start_index": 0, "end_index": 0,
+                        "error": str(exc), "unit_minutes": unit,
+                        "overlap": overlap}
 
         app.clientside_callback(
             ClientsideFunction(namespace="jaal_temporal", function_name="playback"),
@@ -757,7 +818,14 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             ClientsideFunction(namespace="jaal_temporal", function_name="choose"),
             Output("jaal-temporal-frame", "data"),
             Output("jaal-temporal-status", "children"),
+            Output("jaal-temporal-window-highlight", "style"),
             Input("jaal-temporal-index", "value"),
+            Input("jaal-temporal-frames", "data"),
+        )
+        app.clientside_callback(
+            ClientsideFunction(namespace="jaal_temporal", function_name="axis"),
+            Output("jaal-temporal-index", "max"),
+            Output("jaal-temporal-index", "marks"),
             Input("jaal-temporal-frames", "data"),
         )
         app.clientside_callback(
