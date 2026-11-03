@@ -110,14 +110,24 @@ controller for the **same real Jaal/visdcc graph**. Other CSV-based
 taxonomy, DAG and historical cases retain their original non-temporal
 behavior.
 
-- Select any start/end **calendar-day** interval with the range slider.
-  The email example now **starts in a 3-day rolling window**, rather than
-  showing the accumulated full-period hairball.
-- **累積至目前** includes events since the chosen start through the
-  playhead. **滑動時間窗** includes only the last 1, 3, 7, 14 or 30 days.
-  The status line explicitly identifies the selected mode, from/to dates,
-  live messages, active people and active directed links; rolling windows
-  can *lose* old relationships as the playhead advances.
+- Drag **either endpoint** of the analysis-range slider, or enter precise
+  ISO date/time start and exclusive end in the adjacent text boxes (e.g.
+  `2026-10-05T09:00`). The separate blue bar depicts the **currently playing**
+  window and moves at both ends while animating. The fixed analysis-range
+  slider is no longer mistaken for the active window.
+- Choose units **day, three hours, hour, ten minutes or one minute**,
+  and choose window width in units. The default is a **three-day,
+  non-overlapping partition**; window length = advancement stride.
+  The optional overlapping mode exposes a separate stride, requiring
+  `stride <= window`; cumulative mode remains available.
+- **All precise intervals are left-closed/right-open `[start,end)`**. An
+  event exactly on the next window boundary belongs only to the next
+  non-overlapping window, never both. Existing Python `snapshot()` /
+  `frames()` day-level callers remain intact.
+- At most **240 frames** are precomputed. If minute precision over a long
+  period exceeds this budget, an explicit error asks the user to shorten
+  the analysis range or increase the step; it never quietly downgrades
+  timestamps to days or pretends stale frames are current.
 - **基礎邊長／間距** (60–300 px) adjusts the network's spring length
   for ordinary graphs and the frozen visual spacing of the temporal
   community viewer. It never changes stored edge weights or source data.
@@ -131,7 +141,7 @@ behavior.
 - Dense **網狀（全展開）** defaults to labels for the 12 highest-volume
   active participants. All identities, arrows and hover titles remain;
   check **顯示全部節點名稱** to restore every label.
-- Scrub manually, step 1/2/5/7 days, Play/Pause, loop, and choose
+- Scrub manually, advance by precomputed time frames, Play/Pause, loop, and choose
   playback speed 350/700/1400/2500 milliseconds per step.
 - Each frame recomputes actual directed-pair message counts, active nodes
   and edges, plus an optional **time-slice Louvain partition**. The default
