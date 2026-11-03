@@ -139,7 +139,7 @@ jobs:
               assert len(packet["frames"]) == 2
               assert packet["frames"][0]["messages"] == 1
               assert packet["frames"][1]["edges"] == [["Child", "Root", 1]]
-              assert graph.edge_counts is None  # unchanged CSV source
+              assert graph.edge_counts == {}  # unchanged CSV source
               host = Flask("clean_wheel_smoke")
               @host.get("/upstream-health")
               def upstream_health():
