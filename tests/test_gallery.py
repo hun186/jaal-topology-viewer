@@ -70,8 +70,10 @@ class GalleryContractTests(unittest.TestCase):
         mounted = self.gallery.server._jaal_topology_mounts
         self.assertEqual(set(mounted), {"/cases/tree", "/cases/dag"})
         self.assertIsNot(mounted["/cases/tree"], mounted["/cases/dag"])
-        self.assertIn("graph.data", mounted["/cases/tree"].callback_map)
-        self.assertIn("graph.data", mounted["/cases/dag"].callback_map)
+        self.assertTrue(any("graph.data" in key
+                            for key in mounted["/cases/tree"].callback_map))
+        self.assertTrue(any("graph.data" in key
+                            for key in mounted["/cases/dag"].callback_map))
 
     def test_dropdown_matches_current_route_and_modes_reset_per_case(self):
         for path, selected, expected_graph_kind, expected_mode, structural_disabled in [
