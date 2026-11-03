@@ -18,7 +18,7 @@
 - Metadata 預設 `ClassLabel,CT`，可指定欄名；缺少或空白翻譯沿用 ID；已有節點的重複 metadata ID 拒絕。
 
 ## CONTRACT-002 — Python
-- `Graph(edges, nodes, translations)` 是 frozen dataclass，內部 dict 不保證深度 immutable。
+- `Graph(edges, nodes, translations, edge_counts={})` 是 frozen dataclass；新增可選的 `edge_counts[(from,to)]=positive integer` 只供明確逐件彙總的寄收件示例。舊有三參數呼叫與原始 CSV 解析器不變；`select_subgraph` 同步裁切計數。內部 dict 不保證深度 immutable。
 - `load_graph(edge_files, metadata_file=None, *, metadata_id_column="ClassLabel", metadata_label_column="CT") -> Graph`。
 - `select_subgraph(graph, root=None, *, max_nodes=250, max_edges=5000) -> Graph`；root 沿有向 child 可達，保留子圖內原始邊；root=None 為有界全圖。
 - 100,000 unique input edges；max_nodes 1..3000，max_edges 1..5000；非法值／超限丟 `GraphInputError`。
@@ -37,7 +37,7 @@
 ## CONTRACT-005 — Browser
 - 四種相容 legacy：`network`、`network-collapsed`、`hierarchical`、`hierarchical-collapsed`；實驗第五模式：`network-community-collapsed`，不重新定義原 `network-collapsed` 的子孫節點語義。
 - `layout_options` deep-copy base options，切回 network 需顯式還原 hierarchy／physics／edge smooth／node styles。
-- 使用 `community.detect_louvain` 以有界有向圖、固定 seed=42、resolution=1、distinct directed edges、topology-only 的 NetworkX Louvain 分群；前端合成社群 node ID 僅存在顯示層，原 ID 與來源 CSV 不修改。聚合後仍區分 A→B／B→A；Search/Filter 有 hidden flags 時暫回原圖，展開/收攏不呼叫 fit。
+- 使用 `community.detect_louvain` 以有界有向圖、固定 seed=42、resolution=1、distinct directed edges 執行 NetworkX Louvain；**舊圖 `edge_counts={}` 維持 unit-weight topology-only**，新情境郵件圖才依經確認的合成寄收件次數加權。合成社群 node ID 僅存在顯示層，原 ID 與來源 CSV 不修改。社群聚合後仍區分 A→B／B→A；既有邊標籤仍顯示*獨立有向邊數*而非郵件封數。
 - 中文翻譯預設關閉；搜尋及 tooltip 用原 ID，filtered browser 檢視亦保留所選中文標籤。JS `16.jaal_visible_labels.js`、`17.jaal_structural_collapse.js`、`18.jaal_community_collapse.js` 由本套件提供。
 - Windows Hosted Chromium 可驗證實際 visdcc DataSet、同埠 iframe、搜尋與收攏的部分契約；不代表使用者 Windows Stage 4 drag/focus/Filter/Color/Size 實機完整驗收。
 
