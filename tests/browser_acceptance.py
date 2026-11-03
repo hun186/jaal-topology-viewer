@@ -70,6 +70,7 @@ def check(port: int, evidence: Path) -> None:
             for asset in ("16.jaal_visible_labels.js",
                           "17.jaal_structural_collapse.js",
                           "18.jaal_community_collapse.js",
+                          "22.jaal_local_focus.js",
                           "bootstrap.min.css", "19.jaal_compact_layout.css"):
                 with urlopen(target + "/topology/assets/" + asset, timeout=5) as response:
                     assert response.status == 200, asset
@@ -305,6 +306,60 @@ def check(port: int, evidence: Path) -> None:
                                 for n in s["nodes"]),
                 )
                 assert frame.locator(".vis-network canvas").first.is_visible()
+                # Searchable bilingual root picker: scope is a reversible
+                # rendering projection, not a mutation of the 77/169 source.
+                local_details = frame.locator(".jaal-local-details")
+                local_details.locator("summary").click()
+                assert local_details.evaluate("(el) => el.open")
+                frame.locator("#jaal-local-hops").click()
+                frame.locator("#jaal-local-hops").get_by_text(
+                    "0 步", exact=True
+                ).last.click()
+                candidate = frame.locator("body").evaluate("""() =>
+                    window.__acceptanceNetwork.props.data.nodes.find(
+                        n => String(n.id).includes("Executive"))?.id ||
+                    window.__acceptanceNetwork.props.data.nodes[0].id
+                """)
+                search_root = frame.locator("#jaal-local-root input")
+                search_root.fill(candidate)
+                search_root.press("ArrowDown")
+                search_root.press("Enter")
+                expect(frame.locator("#jaal-local-status")).to_contain_text(
+                    "局部子圖", timeout=15000
+                )
+                latest = None
+                deadline = time.monotonic() + 20
+                while time.monotonic() < deadline:
+                    latest = frame.locator("body").evaluate("""() => {
+                        const instance = window.__acceptanceNetwork;
+                        return {
+                            root: window.dash_clientside?.jaal_local_focus?.root,
+                            shown: instance.nn.get().filter(n => !n.hidden).length,
+                            total: instance.props.data.nodes.length,
+                        };
+                    }""")
+                    if latest["root"] == candidate and latest["shown"] == 1:
+                        break
+                    page.wait_for_timeout(200)
+                assert latest and latest["shown"] == 1, latest
+                assert latest["total"] == 77
+                assert frame.locator(".vis-network canvas").first.is_visible()
+                # Clear the selector in-place and recover the full graph.
+                frame.locator("#jaal-local-root .Select-clear-zone").click()
+                restored_scope = None
+                deadline = time.monotonic() + 15
+                while time.monotonic() < deadline:
+                    restored_scope = frame.locator("body").evaluate("""() => {
+                        const instance = window.__acceptanceNetwork;
+                        return {
+                            root: window.dash_clientside?.jaal_local_focus?.root,
+                            shown: instance.nn.get().filter(n => !n.hidden).length,
+                        };
+                    }""")
+                    if restored_scope["root"] is None and restored_scope["shown"] == 77:
+                        break
+                    page.wait_for_timeout(200)
+                assert restored_scope == {"root": None, "shown": 77}, restored_scope
                 if errors:
                     raise AssertionError("Browser JavaScript errors: " + " | ".join(errors))
                 (evidence / "acceptance-summary.txt").write_text(
