@@ -5,7 +5,7 @@
 ## Metadata
 - 初始化狀態：`INITIALIZED`
 - 最後查證日期：2026-11-03（台灣）
-- 查證基準：`main` Squash merge commit `8fddffa1c94edeab0dce4cedafdd44a2ceeb1ac0`；[PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 的可選事件時間片／前端播放已於 2026-11-03 Merge、Hosted CI 8/8 PASS；先前 [PR #14](https://github.com/hun186/jaal-topology-viewer/pull/14) 提供四案例與虛構郵件頻次加權。下游 [text-category-profiler PR #227](https://github.com/hun186/text-category-profiler/pull/227) 仍釘舊版 `47942ac3bd08d8cbcc615fa215c5e5eef286f486`，不代表新時間功能已通過 consumer 驗證。Vercel 公網 Python 仍未證實 READY（先前 HTTP 402／部署需另行授權）。
+- 查證基準：`main` Squash merge commit `1b9cd893531b3777b80f7efabb7bea170cbf5a85`；[PR #16](https://github.com/hun186/jaal-topology-viewer/pull/16) 的 Ubuntu/Windows isolated Wheel 時間演化 Consumer smoke 已於 2026-11-03 Merge、Hosted CI 8/8 PASS；[PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 的可選事件時間片／前端播放已 Merge；先前 [PR #14](https://github.com/hun186/jaal-topology-viewer/pull/14) 提供四案例與虛構郵件頻次加權。下游 [text-category-profiler PR #227](https://github.com/hun186/text-category-profiler/pull/227) 仍釘舊版 `47942ac3bd08d8cbcc615fa215c5e5eef286f486`，不代表新時間功能已通過 consumer 驗證。Vercel 公網 Python 仍未證實 READY（先前 HTTP 402／部署需另行授權）。
 - 維護 repository：`hun186/jaal-topology-viewer`
 
 ## 一句話目的
