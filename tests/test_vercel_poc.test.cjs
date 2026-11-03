@@ -35,7 +35,9 @@ test("Vercel Git integration cannot automatically deploy any branch", () => {
   assert.equal(cfg.buildCommand, undefined);
   assert.equal(cfg.outputDirectory, undefined);
   const app = readFileSync(resolve(root, "app.py"), "utf8");
-  assert.match(app, /build_app\(_graph\)/);
+  assert.match(app, /create_gallery_app\(_CASES\)/);
+  assert.match(app, /GalleryCase\("org-tree"/);
+  assert.match(app, /GalleryCase\("project-dag"/);
   assert.match(app, /app = dash_app\.server/);
   // Dash injects its own script bootstrap; a static-only script CSP is invalid.
   assert.ok(cfg.headers[0].headers.some(x => x.key === "X-Content-Type-Options" && x.value === "nosniff"));
