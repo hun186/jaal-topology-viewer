@@ -79,6 +79,19 @@ test("community quotient retains both directed totals, self-internal edges and o
   );
   assert.equal(from0to1.originals.length, 2);
   assert.equal(from1to0.originals.length, 1);
+  const drawn01 = view.edges.find(e => e.from === group0 && e.to === group1);
+  const drawn10 = view.edges.find(e => e.from === group1 && e.to === group0);
+  assert.deepEqual(
+    community.explainEdge(view, drawn01.id).map(e => [e.from, e.to]),
+    [["A", "D"], ["B", "D"]],
+  );
+  assert.deepEqual(
+    community.explainEdge(view, drawn10.id).map(e => [e.from, e.to]),
+    [["D", "A"]],
+  );
+  assert.deepEqual(community.explainEdge(view, "missing"), []);
+  assert.match(view.nodes.find(n => n.id === group0).label, /個節點/);
+  assert.ok(!view.nodes.find(n => n.id === group0).label.includes(" 人"));
   const total = [...view.aggregated.values()].reduce(
     (n, p) => n + p.originals.length, 0
   ) + [...view.internal.values()].reduce((a,b) => a+b,0);
@@ -88,6 +101,29 @@ test("community quotient retains both directed totals, self-internal edges and o
   const opened = community.makeView(input, membership, new Set(["community-0"]), true);
   assert.ok(opened.nodes.some(n => n.id === "A"));
   assert.ok(!opened.nodes.some(n => n.id === group0));
+});
+
+test("quotient edge provenance keeps HTML-looking IDs literal", () => {
+  const original = {
+    nodes: ["<img src=x onerror=alert(1)>", "X", "Y", "Z", "P", "Q"]
+      .map(id => ({id, label: id})),
+    edges: [
+      {id:"e1",from:"<img src=x onerror=alert(1)>",to:"Z"},
+      {id:"e2",from:"X",to:"Z"},
+    ],
+  };
+  const membership = Object.assign(Object.create(null), {
+    "<img src=x onerror=alert(1)>":"a", X:"a",Y:"a",
+    Z:"b",P:"b",Q:"b",
+  });
+  const view = community.makeView(original, membership, new Set(), false);
+  const edge = view.edges.find(x => String(x.id).startsWith("__jaal_internal_link__"));
+  assert.ok(edge);
+  assert.equal(community.explainEdge(view, edge.id)[0].from,
+               "<img src=x onerror=alert(1)>");
+  assert.deepEqual(original.nodes.map(n => n.id), [
+    "<img src=x onerror=alert(1)>", "X", "Y", "Z", "P", "Q",
+  ]);
 });
 
 test("community activation and restoration preserve original DataSets and camera", () => {

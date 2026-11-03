@@ -6,6 +6,7 @@
   "use strict";
   const MIN_GROUP_SIZE = 3;
   const stateAPI = {partition: {}};
+  const INSPECTOR_ID = "jaal-community-edge-inspector";
 
   function nameFor(id, zh) {
     const labels = root.dash_clientside && root.dash_clientside.jaal_visible_labels;
@@ -67,7 +68,7 @@
       const count = members.get(group).length;
       nodes.push({
         id: clusterId, shape: "box",
-        label: "社群 " + (sorted.indexOf(group) + 1) + "\n" + count + " 人",
+        label: "社群 " + (sorted.indexOf(group) + 1) + "\n" + count + " 個節點",
         title: "Louvain 社群；" + count + " 個節點（拓樸分群，非上下級）",
         color: {background: "#dbeafe", border: "#3b82f6"},
         margin: 12,
@@ -92,25 +93,100 @@
     }
     let ordinal = 0;
     const edges = [];
+    const edgeSources = Object.create(null);
     for (const pair of pairs.values()) {
       const originals = pair.originals, count = originals.length;
       const stillOriginal = count === 1 &&
         representative[String(originals[0].from)] === String(originals[0].from) &&
         representative[String(originals[0].to)] === String(originals[0].to);
-      if (stillOriginal) {
-        edges.push({...originals[0]});
-      } else {
-        edges.push({
-          id: edgePrefix + (ordinal++),
-          from: pair.from, to: pair.to, arrows: "to",
-          width: Math.min(8, 1 + Math.log2(count + 1)),
-          label: count > 1 ? String(count) : undefined,
-          title: "原始有向關係數：" + count,
-        });
-      }
+      const drawn = stillOriginal ? {...originals[0]} : {
+        id: edgePrefix + (ordinal++),
+        from: pair.from, to: pair.to, arrows: "to",
+        width: Math.min(8, 1 + Math.log2(count + 1)),
+        label: count > 1 ? String(count) : undefined,
+        title: "原始有向關係數：" + count,
+      };
+      edges.push(drawn);
+      // Every visible quotient edge carries its exact input relations.
+      // The two directions of a reciprocal community pair stay separate.
+      edgeSources[String(drawn.id)] = originals.map(edge => ({
+        id: String(edge.id), from: String(edge.from), to: String(edge.to),
+      }));
     }
     return {nodes, edges, internal, clusterToGroup, representative,
-            aggregated: pairs, members};
+            aggregated: pairs, members, edgeSources};
+  }
+
+
+  function explainEdge(view, visibleEdgeId) {
+    if (!view || !view.edgeSources ||
+        !Object.prototype.hasOwnProperty.call(view.edgeSources, String(visibleEdgeId))) {
+      return [];
+    }
+    return view.edgeSources[String(visibleEdgeId)].map(item => ({...item}));
+  }
+
+  function closeInspector() {
+    const doc = root.document;
+    const panel = doc && doc.getElementById(INSPECTOR_ID);
+    if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+  }
+
+  function showEdgeInspector(view, visibleEdgeId, zh) {
+    const origins = explainEdge(view, visibleEdgeId);
+    if (!origins.length || !root.document || !root.document.body) return;
+    const doc = root.document;
+    closeInspector();
+    const panel = doc.createElement("section");
+    panel.id = INSPECTOR_ID;
+    panel.setAttribute("role", "region");
+    panel.setAttribute("aria-label", "社群有向連線原始來源");
+    Object.assign(panel.style, {
+      position: "fixed", right: "12px", bottom: "12px", zIndex: "1000",
+      maxWidth: "min(450px, calc(100% - 24px))", maxHeight: "40vh",
+      overflow: "auto", boxSizing: "border-box", background: "#fff",
+      border: "1px solid #6486c5", borderRadius: "8px",
+      boxShadow: "0 4px 18px rgba(0, 0, 0, 0.16)",
+      font: "13px/1.4 system-ui, sans-serif", color: "#1f2937",
+      padding: "10px 12px",
+    });
+    const header = doc.createElement("div");
+    header.style.display = "flex";
+    header.style.gap = "8px";
+    header.style.justifyContent = "space-between";
+    const title = doc.createElement("strong");
+    title.textContent = "原始有向關係（" + origins.length + " 條）";
+    const close = doc.createElement("button");
+    close.type = "button";
+    close.textContent = "關閉";
+    close.setAttribute("aria-label", "關閉原始關係檢視");
+    close.addEventListener("click", closeInspector);
+    header.append(title, close);
+    panel.appendChild(header);
+    const description = doc.createElement("p");
+    description.textContent = "箭頭方向逐條來自原圖，不代表社群之間的父子層級。";
+    description.style.margin = "6px 0";
+    panel.appendChild(description);
+    const list = doc.createElement("ol");
+    list.style.paddingLeft = "20px";
+    list.style.margin = "0";
+    // Hard cap on DOM creation; all records remain available in source graph.
+    for (const origin of origins.slice(0, 100)) {
+      const item = doc.createElement("li");
+      // NEVER use innerHTML: node IDs and translated labels are untrusted.
+      item.textContent = nameFor(origin.from, zh) + " → " +
+        nameFor(origin.to, zh);
+      item.title = origin.from + " → " + origin.to;
+      list.appendChild(item);
+    }
+    panel.appendChild(list);
+    if (origins.length > 100) {
+      const rest = doc.createElement("p");
+      rest.textContent = "僅列出前 100 條；其餘 " + (origins.length - 100) +
+        " 條可在原始圖逐項檢視。";
+      panel.appendChild(rest);
+    }
+    doc.body.appendChild(panel);
   }
 
   function reconcile(dataset, rows) {
@@ -133,6 +209,7 @@
     // the exact filtered source instead of showing stale synthetic communities.
     const filtered = source.nodes.some(n => n.hidden) ||
       source.edges.some(e => e.hidden);
+    if (filtered) closeInspector();
     const view = filtered ? {
       nodes: source.nodes.map(node => ({
         ...node,
@@ -219,6 +296,7 @@
   }
 
   function restore() {
+    closeInspector();
     const state = this.__jaalCommunity;
     if (!state || !state.active) return;
     state.active = false;
@@ -258,7 +336,13 @@
         if (!current || !current.active || current.filtered || !current.view) return;
         const id = event && event.nodes && event.nodes.length
           ? String(event.nodes[0]) : null;
-        if (!id) return;
+        if (!id) {
+          const edge = event && event.edges && event.edges.length
+            ? String(event.edges[0]) : null;
+          if (edge !== null) showEdgeInspector(current.view, edge, current.zh);
+          return;
+        }
+        closeInspector();
         const group = current.view.clusterToGroup[id] ||
           (Object.prototype.hasOwnProperty.call(current.partition, id)
             ? String(current.partition[id]) : null);
@@ -273,7 +357,7 @@
   }
 
   root.dash_clientside = root.dash_clientside || {};
-  Object.assign(stateAPI, {activate, restore, makeView});
+  Object.assign(stateAPI, {activate, restore, makeView, explainEdge});
   root.dash_clientside.jaal_community_collapse = stateAPI;
   if (typeof module !== "undefined" && module.exports) {
     module.exports = stateAPI;
