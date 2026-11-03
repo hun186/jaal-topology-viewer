@@ -51,6 +51,53 @@
     return {nodes: projectedNodes, edges: projectedEdges};
   }
 
+  // The displayed graph is a fixed-universe graph.  Absent participants
+  // remain in the actual vis DataSet with hidden=true, retaining their ID,
+  // x/y and all original metadata.  No new physics layout is triggered when
+  // an event window adds/removes an active relationship.
+  function stableSource(source) {
+    if (!source || !Array.isArray(source.nodes) ||
+        !Array.isArray(source.edges) || !state.frame) return source;
+    const active = projectSource(source);
+    const activeNodes = new Map(active.nodes.map(n => [String(n.id), n]));
+    const activeEdges = new Map(active.edges.map(e => [String(e.id), e]));
+    return {
+      nodes: source.nodes.map(n => {
+        const live = activeNodes.get(String(n.id));
+        return {
+          ...n,
+          ...(live ? {
+            SentEmails: live.SentEmails,
+            ReceivedEmails: live.ReceivedEmails,
+            TotalEmails: live.TotalEmails,
+          } : {
+            SentEmails: 0, ReceivedEmails: 0, TotalEmails: 0,
+          }),
+          hidden: Boolean(n.hidden) || !live,
+        };
+      }),
+      edges: source.edges.map(e => {
+        const live = activeEdges.get(String(e.id));
+        return {
+          ...e, ...(live || {}),
+          hidden: Boolean(e.hidden) || !live,
+        };
+      }),
+    };
+  }
+
+  function freezePhysics(instance) {
+    // Physics keeps re-running if links are deleted/reinserted each frame.
+    // Once the initial full layout is present, freeze it for this playback
+    // session. Users can still drag nodes; the next frame remembers that.
+    if (!instance || !instance.net) return;
+    if (!instance.__jaalTemporalLayoutLocked &&
+        typeof instance.net.setOptions === "function") {
+      instance.net.setOptions({physics: {enabled: false}});
+      instance.__jaalTemporalLayoutLocked = true;
+    }
+  }
+
   function reconcile(ds, rows) {
     if (!ds || !Array.isArray(rows)) return;
     const wanted = new Set(rows.map(row => String(row.id)));
@@ -67,15 +114,18 @@
       to: state.frame.to,
       sourceNodes: source.nodes.length,
       sourceEdges: source.edges.length,
-      drawnNodes: instance.nn.getIds().length,
-      drawnEdges: instance.ee.getIds().length,
+      drawnNodes: instance.nn.get().filter(n => !n.hidden).length,
+      drawnEdges: instance.ee.get().filter(e => !e.hidden).length,
     };
   }
 
   function apply() {
     if (!state.frame || !this || !this.nn || !this.ee) return;
-    const source = projectSource(this.props && this.props.data);
-    if (!source) return;
+    const fullSource = this.props && this.props.data;
+    const source = projectSource(fullSource);
+    const universe = stableSource(fullSource);
+    if (!source || !universe) return;
+    freezePhysics(this);
     const net = this.net;
     const camera = net && typeof net.getViewPosition === "function" &&
       typeof net.getScale === "function"
@@ -87,15 +137,16 @@
       if (Number.isFinite(pos.x) && Number.isFinite(pos.y) &&
           !id.startsWith("__jaal_internal_")) saved[id] = pos;
     }
-    const viewNodes = source.nodes.map(node => {
+    const viewNodes = universe.nodes.map(node => {
       const coord = saved[String(node.id)];
       return coord && Number.isFinite(coord.x) && Number.isFinite(coord.y)
         ? {...node, x: coord.x, y: coord.y} : node;
     });
-    const oldEdges = this.ee.getIds();
-    if (oldEdges.length) this.ee.remove(oldEdges);
-    reconcile(this.nn, viewNodes);
-    reconcile(this.ee, source.edges);
+    // Keep the same node IDs and edge IDs permanently in the DataSets.
+    // Setting hidden/visible is one bounded in-place update per frame.
+    // Removing/reinserting every edge caused a flash and a layout restart.
+    if (viewNodes.length) this.nn.update(viewNodes);
+    if (universe.edges.length) this.ee.update(universe.edges);
     if (camera && typeof net.moveTo === "function") {
       net.moveTo({...camera, animation: false});
     }
@@ -171,7 +222,8 @@
 
   root.dash_clientside = root.dash_clientside || {};
   Object.assign(state, {
-    setFrame, projectSource, apply, noteRender, playback, choose, speed,
+    setFrame, projectSource, stableSource, freezePhysics,
+    apply, noteRender, playback, choose, speed,
   });
   root.dash_clientside.jaal_temporal = state;
   if (typeof module !== "undefined" && module.exports) {
