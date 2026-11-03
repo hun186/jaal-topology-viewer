@@ -1,19 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
-  "buildCommand": "node vercel-poc/build.mjs",
-  "outputDirectory": "vercel-poc/dist",
+  "framework": "flask",
   "git": {
     "deploymentEnabled": false
+  },
+  "functions": {
+    "app.py": {
+      "excludeFiles": "{tests/**,vercel-poc/**,.codex/**,.github/**,docs/**}"
+    }
   },
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'"
-        },
         {
           "key": "X-Content-Type-Options",
           "value": "nosniff"
@@ -25,6 +24,10 @@
         {
           "key": "Permissions-Policy",
           "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
         }
       ]
     }
