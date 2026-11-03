@@ -50,7 +50,7 @@ def main():
             page.locator("#search").fill("CEO / Executive Office")
             assert page.locator("svg .graph-node.faded").count() > 0
             node = page.locator('svg .graph-node[data-id="CEO / Executive Office"]')
-            node.click()
+            node.locator("circle").click()
             assert "執行長" in page.locator("#detailTitle").inner_text()
             assert page.locator("#detailBody").inner_text() == "CEO / Executive Office"
             page.locator("#chinese").uncheck()
@@ -70,7 +70,7 @@ def main():
             assert page.locator("svg .graph-node.cluster.faded").count() >= 1
             page.locator("#search").fill("")
             cluster = page.locator("svg .graph-node.cluster").first
-            cluster.click()
+            cluster.locator("circle").click()
             assert int(page.locator("#visibleNodes").inner_text()) > collapsed
             assert page.locator("#edgeTotal").inner_text() == "169"
             page.get_by_role("button", name="網狀全展開").click()
