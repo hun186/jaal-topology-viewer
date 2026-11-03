@@ -46,7 +46,7 @@ test("projectSource really removes inactive relationships and derives window cou
   temporal.setFrame(null);
   assert.strictEqual(temporal.projectSource(source), source);
 });
-test("real DataSets mutate on playback and preserve the same canvas camera", () => {
+test("real DataSets hide inactive graph elements without recreating nodes or moving the camera", () => {
   temporal.setFrame(frame);
   const nn = new DataSet(source.nodes), ee = new DataSet(source.edges);
   let moved = null;
@@ -56,9 +56,18 @@ test("real DataSets mutate on playback and preserve the same canvas camera", () 
     moveTo: args => {moved = args;},
   }};
   temporal.apply.call(instance);
-  assert.deepEqual(nn.getIds(), ["A", "B"]);
-  assert.deepEqual(ee.getIds(), ["edge0"]);
+  // Playback keeps a fixed DataSet universe to avoid network physics flashes.
+  // Hidden inactive records are not drawn and retain their IDs/positions.
+  assert.deepEqual(nn.getIds(), ["A", "B", "C"]);
+  assert.deepEqual(ee.getIds(), ["edge0", "edge1"]);
+  assert.equal(nn.rows.get("A").hidden, false);
+  assert.equal(nn.rows.get("B").hidden, false);
+  assert.equal(nn.rows.get("C").hidden, true);
+  assert.equal(ee.rows.get("edge0").hidden, false);
+  assert.equal(ee.rows.get("edge1").hidden, true);
+  assert.equal(nn.rows.get("C").TotalEmails, 0);
   assert.equal(nn.rows.get("A").TotalEmails, 3);
+  assert.deepEqual([nn.rows.get("A").x, nn.rows.get("A").y], [5, 7]);
   assert.deepEqual(moved.position, {x: 2, y: 3});
   assert.equal(moved.scale, 1.25);
   assert.deepEqual([temporal.lastRendered.sourceEdges,
@@ -66,9 +75,18 @@ test("real DataSets mutate on playback and preserve the same canvas camera", () 
   temporal.setFrame({...frame, date: "2026-10-06",
     edges: [["B", "C", 5]]});
   temporal.apply.call(instance);
-  assert.deepEqual(nn.getIds(), ["B", "C"]);
-  assert.deepEqual(ee.getIds(), ["edge1"]);
+  assert.deepEqual(nn.getIds(), ["A", "B", "C"]);
+  assert.deepEqual(ee.getIds(), ["edge0", "edge1"]);
+  assert.equal(nn.rows.get("A").hidden, true);
+  assert.equal(nn.rows.get("B").hidden, false);
+  assert.equal(nn.rows.get("C").hidden, false);
+  assert.equal(ee.rows.get("edge0").hidden, true);
+  assert.equal(ee.rows.get("edge1").hidden, false);
+  assert.equal(nn.rows.get("A").TotalEmails, 0);
   assert.equal(nn.rows.get("C").ReceivedEmails, 5);
+  assert.deepEqual([nn.rows.get("C").x, nn.rows.get("C").y], [10, 11]);
+  assert.deepEqual([temporal.lastRendered.drawnNodes,
+    temporal.lastRendered.drawnEdges], [2, 1]);
   assert.equal(temporal.lastRendered.date, "2026-10-06");
   temporal.setFrame(null);
 });
