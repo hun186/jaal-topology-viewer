@@ -8,11 +8,13 @@ import unittest
 class VercelJaalRuntimeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from app import app, dash_app, _graph
+        from app import app, dash_app, _graph, _email, _simulation
 
         cls.app = app
         cls.dash_app = dash_app
         cls.graph = _graph
+        cls.email_graph = _email
+        cls.simulation = _simulation
         cls.client = app.test_client()
 
     def test_real_dash_server_and_original_five_modes(self):
@@ -64,18 +66,23 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             {
                 "status": "ok", "demo": "public-fictional-data",
                 "viewer": "jaal-dash-real-runtime",
-                "modes": 5, "nodes": 77, "directed_edges": 169,
+                "modes": 5,
+                "nodes": len(self.email_graph.nodes),
+                "directed_edges": len(self.email_graph.edges),
             },
         )
 
     def test_public_gallery_cases_use_real_dash_routes_and_distinct_graphs(self):
         from app import _CASES, _tree, _dag
 
-        self.assertEqual(len(_CASES), 3)
+        self.assertEqual(len(_CASES), 4)
         self.assertEqual((len(_tree.nodes), len(_tree.edges)), (52, 51))
         self.assertEqual((len(_dag.nodes), len(_dag.edges)), (19, 31))
         for path, case_label, expected_mode, expected_count in (
-            ("/", "公司寄收件網路（一般有環）", "network", 77),
+            ("/", "企業郵件實務模擬（業務與事件）",
+             "network-community-collapsed", len(self.email_graph.nodes)),
+            ("/cases/mail-network/", "舊版通訊拓樸（類別樹改編）",
+             "network", 77),
             ("/cases/org-tree/", "公司組織階層樹（無環）",
              "hierarchical-collapsed", 52),
             ("/cases/project-dag/", "專案相依網路（多父 DAG）",
@@ -98,6 +105,35 @@ class VercelJaalRuntimeTests(unittest.TestCase):
                 )
         self.assertIs(self.app._jaal_topology_mounts["/cases/org-tree"].server.wsgi_app
                       is not None, True)
+
+    def test_email_event_downloads_are_read_only_and_consistent(self):
+        import csv
+        import io
+
+        client = self.client
+        events = client.get("/demo/mail-events.csv")
+        edges = client.get("/demo/mail-edges.csv")
+        summary = client.get("/demo/mail-summary")
+        self.assertEqual(events.status_code, 200)
+        self.assertEqual(edges.status_code, 200)
+        self.assertEqual(summary.status_code, 200)
+        self.assertEqual(client.post("/demo/mail-events.csv").status_code, 405)
+        rows = list(csv.DictReader(io.StringIO(events.get_data(as_text=True))))
+        aggregated = list(csv.DictReader(io.StringIO(edges.get_data(as_text=True))))
+        self.assertEqual(len(rows), len(self.simulation.events))
+        self.assertEqual(len(aggregated), len(self.email_graph.edges))
+        self.assertEqual(sum(int(r["message_count"]) for r in aggregated), len(rows))
+        payload = summary.get_json()
+        self.assertEqual(payload["status"], "fictional-simulation")
+        self.assertEqual(payload["events"], len(rows))
+        self.assertEqual(payload["directed_pairs"], len(aggregated))
+        self.assertEqual(payload["work_days"], 20)
+        self.assertGreater(payload["replies"], 100)
+        layout = client.get("/_dash-layout").get_json()
+        serialized = json.dumps(layout, ensure_ascii=False)
+        self.assertIn("下載模擬郵件事件 CSV", serialized)
+        self.assertIn("本案例以合成郵件收發量加權", serialized)
+        self.assertIn("企業郵件實務模擬（業務與事件）", serialized)
 
     def test_vercel_configuration_never_automatically_builds_prs(self):
         from pathlib import Path
