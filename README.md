@@ -103,6 +103,49 @@ not trigger a new Vercel deployment**. The production Vercel URL remains
 on its previously deployed version until an authorized, quota-available
 post-Merge release is separately verified.
 
+## Temporal Network Analysis — optional event-backed animation
+
+The fictional business-email case has an opt-in **時間演化**
+controller for the **same real Jaal/visdcc graph**. Other CSV-based
+taxonomy, DAG and historical cases retain their original non-temporal
+behavior.
+
+- Select any start/end **calendar-day** interval with the range slider.
+- **累積至目前** includes events since the chosen start through the
+  playhead. **滑動時間窗** includes only the last 1, 3, 7, 14 or 30 days.
+- Scrub manually, step 1/2/5/7 days, Play/Pause, loop, and choose
+  playback speed 350/700/1400/2500 milliseconds per step.
+- Each frame recomputes real directed-pair message counts, active
+  nodes/edges and **Louvain weighted for that time slice**; the current
+  calendar window and message/node/link counts appear on screen.
+- The Python server precomputes a bounded batch after a date/mode/window
+  change. Subsequent playback is entirely **in the browser**, without
+  a Flask/Vercel HTTP request for each animation tick.
+
+Custom applications can opt in without modifying their old
+`Graph(edges,nodes,translations)` or CLI use:
+
+```python
+from jaal_topology import GalleryCase, TemporalTimeline, create_gallery_app
+
+# full_graph: original deduplicated Graph, with optional edge_counts
+# events: sequence of objects exposing ISO .timestamp, .sender, .recipient
+timeline = TemporalTimeline(full_graph, events)
+dash_app = create_gallery_app([
+    GalleryCase("events", "事件演化", full_graph,
+                temporal_timeline=timeline),
+])
+```
+
+The temporal API accepts up to 50,000 events spanning 120 calendar days
+and limits rendering to 3,000 nodes/5,000 directed edges (plus a bounded
+frame batch). Timestamp strings without offsets are explicitly considered
+unspecified local time; timezone-aware timestamps are normalized to UTC,
+and mixing conventions is rejected. Time-sliced Filter/Size *server
+callback schemas*, live email ingestion, timezone selector and side-by-side
+comparisons are not yet included; original Jaal controls still use their
+full-period data source while the displayed graph/counts/Louvain evolve.
+
 ## Install and use in another Python project
 
 This repository **is the standalone package root**. With Python 3.10+
