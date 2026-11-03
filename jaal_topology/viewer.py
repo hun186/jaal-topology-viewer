@@ -597,7 +597,10 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                 physics, dict
             ) else bool(physics)
             return {
-                "physics": {"enabled": enabled},
+                # Timeline playback keeps a stable node universe and camera.
+                # Never restart physics in its delayed layout-restore tick.
+                # Ordinary non-temporal Jaal viewers retain legacy behavior.
+                "physics": {"enabled": enabled and temporal_frames is None},
                 "edges": {"smooth": reset["edges"]["smooth"]},
                 "nodes": {key: reset["nodes"][key] for key in (
                     "shape", "widthConstraint", "margin", "borderWidth"
@@ -608,6 +611,11 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             "hierarchical", "hierarchical-collapsed",
         ):
             options = layout_options(base, mode)
+            if temporal_frames is not None:
+                # Switching hierarchy/network otherwise re-enables vis physics
+                # after the clientside first-frame lock (including on resume).
+                # Keep temporal positions steady in all five layout modes.
+                options["physics"] = {"enabled": False}
             if focused:
                 options["height"] = "100dvh"
             return options, mode.startswith("hierarchical")
