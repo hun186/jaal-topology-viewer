@@ -64,7 +64,9 @@ def check(port):
                 assert not help_details.evaluate("(el) => el.open")
                 width_open = column.bounding_box()["width"]
                 canvas_open = page.locator(".vis-network canvas").first.bounding_box()["width"]
-                assert page.locator("#jaal-compact-toolbar").bounding_box()["height"] < 105
+                # The timeline adds a compact second control row; other
+                # single-graph and non-temporal cases retain the small toolbar.
+                assert page.locator("#jaal-compact-toolbar").bounding_box()["height"] < 260
                 sidebar.click()
                 expect(sidebar).to_have_attribute("aria-expanded", "false", timeout=15000)
                 expect(panel).to_be_hidden(timeout=15000)
@@ -190,6 +192,78 @@ def check(port):
                 ).get_attribute("href") == "/demo/mail-events.csv"
                 page.locator("#jaal-original-help-details summary").click()
 
+                # Real temporal evolution: visible Louvain source DataSets
+                # change with the selected interval; the source event series
+                # remains intact. Tick animation must stay clientside.
+                temporal = page.locator("#jaal-temporal-controls")
+                assert temporal.is_visible()
+                page.wait_for_function(
+                    "() => Boolean(window.dash_clientside?.jaal_temporal?.lastRendered?.date)",
+                    timeout=30000,
+                )
+                full = page.evaluate(
+                    "() => ({...window.dash_clientside.jaal_temporal.lastRendered})"
+                )
+                full_messages = page.locator("#jaal-temporal-status").inner_text()
+                assert "封信" in full_messages
+                assert full["sourceEdges"] > 100, full
+
+                page.get_by_label("滑動時間窗", exact=True).check()
+                page.locator("#jaal-temporal-window").click()
+                page.get_by_text("1 天", exact=True).last.click()
+                page.wait_for_function(
+                    "() => window.dash_clientside?.jaal_temporal?.frame?.mode === 'rolling' && " +
+                    "window.dash_clientside?.jaal_temporal?.frame?.from === " +
+                    "window.dash_clientside?.jaal_temporal?.frame?.to",
+                    timeout=30000,
+                )
+                day = page.evaluate(
+                    "() => ({...window.dash_clientside.jaal_temporal.frame})"
+                )
+                page.wait_for_function(
+                    "(d) => window.dash_clientside?.jaal_temporal?.lastRendered?.date === d",
+                    arg=day["date"], timeout=30000,
+                )
+                actual = page.evaluate(
+                    "() => ({...window.dash_clientside.jaal_temporal.lastRendered})"
+                )
+                assert actual["sourceEdges"] == day["links"]
+                assert day["messages"] > 0
+                assert day["messages"] < 2000
+                assert actual["sourceEdges"] < full["sourceEdges"], (actual, full)
+                page.locator("#jaal-temporal-back").click()
+                page.wait_for_function(
+                    "(date) => window.dash_clientside?.jaal_temporal?.frame?.date !== date",
+                    arg=day["date"], timeout=30000,
+                )
+                page.wait_for_function(
+                    "() => window.dash_clientside?.jaal_temporal?.lastRendered?.date === " +
+                    "window.dash_clientside?.jaal_temporal?.frame?.date",
+                    timeout=30000,
+                )
+                before_play = page.evaluate(
+                    "() => window.dash_clientside.jaal_temporal.frame.date"
+                )
+                # After the user changed the analysis window, precomputation
+                # ends. Playback ticks must NOT send new Flask/Vercel RPCs.
+                page.wait_for_load_state("networkidle", timeout=20000)
+                backend_ticks = []
+                page.on("request", lambda req: backend_ticks.append(req.url)
+                        if "/_dash-update-component" in req.url else None)
+                page.locator("#jaal-temporal-play").click()
+                expect(page.locator("#jaal-temporal-play")).to_have_text(
+                    "⏸ 暫停", timeout=12000
+                )
+                page.wait_for_function(
+                    "(date) => window.dash_clientside?.jaal_temporal?.frame?.date !== date",
+                    arg=before_play, timeout=30000,
+                )
+                page.locator("#jaal-temporal-play").click()
+                expect(page.locator("#jaal-temporal-play")).to_have_text(
+                    "▶ 播放", timeout=12000
+                )
+                assert backend_ticks == [], backend_ticks
+                # A static case never receives timeline controls.
                 if errors:
                     raise AssertionError("Dash browser errors: " + repr(errors))
                 print("VERCEL_REAL_JAAL_BROWSER_PASS")
