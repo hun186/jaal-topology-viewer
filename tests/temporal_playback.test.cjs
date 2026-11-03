@@ -198,7 +198,9 @@ test("temporal community holds one partition and open state across rolling ticks
   assert.equal(temporal.lastRendered.sourceEdges, 2);
   assert.equal(instance.nn.rows.get("A").hidden, true);
   assert.equal(instance.nn.rows.get("C").hidden, false);
-  assert.equal(instance.nn.rows.get("D").hidden, false);
+  const otherGroup = Object.keys(instance.__jaalCommunity.view.clusterToGroup)
+    .find(k => instance.__jaalCommunity.view.clusterToGroup[k] === "team-1");
+  assert.ok(otherGroup && !instance.nn.rows.get(otherGroup).hidden);
   temporal.setFrame(null);
   api.restore.call(instance);
   assert.deepEqual([...instance.nn.getIds()].sort(), members);
