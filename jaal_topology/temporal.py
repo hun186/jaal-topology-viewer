@@ -8,7 +8,7 @@ background scheduler is involved.
 from __future__ import annotations
 
 from collections import Counter
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 from .community import detect_louvain
 from .data import Graph, GraphInputError
@@ -34,7 +34,7 @@ class TemporalTimeline:
         aware = None
         for event in events:
             try:
-                timestamp = datetime.fromisoformat(event.timestamp)
+                timestamp = datetime.fromisoformat(event.timestamp.replace("Z", "+00:00"))
                 sender, recipient = str(event.sender), str(event.recipient)
             except (AttributeError, TypeError, ValueError) as exc:
                 raise GraphInputError("Temporal events need valid ISO timestamps and endpoints") from exc
@@ -115,6 +115,11 @@ class TemporalTimeline:
         """Precompute bounded frames; client playback uses NO per-tick HTTP."""
         if last_index is None:
             last_index = len(self.days) - 1
+        if (type(first_index) is not int or type(last_index) is not int or
+                not 0 <= first_index <= last_index < len(self.days) or
+                mode not in ("cumulative", "rolling") or
+                type(window_days) is not int or not 1 <= window_days <= 60):
+            raise GraphInputError("Invalid temporal frame selection")
         rows = []
         total_edges = 0
         for index in range(first_index, last_index + 1):
