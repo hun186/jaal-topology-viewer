@@ -10,6 +10,8 @@
   "use strict";
 
   const HIERARCHICAL_RUN = String.raw`(function () {
+    var temporal = globalThis.dash_clientside && globalThis.dash_clientside.jaal_temporal;
+    if (temporal && typeof temporal.apply === "function") temporal.apply.call(this);
     var ds = this.nn;
     if (!ds || typeof ds.get !== "function" || typeof ds.update !== "function") return;
     function displayLabel(value) {
@@ -39,6 +41,8 @@
   }).call(this);`;
 
   const NETWORK_RUN = String.raw`(function () {
+    var temporal = globalThis.dash_clientside && globalThis.dash_clientside.jaal_temporal;
+    if (temporal && typeof temporal.apply === "function") temporal.apply.call(this);
     var ds = this.nn;
     if (!ds || typeof ds.get !== "function" || typeof ds.update !== "function") return;
     var changes = ds.get().map(function (node) {
@@ -74,7 +78,7 @@
   }
 
   function apply(mode, graphData, selectedLanguages, translations, membership,
-                 structuralEligible) {
+                 structuralEligible, temporalFrame) {
     // Only pre-authored static commands are ever evaluated by visdcc.
     // CSV contents are data in a bounded Dash Store, never executable code.
     if (!graphData || !Array.isArray(graphData.nodes)) return "";
@@ -82,7 +86,12 @@
       selectedLanguages.includes("zh");
     const state = root.dash_clientside.jaal_visible_labels;
     const community = root.dash_clientside && root.dash_clientside.jaal_community_collapse;
-    if (community) community.partition = membership || {};
+    const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
+    if (temporal && typeof temporal.setFrame === "function") {
+      temporal.setFrame(temporalFrame);
+    }
+    if (community) community.partition =
+      temporalFrame && temporalFrame.partition ? temporalFrame.partition : membership || {};
     state.translations = translations && typeof translations === "object" &&
       !Array.isArray(translations) ? translations : {};
     const hierarchy = HIERARCHICAL_RUN.replace(
