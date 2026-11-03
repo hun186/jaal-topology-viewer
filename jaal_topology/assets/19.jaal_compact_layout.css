@@ -8,8 +8,8 @@
   font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans TC", sans-serif;
 }
 .jaal-compact-toolbar {
-  position: sticky;
-  top: 0;
+  /* Do not pin the status/options bar while the user scrolls the graph. */
+  position: relative;
   z-index: 80;
   display: flex;
   align-items: center;
@@ -39,6 +39,23 @@
 .jaal-sidebar-toggle:hover,
 .jaal-sidebar-toggle:focus-visible {
   background: #e8f2ff;
+  outline-offset: 2px;
+}
+.jaal-focus-toggle {
+  flex: 0 0 auto;
+  border: 1px solid #90a8c4;
+  border-radius: 6px;
+  background: #eef5ff;
+  color: #274a70;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.jaal-focus-toggle:hover,
+.jaal-focus-toggle:focus-visible {
+  background: #d9e9ff;
   outline-offset: 2px;
 }
 .jaal-graph-kind {
@@ -215,5 +232,70 @@
   }
   .jaal-original-app-shell .jaal-graph-col {
     flex: 0 0 100% !important;
+  }
+}
+
+
+/* Full-window topology mode. Original Dash/Jaal components are never
+   unmounted: escaping restores the same mode, graph and input state.
+   This works inside a same-origin iframe too (it fills the iframe's
+   viewport, not the browser's OS fullscreen). */
+body:has(.jaal-focus-mode) {
+  overflow: hidden !important;
+}
+.jaal-viewer-shell.jaal-focus-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  background: #fff;
+}
+.jaal-focus-mode .jaal-compact-toolbar {
+  position: absolute;
+  z-index: 2100;
+  top: 9px;
+  right: 12px;
+  width: auto;
+  display: block;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.jaal-focus-mode .jaal-compact-toolbar > :not(#jaal-focus-toggle) {
+  display: none !important;
+}
+.jaal-focus-mode #jaal-focus-toggle {
+  background: rgba(245,249,255,.94);
+  box-shadow: 0 2px 10px rgba(15,23,42,.16);
+}
+.jaal-focus-mode .jaal-original-app-shell,
+.jaal-focus-mode .jaal-original-app-shell > div {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+.jaal-focus-mode .jaal-brand-row,
+.jaal-focus-mode .jaal-settings-col {
+  display: none !important;
+}
+.jaal-focus-mode .jaal-graph-col {
+  flex: 0 0 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100dvh;
+  min-width: 0 !important;
+  padding: 0 !important;
+}
+.jaal-focus-mode .jaal-graph-col .vis-network {
+  width: 100% !important;
+  height: 100dvh !important;
+}
+@media (max-width: 560px) {
+  .jaal-focus-mode .jaal-compact-toolbar {
+    top: 6px;
+    right: 6px;
   }
 }
