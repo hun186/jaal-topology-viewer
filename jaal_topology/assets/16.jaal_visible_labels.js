@@ -46,7 +46,9 @@
     var ds = this.nn;
     if (!ds || typeof ds.get !== "function" || typeof ds.update !== "function") return;
     var changes = ds.get().map(function (node) {
-      return {id: node.id, label: String(node.id)};
+      var text = String(node.id);
+      return {id: node.id, label: temporal && temporal.displayLabel
+        ? temporal.displayLabel(node.id, text) : text};
     });
     if (changes.length) ds.update(changes);
   }).call(this);`;
@@ -78,7 +80,7 @@
   }
 
   function apply(mode, graphData, selectedLanguages, translations, membership,
-                 structuralEligible, temporalFrame) {
+                 structuralEligible, temporalFrame, labelOptions, communityPolicy) {
     // Only pre-authored static commands are ever evaluated by visdcc.
     // CSV contents are data in a bounded Dash Store, never executable code.
     if (!graphData || !Array.isArray(graphData.nodes)) return "";
@@ -89,9 +91,15 @@
     const temporal = root.dash_clientside && root.dash_clientside.jaal_temporal;
     if (temporal && typeof temporal.setFrame === "function") {
       temporal.setFrame(temporalFrame);
+      if (typeof temporal.setDisplayOptions === "function") {
+        temporal.setDisplayOptions(labelOptions);
+      }
     }
+    // Full-period membership stays fixed while per-window traffic changes;
+    // a separate opt-in dynamic mode recomputes Louvain on every frame.
     if (community) community.partition =
-      temporalFrame && temporalFrame.partition ? temporalFrame.partition : membership || {};
+      communityPolicy === "dynamic" && temporalFrame && temporalFrame.partition
+        ? temporalFrame.partition : membership || {};
     state.translations = translations && typeof translations === "object" &&
       !Array.isArray(translations) ? translations : {};
     const hierarchy = HIERARCHICAL_RUN.replace(
@@ -101,10 +109,10 @@
         : "displayLabel(node.id)"
     );
     const network = NETWORK_RUN.replace(
-      "String(node.id)",
+      "var text = String(node.id);",
       preferChinese
-        ? "globalThis.dash_clientside.jaal_visible_labels.resolve(node.id, true)"
-        : "String(node.id)"
+        ? "var text = globalThis.dash_clientside.jaal_visible_labels.resolve(node.id, true);"
+        : "var text = String(node.id);"
     );
     const restorePrefix = "if (globalThis.dash_clientside && globalThis.dash_clientside.jaal_community_collapse) globalThis.dash_clientside.jaal_community_collapse.restore.call(this); if (globalThis.dash_clientside && globalThis.dash_clientside.jaal_structural_collapse) globalThis.dash_clientside.jaal_structural_collapse.restore.call(this); var ds = this.nn;";
     // The server and the actual visdcc callback have separate Dash inputs.
