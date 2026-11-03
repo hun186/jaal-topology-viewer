@@ -5,7 +5,7 @@
 ## Metadata
 - 初始化狀態：`INITIALIZED`
 - 最後查證日期：2026-11-03（台灣）
-- 查證基準：PR #5 HEAD `8d9beddd1be75cb4219952cc20dbc69fe411532a`（尚未 Merge；`main` 的狀態仍另行查證）
+- 查證基準：`main` merge commit `47942ac3bd08d8cbcc615fa215c5e5eef286f486`；[PR #5](https://github.com/hun186/jaal-topology-viewer/pull/5) 已於 2026-11-03 Merge。下游 [text-category-profiler PR #227](https://github.com/hun186/text-category-profiler/pull/227) 已合併，將 consumer pin 更新到同一 SHA；使用者 Stage 4 候選實機驗收 9 項 PASS、consumer Hosted Windows/Ubuntu CI PASS，但 Dash 2/3/4 全矩陣及乾淨外部環境仍未證明。
 - 維護 repository：`hun186/jaal-topology-viewer`
 
 ## 一句話目的
@@ -24,7 +24,7 @@
 | 套件 | `jaal-topology-viewer` 0.1.0；`jaal>=0.1.9`、`pandas>=1.5`、`networkx>=3.2,<4`；未見 lockfile | `pyproject.toml` |
 | UI | Jaal / Dash；可選 Flask / Werkzeug WSGI mount | `viewer.py`、`integration.py` |
 | Browser | 內含 JS 與 Bootstrap CSS；Node.js 測試、Windows Hosted Chromium 真實 iframe smoke（非 Stage 4 實機驗收） | `assets/`、`tests/browser_acceptance.py`、`ci.yml` |
-| OS | CI `ubuntu-latest` + `windows-latest` headless Chromium；使用者 Windows/Stage 4 實機仍待驗 | `ci.yml`、`README.md` |
+| OS | CI `ubuntu-latest` + `windows-latest` headless Chromium；下游 Stage 4 特定 Louvain 候選已取得 Windows 使用者實機 9 項 PASS（consumer PR #227），全 Dash/OS 矩陣仍待驗 | `ci.yml`、consumer PR #227 |
 | 遠端依賴 | 執行時無必需遠端服務；安裝可能需要取得套件 | `README.md` |
 
 ## 入口與 Repository 地圖
@@ -47,7 +47,7 @@
 - 無邊、未知 root、壞格式或超上限拒絕；CLI 預設只綁定 `127.0.0.1:8059`。
 - `text-category-profiler` 透過固定 Git commit 消費套件；本 repo 是 portable Python/JS 核心唯一來源，不複製 runtime 回下游。
 - 测試資料可使用 `examples/*.csv`；`.gitignore` 排除本機 cache、venv、build。
-- 待確認：Windows browser 實機、乾淨 consumer 安裝與 Dash 2/3/4 組合。**未驗證不等於失敗。**
+- 待確認：未涵蓋的 Windows／Dash 版本矩陣與乾淨外部環境。已確認 consumer PR #227 的特定 Stage 4 實機 PASS，不等於所有版本組合均驗收。
 
 ## README 閘門
 - `ADEQUATE`：既有 README 已有正確用途、安裝、CLI、整合、測試及限制，保留不重寫。

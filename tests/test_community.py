@@ -77,3 +77,51 @@ class DirectedCommunityTests(unittest.TestCase):
             detect_louvain(graph, seed=True)
         with self.assertRaises(GraphInputError):
             detect_louvain(Graph((("A", "missing"),), ("A",), {}))
+
+    def test_resolution_and_seed_are_repeatable_without_losing_direction(self):
+        # A complete directed graph has one group at low resolution,
+        # and singleton groups at sufficiently high resolution.
+        nodes = tuple(f"Node-{index}" for index in range(6))
+        edges = tuple((a, b) for a in nodes for b in nodes if a != b)
+        graph = Graph(edges, nodes)
+        low = detect_louvain(graph, seed=7, resolution=0.01)
+        high = detect_louvain(graph, seed=7, resolution=10.0)
+        self.assertEqual(low, detect_louvain(graph, seed=7, resolution=0.01))
+        self.assertEqual(high, detect_louvain(graph, seed=7, resolution=10.0))
+        self.assertEqual(len(low.groups), 1)
+        self.assertEqual(len(high.groups), len(nodes))
+        self.assertEqual(high.seed, 7)
+        self.assertEqual(high.resolution, 10.0)
+        self.assertEqual(set(high.member_to_group), set(nodes))
+        self.assertEqual(
+            sum(high.cross_group_edges.values()) +
+            sum(high.internal_edges.values()), len(edges),
+        )
+        a, b = high.member_to_group[nodes[0]], high.member_to_group[nodes[1]]
+        self.assertEqual(high.cross_group_edges[(a, b)], 1)
+        self.assertEqual(high.cross_group_edges[(b, a)], 1)
+        self.assertEqual(graph.edges, edges)
+
+    def test_maximum_bounded_graph_and_one_over_limit_fail_closed(self):
+        # Exact documented viewer ceiling, not a synthetic small-graph proxy.
+        nodes = tuple(f"N{index:04d}" for index in range(3000))
+        edges = (
+            tuple((nodes[i], nodes[(i + 1) % 3000]) for i in range(3000)) +
+            tuple((nodes[i], nodes[(i + 17) % 3000]) for i in range(2000))
+        )
+        graph = Graph(edges, nodes)
+        result = detect_louvain(graph)
+        self.assertEqual(result, detect_louvain(graph))
+        self.assertEqual(len(result.member_to_group), 3000)
+        self.assertEqual(set(result.member_to_group), set(nodes))
+        self.assertEqual(sum(map(len, result.groups)), 3000)
+        self.assertEqual(
+            sum(result.cross_group_edges.values()) +
+            sum(result.internal_edges.values()), 5000,
+        )
+        self.assertEqual(len(set(graph.edges)), 5000)
+        self.assertEqual(graph.edges, edges)
+        with self.assertRaises(GraphInputError):
+            detect_louvain(Graph(edges, nodes + ("EXTRA",)))
+        with self.assertRaises(GraphInputError):
+            detect_louvain(Graph(edges + ((nodes[2000], nodes[2017]),), nodes))
