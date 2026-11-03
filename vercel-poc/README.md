@@ -21,6 +21,15 @@ settings retain their values, and the graph column expands to the
 available width. The long cycle/quotient explanations appear only when
 opening **圖形說明** (the graph's cyclic status remains visible).
 
+The user-facing **全版檢視 ⛶** button creates a temporary viewport-sized
+topology view, hides Jaal's toolbar/settings/logo, and keeps the **退出全版 ✕**
+button available; **Escape** also restores the previous layout. In ordinary
+mode, the toolbar is no longer sticky when scrolling, and graph height uses
+its enclosing viewport-based column (not a hardcoded 600px). This is a
+layout-only switch on the same visdcc.Network, not a second graph renderer.
+Inside an iframe, it fills the iframe viewport rather than escaping to
+the hosting page or invoking the browser Fullscreen API.
+
 The old static SVG prototype remains in `vercel-poc/` as an explicitly
 **unpublished historical comparison**; it is *not* the deployed viewer.
 The public runtime does not support arbitrary file uploads, secrets,
