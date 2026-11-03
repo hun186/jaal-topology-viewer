@@ -6,6 +6,7 @@
 | ID | 優先度 | 狀態 | 項目 | 完成條件 |
 | --- | --- | --- | --- | --- |
 | BL-001 | High | Partial PASS | Windows 實機 Jaal／Stage 4 browser 視覺相容驗收 | 已有 consumer PR #227、Windows 使用者 9 項候選實機 PASS 與 Hosted browser acceptance；未覆蓋的 UI／版本組合或完整 ML 工況仍需個別列證，不宣稱全矩陣已驗收 |
+| BL-003 | Medium | In Progress | Vercel 公開唯讀 PoC 與節流部署 | 真實 SVG／CSV 靜態互動及 Hosted CI 通過；僅相關 PR 合併才有部署資格；Vercel project/憑證啟用/實際 READY 另驗 |
 | BL-002 | Medium | In Progress | 乾淨外部 consumer 安裝與 Dash/Jaal 版本組合驗證 | upstream clean Wheel smoke（Ubuntu／Windows，非 editable）與 HTTP/JS/CSS 正在補齊；外部 consumer 安裝、Dash 多版本矩陣與互動驗收仍需額外證據 |
 
 ## Candidate Ideas
