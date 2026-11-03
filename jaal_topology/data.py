@@ -22,6 +22,9 @@ class Graph:
     edges: tuple[tuple[str, str], ...]
     nodes: tuple[str, ...]
     translations: dict[str, str] = field(default_factory=dict)
+    # Optional simulated/aggregated message counts per directed pair; absent
+    # for standard taxonomy/relationship CSV so all previous semantics remain.
+    edge_counts: dict[tuple[str, str], int] = field(default_factory=dict)
 
 
 _HEADER_PAIRS = {
@@ -196,4 +199,6 @@ def select_subgraph(graph: Graph, root=None, *, max_nodes=250, max_edges=5000):
         )
     return Graph(chosen_edges, tuple(sorted(selected)),
                  {name: value for name, value in graph.translations.items()
-                  if name in selected})
+                  if name in selected},
+                 {edge: graph.edge_counts[edge] for edge in chosen_edges
+                  if edge in graph.edge_counts})
