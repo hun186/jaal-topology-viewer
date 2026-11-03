@@ -1,0 +1,117 @@
+name: Vercel Jaal PoC - merged PR only
+
+# Fork-safe trusted base workflow: only merged PRs can deploy; never execute
+# unmerged fork code with environment credentials.
+# Vercel Git auto-deploy is also disabled in vercel.json.
+on:
+  pull_request_target:
+    types: [closed]
+    paths:
+      - "vercel-poc/**"
+      - "vercel.json"
+      - ".github/workflows/vercel-poc-merge-only.yml"
+      - "examples/company_communications.csv"
+      - "examples/company_people.csv"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jaal-vercel-poc-production
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      vars.JAAL_VERCEL_POC_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: vercel-poc
+    timeout-minutes: 15
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      VERCEL_CLI_VERSION: ${{ vars.VERCEL_CLI_VERSION }}
+      MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify exact merge and build fictional public assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$MERGE_SHA"
+          git merge-base --is-ancestor "$MERGE_SHA" origin/main
+          node vercel-poc/build.mjs
+          node --test tests/test_vercel_poc.test.cjs
+          if [ -z "${VERCEL_ORG_ID:-}" ] || [ -z "${VERCEL_PROJECT_ID:-}" ]; then
+            echo "::error::Set VERCEL_ORG_ID and VERCEL_PROJECT_ID repository variables"
+            exit 1
+          fi
+          if [[ ! "$VERCEL_CLI_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Set reviewed exact VERCEL_CLI_VERSION x.y.z"
+            exit 1
+          fi
+      - name: Check existing deployment of this exact merge SHA
+        id: dedupe
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VERCEL_TOKEN:-}" ]; then
+            echo "::error::Set VERCEL_TOKEN in GitHub environment vercel-poc"
+            exit 1
+          fi
+          python - <<'PY'
+          import json, os, urllib.parse, urllib.request
+          query = urllib.parse.urlencode({
+              'projectId': os.environ['VERCEL_PROJECT_ID'],
+              'teamId': os.environ['VERCEL_ORG_ID'],
+              'limit': 100,
+          })
+          request = urllib.request.Request(
+              'https://api.vercel.com/v6/deployments?' + query,
+              headers={'Authorization': 'Bearer ' + os.environ['VERCEL_TOKEN']},
+          )
+          # Do not deploy if Vercel's state is unavailable or malformed.
+          with urllib.request.urlopen(request, timeout=20) as response:
+              body = json.load(response)
+          deployments = body.get('deployments')
+          if not isinstance(deployments, list):
+              raise RuntimeError('Unexpected Vercel deployment listing')
+          sha = os.environ['MERGE_SHA']
+          exists = any(
+              d.get('target') == 'production'
+              and d.get('meta', {}).get('mergeCommitSha') == sha
+              and d.get('state') not in ('ERROR', 'CANCELED')
+              for d in deployments
+          )
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
+              out.write('skip=' + ('true' if exists else 'false') + '\n')
+          print('Already deployed or pending:', exists, 'merge:', sha[:12])
+          PY
+      - name: Install approved pinned Vercel CLI
+        if: steps.dedupe.outputs.skip != 'true'
+        run: npm install --global "vercel@${VERCEL_CLI_VERSION}"
+      - name: Pull production deployment configuration
+        if: steps.dedupe.outputs.skip != 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production
+      - name: Build static site
+        if: steps.dedupe.outputs.skip != 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod
+      - name: Deploy reviewed merged commit
+        if: steps.dedupe.outputs.skip != 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prebuilt --prod --meta "mergeCommitSha=${MERGE_SHA}"

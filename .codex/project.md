@@ -15,7 +15,7 @@
 - 使用者：檢視分類樹或其他有向關係的 Python 開發者，以及下游 `text-category-profiler`。
 - 輸入：一個以上 parent/child CSV、可選 `ClassLabel,CT` metadata、root 與渲染上限。
 - 輸出：Dash/Jaal 互動圖（四種 legacy 模式加一個實驗 Louvain 社群收攏模式；中文名稱預設關閉）；**不回寫**任一 CSV。
-- 非目標：BertScript／TCFMain／WorkPool／模型訓練，consumer 的 root 搜尋下拉、sidebar 與 iframe autoheight，公網部署、自動同步下游。
+- 非目標：BertScript／TCFMain／WorkPool／模型訓練，consumer 的 root 搜尋下拉、sidebar 與 iframe autoheight，正式 Python Runtime 公網部署、自動同步下游。僅有獨立虛構資料的靜態公開 SVG PoC，不是正式 Jaal Runtime。
 
 ## 技術與執行
 | 項目 | 已確認 | 證據 |
@@ -37,6 +37,7 @@
 | `assets/` | Browser JS（包含社群投影／收攏）、Bootstrap CSS，從套件直接提供 |
 | `integration.py` | `mount_flask`；Flask 同來源、同 port |
 | `tests/`, `examples/` | Python/Node 測試、最小 CSV fixture |
+| `vercel-poc/`, `vercel.json`, `.github/workflows/vercel-poc-merge-only.yml` | 公開唯讀 SVG PoC、禁止 Vercel Git 自動部署，僅相關 PR 合併後由專用 workflow 發布（預設關閉） |
 | `.github/workflows/ci.yml` | Hosted CI；Ubuntu Python／Node／Dash 與 Windows Chromium 互動／iframe smoke，留存瀏覽器截圖 |
 | `REPOSITORY_SETUP.md` | 唯一原始碼來源、下游 exact SHA 升級 |
 | `AGENTS.md`, `.codex/` | Codex 路由、現況與記憶 |

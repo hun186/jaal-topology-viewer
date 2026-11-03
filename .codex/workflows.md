@@ -19,6 +19,7 @@
 | Dash HTTP/asset smoke | `build_app` + Flask test_client，驗證 `/_dash-layout`、`16.jaal_visible_labels.js`、`17.jaal_structural_collapse.js`、`18.jaal_community_collapse.js`、`bootstrap.min.css` 皆回傳 200 | `.github/workflows/ci.yml` 有完整可複製程式 |
 | Dash 2／3／4 固定版本回歸 | CI `dash-major-compat`（Ubuntu Python 3.11 + `dash==2.18.2`、`3.4.0`、`4.5.0`），`pip check` 並重跑完整 Python graph／WSGI／HTTP smoke；**不含**跨版本 Chromium 視覺測試 | `.github/workflows/ci.yml`；只代表這三個 exact versions 與 CI 平台，不推及所有 Dash patch 或 consumer Windows |
 | Clean Wheel 兩系統隔離驗證 | CI `clean-wheel` matrix（ubuntu-latest／windows-latest）：`python -m pip wheel --no-deps --wheel-dir wheelhouse .`，fresh venv 裝 Wheel 後切出 checkout，實際驗證 Python import／Louvain／Dash HTML/JS/CSS／Flask same-port | `.github/workflows/ci.yml`；只驗套件 Wheel，不等於外部 consumer 全組合或 Stage 4 實機 |
+| Vercel 靜態 PoC | node vercel-poc/build.mjs；node --test tests/test_vercel_poc.test.cjs；python tests/vercel_poc_browser.py（先建置，需 Chromium） | CI 驗證不部署；獨立 merge-only workflow 需 Vercel 憑證及顯式啟用；詳 vercel-poc/README.md |
 | Windows Chromium smoke | `python -m pip install playwright`, `python -m playwright install chromium`, `python tests/browser_acceptance.py --evidence browser-evidence` | `ci.yml` browser-windows job；使用虛構資料、同埠 iframe、截圖；**不是** Stage 4 完整手動驗收 |
 | Lint、format、typecheck、build | 沒有已確認 canonical 指令 | 不擅自捏造 |
 

@@ -12,6 +12,8 @@
 
 - Issue #4 已由 [PR #6](https://github.com/hun186/jaal-topology-viewer/pull/6) 合併驗證 Louvain resolution/seed 與 3000-node／5000-edge 邊界；BL-002 的隔離 Wheel smoke 由 PR #7 Hosted CI 通過，Dash 2/3/4 固定版本矩陣以其 PR 最新 HEAD CI/Review 為準，不外推至 consumer 全組合。
 
+- 新 Vercel PoC 規則：公網僅公開虛構資料靜態 SVG，不公開 Python Jaal 服務。Vercel Git 自動部署必須關閉；僅相關 PR merge-to-main 並顯式啟用後可觸發部署；CI/Review/Merge/READY 分別記錄。
+
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
