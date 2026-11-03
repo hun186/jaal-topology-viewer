@@ -99,9 +99,15 @@ def check(port):
                 expect(page.locator(".jaal-brand-row")).to_be_hidden()
                 graph_box = column.bounding_box()
                 assert graph_box["width"] > 1350, graph_box
-                focused_canvas_height = page.locator(
-                    ".vis-network canvas"
-                ).first.bounding_box()["height"]
+                focused_canvas_height = 0
+                deadline = time.monotonic() + 20
+                while time.monotonic() < deadline:
+                    focused_canvas_height = page.locator(
+                        ".vis-network canvas"
+                    ).first.bounding_box()["height"]
+                    if focused_canvas_height > 900:
+                        break
+                    page.wait_for_timeout(200)
                 assert focused_canvas_height > 900, focused_canvas_height
                 assert page.locator("#graph").count() == 1
                 focus_button.press("Escape")
