@@ -12,7 +12,7 @@
 
 - Issue #4 已由 [PR #6](https://github.com/hun186/jaal-topology-viewer/pull/6) 合併驗證 Louvain resolution/seed 與 3000-node／5000-edge 邊界；BL-002 的隔離 Wheel smoke 由 PR #7 Hosted CI 通過，Dash 2/3/4 固定版本矩陣以其 PR 最新 HEAD CI/Review 為準，不外推至 consumer 全組合。
 
-- Vercel PoC 已因視覺／功能不一致而改採同一 Jaal/Dash Flask WSGI 入口（非平行 SVG），但只公開固定 77/169 虛構圖，禁止任意上傳。Git 自動部署保持關閉；相關 PR merge 後且顯式啟用才部署。新方案的 Hosted CI／Review／Merge／READY 尚待各自驗證，不能宣稱上線。
+- Vercel PoC 使用相同 Jaal/Dash Flask WSGI、固定 77/169 虛構圖，無任意上傳。PR #10 已 CI/Review/Merge，2026-11-03 嘗試部署受到 Vercel HTTP 402 每日限額阻擋，公開站仍為先前靜態版；不能宣稱 Python 已 READY。Git 自動部署禁用，merge-only 工作流需顯式 enable/secret。使用者 Windows 本地 Python 3.12 WSGI 三項單元測試 PASS，但截圖指出共用 Jaal 左欄無收合與頂部常駐警告佔畫布；目前正在實作同源 UI 改善。
 
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
