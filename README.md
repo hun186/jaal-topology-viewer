@@ -10,8 +10,10 @@ training, or WorkPool. It **never writes** either source CSV.
 The [public demonstration](vercel-poc/README.md) now mounts the **real
 Python Jaal/Dash app**, using the same core, layout controls, Search/
 Filter/Color/Size and Louvain/community logic as this portable viewer.
-It is driven by the fictional 77-node/169-edge company example; cyclic
-graphs correctly disable the two DAG-only collapse modes.
+The default case now simulates fictional business-email workflows from
+individual events; the former 77-node/169-edge taxonomy-derived network is
+still available for comparison. Cyclic graphs correctly disable the two
+DAG-only collapse modes.
 
 The common Jaal/Dash viewer has a **collapsible Search/Filter/Color/Size
 sidebar**; collapsing it releases the full graph width without unmounting
@@ -43,9 +45,14 @@ The gallery is an optional part of the **portable Jaal component**, not a
 separate SVG mockup. The public demo, as served by `app.py`, offers a searchable
 **示範案例** dropdown containing:
 
-- **公司寄收件網路（一般有環）** — original fictional corporate messages
-  (77 nodes, 169 directed links), the default at `/`; use Louvain for
-  collapsed network views
+- **企業郵件實務模擬（業務與事件）** — the new default at `/`:
+  seeded, workflow-driven *fictional* individual emails with replies,
+  projects, cross-team escalations, system incidents and month-close effects.
+  Directed lines reveal synthetic send frequency; Louvain uses weighted
+  volumes. Review the [full model and downloads](examples/REALISTIC_EMAIL_DEMO.md).
+- **舊版通訊拓樸（類別樹改編）** — 77 nodes and 169 directed pairs,
+  retained at `/cases/mail-network/` for historical algorithm comparison
+  (**not** a realistic email event model)
 - **公司組織階層樹（無環）** — synthetic 52-node, 51-edge hierarchy,
   initially in hierarchy-collapsed mode, at `/cases/org-tree/`
 - **專案相依網路（多父 DAG）** — synthetic 19-node, 31-edge
