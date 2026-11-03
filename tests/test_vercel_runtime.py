@@ -164,6 +164,36 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             self.assertNotIn("jaal-temporal-controls",
                              json.dumps(child_layout))
 
+    def test_temporal_layout_changes_do_not_restart_physics(self):
+        # Exercise the real registered Dash callback (not a reimplemented
+        # helper): every mode switch and delayed restore must leave temporal
+        # physics disabled so playback positions cannot drift between frames.
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        callback = next(
+            config["callback"].__wrapped__
+            for key, config in self.dash_app.callback_map.items()
+            if "graph.options" in key
+            and "jaal-original-physics-restore.disabled" in key
+        )
+        for mode in ("network", "network-community-collapsed", "hierarchical"):
+            with self.subTest(mode=mode):
+                with patch("jaal_topology.viewer.callback_context",
+                           SimpleNamespace(triggered=[{
+                               "prop_id": "jaal-original-layout-mode.value"
+                           }])):
+                    options, _disabled = callback(mode, 0, 0)
+                self.assertIs(options["physics"]["enabled"], False)
+
+        with patch("jaal_topology.viewer.callback_context",
+                   SimpleNamespace(triggered=[{
+                       "prop_id": "jaal-original-physics-restore.n_intervals"
+                   }])):
+            restored, disabled = callback("network", 1, 0)
+        self.assertIs(restored["physics"]["enabled"], False)
+        self.assertTrue(disabled)
+
     def test_vercel_configuration_never_automatically_builds_prs(self):
         from pathlib import Path
 
