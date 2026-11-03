@@ -14,7 +14,6 @@ import random
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from types import MappingProxyType
 
 from .data import Graph, GraphInputError
 
@@ -136,7 +135,6 @@ def simulate_company_email(seed: int = SEED) -> MailSimulation:
                     manager[person] = ids[1 + subteam]
 
     events: list[EmailEvent] = []
-    day_events: dict[int, int] = defaultdict(int)
     serial = 0
     thread_serial = 0
 
@@ -147,7 +145,8 @@ def simulate_company_email(seed: int = SEED) -> MailSimulation:
 
     def emit(day: int, sender: str, recipient: str, flow: str,
              topic: str, thread_id: str, hour: int | None = None,
-             minute: int | None = None, reply_to: str = "") -> EmailEvent:
+             minute: int | None = None, reply_to: str = "",
+             when: datetime | None = None) -> EmailEvent:
         nonlocal serial
         if sender not in divisions or recipient not in divisions or sender == recipient:
             raise RuntimeError("Synthetic workflow has invalid sender/recipient")
@@ -155,7 +154,7 @@ def simulate_company_email(seed: int = SEED) -> MailSimulation:
             raise RuntimeError("Unknown mail workflow")
         serial += 1
         current = START_DAY + timedelta(days=day + 2 * (day // 5))
-        at = current.replace(
+        at = when or current.replace(
             hour=hour if hour is not None else rng.randrange(9, 18),
             minute=minute if minute is not None else rng.randrange(60),
         )
@@ -164,7 +163,6 @@ def simulate_company_email(seed: int = SEED) -> MailSimulation:
             thread_id, sender, recipient, flow, topic, reply_to,
         )
         events.append(event)
-        day_events[day] += 1
         return event
 
     def exchange(day: int, sender: str, recipient: str, flow: str,
@@ -173,8 +171,13 @@ def simulate_company_email(seed: int = SEED) -> MailSimulation:
         t = thread_id or thread(flow[:4].upper())
         sent = emit(day, sender, recipient, flow, topic, t, hour=hour)
         if rng.random() < response_chance:
+            # Keep the response in the same thread and always later
+            # than the message it answers, including after-hours incidents.
+            reply_at = datetime.fromisoformat(sent.timestamp) + timedelta(
+                minutes=rng.randrange(8, 116)
+            )
             emit(day, recipient, sender, flow, "RE: " + topic, t,
-                 hour=hour, reply_to=sent.id)
+                 reply_to=sent.id, when=reply_at)
         return t
 
     all_staff = [p for dept, people in dept_people.items()
@@ -290,6 +293,7 @@ def simulate_company_email(seed: int = SEED) -> MailSimulation:
         translations={k: translations[k] for k in active_nodes},
         edge_counts=dict(counts),
     )
-    return MailSimulation(graph, tuple(events),
-                          {k: divisions[k] for k in active_nodes},
-                          dict(counts))
+    return MailSimulation(
+        graph, tuple(sorted(events, key=lambda event: (event.timestamp, event.id))),
+        {k: divisions[k] for k in active_nodes}, dict(counts),
+    )
