@@ -11,6 +11,7 @@
 | ADR-0004 | Vercel 靜態 PoC 與 Merge-only 釋出 | Superseded by ADR-0005 (static only) | 2026-11-03 |
 | ADR-0005 | 公開 PoC 共用真正 Jaal/Dash，維持 Merge-only | Accepted | 2026-11-03 |
 | ADR-0006 | 有界 Gallery 多 Dash route 取代同頁直接換 Graph | Accepted | 2026-11-03 |
+| ADR-0007 | 原版類別樹通訊示意與新合成郵件業務情境區分 | Accepted | 2026-11-03 |
 
 ## ADR-0001 — 單一來源
 - 背景：portable 核心曾位於 `text-category-profiler/packages/jaal-topology`，下游整合 PR [#209](https://github.com/hun186/text-category-profiler/pull/209)、[#210](https://github.com/hun186/text-category-profiler/pull/210) 後搬離。
@@ -50,6 +51,14 @@
 - 決策：採取 `GalleryCase` registry，最多 20 個明確、可驗證案例，一個 Flask/Port 下為每案建獨立 Dash app／子路徑，下拉以同來源 URL 導頁；切換需要重新載入 Dash 頁面，但每案 callbacks、模式合法性、Louvain membership 隔離，且只在開機建圖一次。
 - 單案例 `build_app`／`mount_flask` 仍原樣相容；Gallery API 可供任何 Python consumer 可選使用。公網案例均為固定虛構資料，無 CSV 上傳／外部 URL。
 - 此改動不代表 Vercel 已部署：Git auto/Preview 仍禁用，只可在 reviewed Merge 後依額度發布，完整上線需 HTTP/browser 證據。
+
+## ADR-0007 — Distinguish historical topology from plausible synthetic email
+
+- 原本 77/169 寄收件示意由 TW Affairs 類別樹改名、加上人工回信與連線，不是根據郵件時間／頻率或企業作業模型產生；不得再宣稱它已模擬真實收發行為。
+- 新增固定種子、20 個工作日的虛構事件生成器，明確涵蓋：團隊內、主管、業務提案／客訴升級、月底對帳、夜間系統事件、主管簡報與 HR 作業。所有參與者只用角色名，不使用真實個資。
+- 原版仍為 Gallery 獨立舊案例；新業務情境成為預設案例，提供可重現的 read-only 逐封事件 CSV 與有向彙總 CSV。無真實郵件串接／任意上傳／資料寫回。
+- 保留一般 `Graph(edges,nodes,translations)` API；僅附帶明確 `edge_counts` 的圖會加權 Louvain 與顯示郵件線寬，避免偷偷更改分類樹或舊示例的拓樸語義。社群聚合邊數仍是獨立有向關係數，不等同郵件封數。
+- 這只是具業務合理性的示範假設，未由真實企業資料校準；公開站改版仍需 Merge Gate 與 Vercel API 額度恢復後獨立驗證。
 
 ## 維護
 新決策使用遞增不重用 ID；被取代時標記 Superseded 與新決策連結；不把一般 bugfix、猜測或秘密放入。
