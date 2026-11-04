@@ -30,14 +30,51 @@ the settings and graph controls without remounting the graph. The
 focus layout fills the current browser viewport (or the hosting iframe's
 viewport); it does not invoke the operating system fullscreen API.
 
-The root `app.py` is a Vercel Flask WSGI entrypoint for the demo only.
-No private data or user file upload is exposed. This does not change
+The root `app.py` remains the Vercel Flask entrypoint. Its optional browser-local
+workspace does not upload or persist private files on the server. This does not change
 the localhost CLI or the downstream `text-category-profiler` pin.
 
 Vercel Git push/PR auto deployments remain disabled. The dedicated
 workflow can release **only a relevant merged PR** when its separate
 GitHub credentials and enable switch are explicitly configured.
 There are no PR preview deployments.
+
+## My Cases — browser-only graph workspace
+
+The existing gallery toolbar now links to **＋ 我的案例／上傳 CSV**
+at **/my-cases/** (same origin). This is a separately scoped **browser-local
+workspace**, not a server upload endpoint.
+
+- **Create:** choose a name and 1–5 UTF-8 CSV/TSV relationship files, with
+  parent,child / from,to / source,target / sender,recipient headers, or
+  headerless first-two-column directed pairs. Optional ClassLabel,CT
+  provides Chinese display labels. The optional count/weight column accepts
+  positive integers, and exact duplicate pairs are deduplicated.
+- **Explore:** preview a real native SVG directed graph, select network or
+  hierarchy layout, click nodes, search original IDs/Chinese labels, inspect
+  edge directions, choose out/in/both and 0–10/all reachable k-hop scope,
+  pan/zoom/reset the viewport. A directed cycle is identified explicitly.
+- **Manage:** save up to 20 cases in same-origin IndexedDB, reopen after
+  refresh, rename, delete, export an individual/all JSON backup and restore
+  a backup. Case limits: 250 nodes, 2,000 unique directed edges, five
+  relationship files per case and 2 MB per input. No source CSV is edited.
+
+**Privacy:** scripts and HTML are GET-only static assets with restrictive CSP
+(connect-src 'none'). File reading, graph parsing/rendering and persistence
+remain inside the browser; no POST, private server data store, remote API,
+account sync or filesystem path recording. A browser cannot silently reopen
+a file solely from a saved local path. Site-data clearing, incognito mode,
+origin changes or browser eviction may erase local cases. JSON backups
+contain **plaintext customer relationships** and must be protected by the
+customer; private data should not be stored in a shared browser profile.
+
+**Feature boundary:** the local workspace is not the original Jaal/Dash
+canvas. The existing five display modes, Louvain collapses and temporal
+animation work unchanged for preloaded gallery cases; they do **not yet**
+apply to uploaded local cases. This boundary is deliberate: passing user
+files to the Python server or swapping the source under stateful Jaal
+callbacks would violate the private local-first workflow and per-case
+callback isolation. A future opt-in adapter requires separate review.
 
 ## Multi-case Jaal gallery
 
@@ -63,7 +100,7 @@ Changing cases navigates **on the same local/hosted domain and port**.
 Each page is a separately mounted original Dash/Jaal app with its own
 Search/Filter/Color/Size callbacks, cycle safety rules, Louvain partition
 and mode selection. Reloading the page when switching prevents stale
-graph callbacks/data from leaking across cases. There is no CSV upload or
+graph callbacks/data from leaking across cases. There is no **server-side** CSV upload or
 filesystem explorer in the public demo. The default `build_app(graph)`
 and existing `mount_flask(...)` consumers remain unchanged.
 
