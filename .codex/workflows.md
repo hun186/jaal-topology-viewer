@@ -11,6 +11,9 @@
 | 用途 | 命令 | 來源／邊界 |
 | --- | --- | --- |
 | 安裝 | `python -m pip install -e .` | CI／README |
+| Browser local-cases JS | node --test tests/browser_cases.test.cjs | CSV parser, weights, scope, limits and backup schema |
+| Browser local-cases Python | python -m unittest discover -s tests -p 'test_browser_cases.py' -v | GET-only Flask assets/CSP and gallery link |
+| Browser local-cases Chromium | python tests/browser_cases_acceptance.py --evidence browser-evidence/local-cases | Actual file upload, two layouts, IndexedDB reload and JSON backup/restore; runs in Windows hosted CI |
 | Python test | `python -m unittest discover -s tests -p "test_*.py" -v` | CI |
 | JS test | `node --test tests/*.test.cjs` | CI |
 | CLI help smoke | `python -m jaal_topology --help` | CI |
