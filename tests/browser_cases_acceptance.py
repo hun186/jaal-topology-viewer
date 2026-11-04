@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -47,7 +48,8 @@ def check(port, evidence):
 
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
-                page = browser.new_page(viewport={"width": 1480, "height": 980}, accept_downloads=True)
+                context = browser.new_context(viewport={"width": 1480, "height": 980}, accept_downloads=True)
+                page = context.new_page()
                 errors, writes = [], []
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.on("request", lambda req:
@@ -114,7 +116,7 @@ def check(port, evidence):
                 expect(page.locator("#library-count")).to_have_text("1 / 20")
                 page.locator(".case-item").first.click()
                 expect(page.locator("#count-edges")).to_have_text("4")
-                stale = page.context.new_page()
+                stale = context.new_page()
                 stale.goto(base + "/my-cases/", wait_until="domcontentloaded")
                 expect(stale.locator("#library-count")).to_have_text("1 / 20")
                 page.once("dialog", lambda dialog: dialog.accept())
@@ -138,6 +140,27 @@ def check(port, evidence):
                 expect(page.locator("#count-edges")).to_have_text("1")
                 expect(page.locator("path.edge-line")).to_have_count(1)
                 assert page.locator("path.edge-line").get_attribute("d").startswith("M ")
+                page.locator("#save-btn").click()
+                expect(page.locator("#library-count")).to_have_text("1 / 20")
+                second_tab = context.new_page()
+                second_tab.goto(base + "/my-cases/", wait_until="domcontentloaded")
+                expect(second_tab.locator("#library-count")).to_have_text("1 / 20")
+                # The first tab adds a second case while the second tab still
+                # has one item in its list. Its backup must include BOTH.
+                page.locator("#case-name").fill("雙向互動")
+                page.locator("#edge-files").set_input_files({
+                    "name": "two.csv", "mimeType": "text/csv",
+                    "buffer": b"from,to\nA,B\nB,A\n"})
+                page.locator("#preview-btn").click()
+                page.locator("#save-btn").click()
+                expect(page.locator("#library-count")).to_have_text("2 / 20")
+                with second_tab.expect_download() as backup_result:
+                    second_tab.locator("#export-all").click()
+                backup_contents = json.loads(
+                    backup_result.value.path().read_text(encoding="utf-8"))
+                assert len(backup_contents["cases"]) == 2, backup_contents
+                expect(second_tab.locator("#library-count")).to_have_text("2 / 20")
+                second_tab.close()
 
                 assert not writes, "Local workbench sent unexpected writes: " + str(writes)
                 assert not errors, "Browser JavaScript errors: " + str(errors)

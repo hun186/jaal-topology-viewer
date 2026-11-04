@@ -495,12 +495,24 @@
       format:"jaal-local-cases",schemaVersion:1,
       cases:[state.active]},null,2));
   }
-  function backupAll() {
-    if (!state.records.length) return;
-    download("jaal-cases-backup.json",JSON.stringify({
-      format:"jaal-local-cases",schemaVersion:1,
-      cases:state.records},null,2));
-    message("備份檔已產生；請妥善保管，其中包含您保存的關係資料。","success");
+  async function backupAll() {
+    try {
+      // Another tab can save/delete at any moment; NEVER back up the stale
+      // state.records snapshot. Read persisted data immediately before export.
+      const records = await readRecords();
+      if (!records.length) {
+        await refreshLibrary();
+        message("目前沒有已儲存案例可備份。");
+        return;
+      }
+      download("jaal-cases-backup.json", JSON.stringify({
+        format: "jaal-local-cases", schemaVersion: 1,
+        cases: records,
+      }, null, 2));
+      await refreshLibrary();
+      message("已備份最新 " + records.length +
+        " 個案例。JSON 含原始關係資料，請妥善保管。", "success");
+    } catch (e) {message("備份失敗：" + e.message, "error");}
   }
   async function restoreBackup() {
     const file=$("restore-file").files[0];
@@ -565,6 +577,10 @@
     $("save-btn").addEventListener("click",saveActive);
     $("export-one").addEventListener("click",exportActive);
     $("export-all").addEventListener("click",backupAll);
+    $("refresh-list").addEventListener("click", async () => {
+      try {await refreshLibrary(); message("已更新此瀏覽器中的案例清單。","success");}
+      catch (e) {message(e.message,"error");}
+    });
     $("restore-file").addEventListener("change",restoreBackup);
     $("sample-btn").addEventListener("click",()=>{
       download("jaal-example-edges.csv",
