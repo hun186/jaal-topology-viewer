@@ -63,6 +63,28 @@
       tx.onabort = () => reject(tx.error || Error("本機儲存交易中止。"));
     });
   }
+  function insertBounded(records) {
+    // Object-store readwrite transactions serialize across browser tabs.
+    // Count and insert share exactly one transaction for an atomic cap.
+    return new Promise((resolve, reject) => {
+      if (!state.db) {reject(Error("瀏覽器本機儲存不可用。")); return;}
+      const tx = state.db.transaction(STORE, "readwrite");
+      const store = tx.objectStore(STORE);
+      let reason = "";
+      const count = store.count();
+      count.onsuccess = () => {
+        if (count.result + records.length > core.MAX_CASES) {
+          reason = "最多保存 20 個案例；請先刪除或備份舊案例。";
+          tx.abort();
+        } else {
+          for (const record of records) store.add(record);
+        }
+      };
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(Error(reason ||
+        (tx.error && tx.error.message) || "保存案例失敗，請檢查儲存空間。"));
+    });
+  }
   function readRecords() {
     return new Promise((resolve, reject) => {
       if (!state.db) {resolve([]); return;}
@@ -351,12 +373,21 @@
       const dx=to.x-from.x, dy=to.y-from.y;
       const distance=Math.max(1,Math.hypot(dx,dy));
       const ux=dx/distance, uy=dy/distance;
-      const line = svg("line", {
-        x1: from.x+ux*17, y1: from.y+uy*17,
-        x2: to.x-ux*23, y2: to.y-uy*23,
-        class: "edge-line" + (edge.weight>1 ? " weighted" : ""),
-        "marker-end": "url(#arrowhead)",
-      });
+      const line = edge.from === edge.to
+        ? svg("path", {
+          d: "M "+(from.x-11)+" "+(from.y-12)+
+            " C "+(from.x-82)+" "+(from.y-94)+
+            " "+(from.x+82)+" "+(from.y-94)+
+            " "+(from.x+13)+" "+(from.y-11),
+          class: "edge-line" + (edge.weight>1 ? " weighted" : ""),
+          "marker-end": "url(#arrowhead)",
+        })
+        : svg("line", {
+          x1: from.x+ux*17, y1: from.y+uy*17,
+          x2: to.x-ux*23, y2: to.y-uy*23,
+          class: "edge-line" + (edge.weight>1 ? " weighted" : ""),
+          "marker-end": "url(#arrowhead)",
+        });
       const tip=svg("title"); tip.textContent=edge.from+" → "+edge.to+
         (edge.weight>1 ? "（件數："+edge.weight+"）" : "");
       line.append(tip);layer.append(line);
@@ -420,10 +451,9 @@
   async function saveActive() {
     if (!state.active || !state.db) return;
     try {
-      if (state.records.length >= core.MAX_CASES) throw Error("已達 20 案例上限，請先刪除或匯出其他案例。");
       const record={...core.validateCase(state.active), id:newId(),
         createdAt:new Date().toISOString()};
-      await dbAction("readwrite", store=>store.add(record));
+      await insertBounded([record]);
       state.savedId=record.id;
       await refreshLibrary();draw();
       $("active-name").textContent=record.title+" · 已儲存於此瀏覽器";
@@ -458,14 +488,9 @@
           value.cases.length <1 || value.cases.length>core.MAX_CASES) {
         throw Error("不是支援的 Jaal 案例備份。");
       }
-      if (state.records.length+value.cases.length>core.MAX_CASES) {
-        throw Error("還原後會超過 20 案例上限；請先移除一些舊案例。");
-      }
       const records=value.cases.map(item=>({...core.validateCase(item),
         id:newId(),createdAt:new Date().toISOString()}));
-      await dbAction("readwrite",store=>{
-        for (const record of records) store.add(record);
-      });
+      await insertBounded(records);
       await refreshLibrary();
       message("成功還原 "+records.length+" 個案例。原有案例未被覆蓋。","success");
     } catch (e) {message("還原失敗："+e.message,"error");}

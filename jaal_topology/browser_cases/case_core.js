@@ -34,8 +34,18 @@
     if (typeof source !== "string" || !source.trim()) throw Error("CSV 檔案是空的。");
     if (source.length > MAX_FILE_CHARS) throw Error("單一檔案不可超過 2 MB。");
     const input = source.charCodeAt(0) === 0xfeff ? source.slice(1) : source;
-    const firstLine = input.split(/\r?\n/, 1)[0];
-    const delimiter = firstLine.includes("\t") && !firstLine.includes(",") ? "\t" : ",";
+    // Detect separators outside quoted cells even for headerless TSV.
+    let outsideQuotes = true, commas = 0, tabs = 0;
+    for (let i = 0; i < input.length; i++) {
+      const ch = input[i];
+      if (ch === '"') {
+        if (!outsideQuotes && input[i + 1] === '"') {i++; continue;}
+        outsideQuotes = !outsideQuotes;
+      } else if (outsideQuotes && (ch === "\n" || ch === "\r")) break;
+      else if (outsideQuotes && ch === ",") commas++;
+      else if (outsideQuotes && ch === "\t") tabs++;
+    }
+    const delimiter = tabs > commas ? "\t" : ",";
     const rows = [];
     let row = [], cell = "", quoted = false, afterQuote = false, atStart = true;
     function flushCell() {
@@ -118,10 +128,12 @@
           weight = Number(value);
         }
         const key = JSON.stringify([from, to]);
-        if (!edgesByKey.has(key)) edgesByKey.set(key, {from, to, weight: 0});
+        if (!edgesByKey.has(key)) edgesByKey.set(key, {from, to, weight: 0, unweighted: false});
         const prev = edgesByKey.get(key);
-        // Without a weight column repeated relationships are the same edge.
-        prev.weight = weightColumn < 0 ? 1 : prev.weight + weight;
+        // Explicit counts add; unweighted occurrences contribute once.
+        // Both cases are independent of file ordering.
+        if (weightColumn >= 0) prev.weight += weight;
+        else if (!prev.unweighted) {prev.weight += 1; prev.unweighted = true;}
         if (prev.weight > 1000000) throw Error("同一有向關係累計權重超過上限。");
         if (edgesByKey.size > MAX_EDGES) {
           throw Error("超過 " + MAX_EDGES.toLocaleString("en-US") + " 條有向邊；請先篩選資料。");
@@ -157,7 +169,7 @@
     return {
       schemaVersion: 1, title: name,
       nodes: [...ids].map(id => ({id, label: labels.get(id) || id})),
-      edges: [...edgesByKey.values()],
+      edges: [...edgesByKey.values()].map(({from, to, weight}) => ({from, to, weight})),
     };
   }
 

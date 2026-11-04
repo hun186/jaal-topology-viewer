@@ -30,6 +30,15 @@ test("explicit weight adds repeated records without silently modifying direction
     {from:"A",to:"B",weight:5},{from:"B",to:"A",weight:1}]);
 });
 
+test("TSV ignores quoted commas and weighted files preserve order-independent totals", () => {
+  const graph=core.importGraph("tab",['"Smith, John"\tBob\nBob\tCarol\n'],"");
+  assert.deepEqual(graph.edges.map(e=>[e.from,e.to]),[
+    ["Smith, John","Bob"],["Bob","Carol"]]);
+  const parts=["from,to,count\nA,B,7\n","from,to\nA,B\nA,B\n"];
+  assert.equal(core.importGraph("mixed",parts,"").edges[0].weight,8);
+  assert.equal(core.importGraph("mixed",parts.slice().reverse(),"").edges[0].weight,8);
+});
+
 test("root scope keeps directed reachability and original induced links", () => {
   const g=core.importGraph("scope",["from,to\nA,B\nB,C\nC,A\nD,A\n"],"");
   assert.deepEqual(core.neighborhood(g,"A",1,"out").nodes.map(n=>n.id),["A","B"]);
