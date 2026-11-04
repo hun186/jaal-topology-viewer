@@ -478,7 +478,7 @@
     if (!file) return;
     try {
       if (!state.db) throw Error("本機儲存不可用，無法還原備份。");
-      if (file.size > 32*1024*1024) throw Error("備份檔不可超過 32 MB。");
+      if (file.size > 96*1024*1024) throw Error("備份檔不可超過 96 MB。");
       const text=await file.text();
       let value;
       try {value=JSON.parse(text);}
