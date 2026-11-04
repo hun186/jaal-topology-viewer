@@ -114,7 +114,7 @@ def check(port, evidence):
                 expect(page.locator("#library-count")).to_have_text("1 / 20")
                 page.locator(".case-item").first.click()
                 expect(page.locator("#count-edges")).to_have_text("4")
-                stale = browser.new_page()
+                stale = page.context.new_page()
                 stale.goto(base + "/my-cases/", wait_until="domcontentloaded")
                 expect(stale.locator("#library-count")).to_have_text("1 / 20")
                 page.once("dialog", lambda dialog: dialog.accept())
