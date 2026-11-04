@@ -80,7 +80,7 @@ def check(port, evidence):
                 page.locator("#root-filter").press("Tab")
                 page.locator("#direction").select_option("out")
                 page.locator("#radius").select_option("1")
-                expect(page.locator("#count-visible")).to_have_text("2 / 1")
+                expect(page.locator("#count-visible")).to_have_text("2 / 2")
                 page.locator("#reset-view").click()
                 expect(page.locator("#count-visible")).to_have_text("4 / 4")
                 page.locator("#layout-mode").select_option("hierarchy")

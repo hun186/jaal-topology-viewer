@@ -311,23 +311,24 @@
     $("count-edges").textContent = String(info.edges);
     $("graph-type").textContent = info.hasCycle ? "有環網路" : "無環有向圖";
     const selector = $("root-filter").value.trim();
-    let rootId = "";
+    let rootId = "", rootWarning = "";
     if (selector) {
-      const match = active.nodes.find(n => n.id === selector || n.label === selector);
-      if (!match) {
-        $("graph-help").textContent = "找不到指定節點：請從下拉提示選擇完整 ID 或顯示名稱；清空欄位可還原全圖。";
-        return;
-      }
-      rootId = match.id;
+      const exact = active.nodes.find(n => n.id === selector);
+      const aliases = active.nodes.filter(n => n.label === selector);
+      if (exact) rootId = exact.id;
+      else if (aliases.length === 1) rootId = aliases[0].id;
+      else rootWarning = aliases.length > 1
+        ? "有多個節點使用相同名稱，請輸入完整 ID；目前顯示全圖。"
+        : "找不到指定節點，請從提示中選擇完整 ID；目前顯示全圖。";
     }
     const radiusVal = $("radius").value;
     const radius = radiusVal === "all" ? "all" : Number(radiusVal);
     const graph = core.neighborhood(active, rootId, radius, $("direction").value);
     $("count-visible").textContent = graph.nodes.length + " / " + graph.edges.length;
     const mode = $("layout-mode").value;
-    $("graph-help").textContent = mode === "hierarchy"
+    $("graph-help").textContent = rootWarning || (mode === "hierarchy"
       ? "階層按有向關係排列，循環圖會選取顯示起點，不把循環誤判為上下級。點節點可做局部分析。"
-      : "提示：點選節點可以只看它幾步內的關係；滾輪縮放、拖曳空白處平移。箭頭保留原始方向。";
+      : "提示：點選節點可以只看它幾步內的關係；滾輪縮放、拖曳空白處平移。箭頭保留原始方向。");
     const options = $("root-options");
     options.replaceChildren();
     for (const node of active.nodes) {
@@ -447,7 +448,7 @@
     if (!file) return;
     try {
       if (!state.db) throw Error("本機儲存不可用，無法還原備份。");
-      if (file.size > 4*1024*1024) throw Error("備份檔不可超過 4 MB。");
+      if (file.size > 32*1024*1024) throw Error("備份檔不可超過 32 MB。");
       const text=await file.text();
       let value;
       try {value=JSON.parse(text);}
