@@ -124,7 +124,7 @@
         prev.weight = weightColumn < 0 ? 1 : prev.weight + weight;
         if (prev.weight > 1000000) throw Error("同一有向關係累計權重超過上限。");
         if (edgesByKey.size > MAX_EDGES) {
-          throw Error("超過 " + MAX_EDGES + " 條有向邊；請先篩選資料。");
+          throw Error("超過 " + MAX_EDGES.toLocaleString("en-US") + " 條有向邊；請先篩選資料。");
         }
       }
     }
