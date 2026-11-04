@@ -18,4 +18,4 @@ jaal-topology = "jaal_topology.cli:main"
 packages = ["jaal_topology"]
 
 [tool.setuptools.package-data]
-jaal_topology = ["assets/*.js", "assets/*.css"]
+jaal_topology = ["assets/*.js", "assets/*.css", "browser_cases/*.html", "browser_cases/*.js", "browser_cases/*.css"]
