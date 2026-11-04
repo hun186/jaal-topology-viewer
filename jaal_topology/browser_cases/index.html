@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="在瀏覽器內上傳 CSV、探索有向關係，保存自己的拓樸案例。">
+  <title>我的案例｜Jaal Topology Viewer</title>
+  <link rel="stylesheet" href="./cases.css">
+  <script src="./case_core.js" defer></script>
+  <script src="./case_ui.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/" aria-label="返回 Jaal 示範案例">◈ JAAL <span>Topology Viewer</span></a>
+    <nav><a href="/">← 返回示範案例</a><span class="privacy">🔒 本機瀏覽器工作區</span></nav>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="eyebrow">YOUR DATA · YOUR INSIGHTS</div>
+      <h1>把自己的關係資料，<em>變成一張看得懂的圖。</em></h1>
+      <p>不需要寫程式。上傳 CSV、確認資料、建立案例，就能互動檢視寄收件關係、組織架構或專案依賴。</p>
+      <div class="hero-points"><span>✓ 不將檔案傳送到伺服器</span><span>✓ 自動辨識常用欄位</span><span>✓ 保存於此瀏覽器</span><span>✓ 可下載備份</span></div>
+    </section>
+    <section id="notice" class="notice" role="status" aria-live="polite">資料只留在目前瀏覽器的 IndexedDB。清除網站資料或更換裝置前，請先匯出備份。</section>
+    <div class="workspace">
+      <aside class="library panel" aria-label="我的案例清單">
+        <div class="panel-head"><h2>我的案例</h2><span id="library-count">0 / 20</span></div>
+        <p class="muted small">點擊案例即可繼續分析；儲存位置是目前瀏覽器，不是雲端帳戶。</p>
+        <div id="case-list" class="case-list" aria-live="polite"></div>
+        <div class="library-actions">
+          <button id="export-all" class="subtle" type="button">↓ 備份全部案例</button>
+          <label class="file-action subtle">↑ 還原備份
+            <input id="restore-file" type="file" accept=".json,application/json">
+          </label>
+        </div>
+        <p class="muted small">瀏覽器可能因清除快取、無痕模式或儲存空間政策移除案例。備份是最可靠的搬移方式。</p>
+      </aside>
+      <div class="content">
+        <section class="panel creator" aria-labelledby="create-title">
+          <div class="panel-head"><div><span class="step">STEP 01 / 建立新案例</span><h2 id="create-title">先告訴我們節點之間的關係</h2></div><button id="sample-btn" class="subtle" type="button">下載範例 CSV</button></div>
+          <p class="muted">只需要兩欄：<strong>起點 → 終點</strong>。例如：寄件人 → 收件人、主管 → 部屬、工作 A → 工作 B。支援 parent,child／from,to／source,target／sender,recipient，亦可沒有標題列。</p>
+          <form id="create-form">
+            <div class="form-grid">
+              <label class="field"><span>案例名稱 <b aria-hidden="true">*</b></span><input id="case-name" maxlength="100" required placeholder="例如：跨部門郵件互動分析" autocomplete="off"></label>
+              <label class="field"><span>關係 CSV <b aria-hidden="true">*</b> <small>1 至 5 份</small></span><input id="edge-files" type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" multiple required></label>
+              <label class="field"><span>節點中文名稱 <small>選填</small></span><input id="labels-file" type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values"><small>格式：ClassLabel,CT。沒有檔案時直接顯示原 ID。</small></label>
+              <div class="field help"><strong>欄位不一樣怎麼辦？</strong><p>先把關係資料存成 UTF-8 CSV，第一欄是起點，第二欄是終點。若有 count／weight 欄位，可顯示有向關係件數。</p></div>
+            </div>
+            <div class="form-footer">
+              <span class="small muted">單檔 ≤ 2 MB、最多 250 個節點／2,000 條連線。檔案只在此裝置解析。</span>
+              <button id="preview-btn" class="primary" type="submit">建立並預覽圖表 →</button>
+            </div>
+          </form>
+        </section>
+        <section id="analysis-panel" class="panel analysis" aria-labelledby="analysis-title">
+          <div class="panel-head"><div><span class="step">STEP 02 / 探索與保存</span><h2 id="analysis-title">圖形分析工作台</h2><p class="small muted" id="active-name">尚未選取案例。可先下載範例 CSV 試用。</p></div><button id="save-btn" class="primary" disabled type="button">儲存這個案例</button></div>
+          <div class="metrics" aria-label="圖形摘要">
+            <div><small>節點</small><strong id="count-nodes">—</strong></div>
+            <div><small>有向連線</small><strong id="count-edges">—</strong></div>
+            <div><small>圖形結構</small><strong id="graph-type">—</strong></div>
+            <div><small>目前顯示</small><strong id="count-visible">—</strong></div>
+          </div>
+          <div class="toolbar" aria-label="圖形控制">
+            <label>版面<select id="layout-mode"><option value="network">網狀分析</option><option value="hierarchy">階層分析</option></select></label>
+            <label class="grow">局部起點<input id="root-filter" list="root-options" placeholder="輸入 ID 或中文名稱；留空＝全圖" autocomplete="off"><datalist id="root-options"></datalist></label>
+            <label>方向<select id="direction"><option value="both">雙向 ↔</option><option value="out">向外 →</option><option value="in">向內 ←</option></select></label>
+            <label>步數<select id="radius"><option value="1">1 步</option><option value="2" selected>2 步</option><option value="3">3 步</option><option value="5">5 步</option><option value="all">全部可達</option></select></label>
+            <label class="checkbox"><input id="all-labels" type="checkbox">顯示所有標籤</label>
+            <button class="subtle" id="reset-view" type="button">重設視野</button>
+          </div>
+          <p class="helpbar" id="graph-help">提示：節點可點擊作為局部起點；滾輪縮放、拖曳空白處平移。箭頭保留原始方向。</p>
+          <div class="canvas-wrap">
+            <svg id="graph-canvas" viewBox="0 0 1100 650" role="img" aria-label="有向關係互動圖">
+              <defs><marker id="arrowhead" markerWidth="8" markerHeight="7" refX="20" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L7 3.5 L0 7 Z" fill="#7791b1"></path></marker></defs>
+              <g id="graph-layer"></g>
+            </svg>
+            <div id="empty-state" class="empty-state"><span>◎</span><strong>您的分析圖會出現在這裡</strong><p>上傳資料或從左側選擇已儲存案例。</p></div>
+            <div class="zoom-controls"><button id="zoom-in" type="button" aria-label="放大圖形">＋</button><button id="zoom-out" type="button" aria-label="縮小圖形">－</button></div>
+          </div>
+          <div class="footer-strip">
+            <p class="small muted">瀏覽器本機繪圖支援網狀／階層、搜尋與局部探索；既有 Jaal 五模式、Louvain 收攏與時間演化目前仍在「示範案例」檢視器，尚未直接套用於私人上傳案例。</p>
+            <button id="export-one" class="subtle" disabled type="button">↓ 匯出目前案例</button>
+          </div>
+        </section>
+      </div>
+    </div>
+    <section class="bottom-note"><h2>常見問題</h2><details><summary>上傳後的資料會被傳到伺服器嗎？</summary><p>不會。本工作區的 CSV 讀取、圖形繪製及案例保存都在瀏覽器完成。儲存在目前網站來源（origin）的 IndexedDB，其他瀏覽器或裝置不會自動同步。</p></details><details><summary>能不能只記住電腦檔案路徑？</summary><p>一般瀏覽器不能靠記住本機路徑，未經授權就自動重新讀取檔案。因此本功能儲存經驗證的圖形資料，而不是路徑；也提供 JSON 備份與還原。</p></details><details><summary>公司有機密資料，應該注意什麼？</summary><p>共用電腦上的同一瀏覽器使用者可能開啟這些案例。請使用受控的電腦與瀏覽器個人設定檔；不需要時刪除案例，並妥善保管匯出的備份。</p></details></section>
+  </main>
+</body>
+</html>
