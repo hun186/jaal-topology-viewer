@@ -25,6 +25,8 @@
 
 - [PR #20](https://github.com/hun186/jaal-topology-viewer/pull/20) 已 Merge（`fcb980d3c68465321987bc082dfca1f1943eb421`）：新增 `neighborhood.py` + `22.jaal_local_focus.js`，支援原 ID／中文別名 root、out/in/both 0..10 hop 或全部可達、循環安全誘導子圖與還原全圖；最終 HEAD `0a8c724` Hosted 8/8、正式 Codex Review 0 findings。僅當次 Windows Chromium 測試通過，不代表全部 Dash 版本／Stage 4 人工視覺驗收；consumer exact pin 未變。
 
+- 2026-11-04：客戶要求由瀏覽器上傳自己的關係 CSV 建立案例。已選擇 browser-only IndexedDB + JSON backup，獨立 native SVG 網狀／階層檢視；原 Jaal 五模式、Louvain/Temporal 尚不適用於上傳資料，後續列 BL-004。此項 PR/CI/Review 尚未確認時不得宣稱合併或公網發布。
+
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
