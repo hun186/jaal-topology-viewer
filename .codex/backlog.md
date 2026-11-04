@@ -7,6 +7,7 @@
 | --- | --- | --- | --- | --- |
 | BL-001 | High | Partial PASS | Windows 實機 Jaal／Stage 4 browser 視覺相容驗收 | 已有 consumer PR #227、Windows 使用者 9 項候選實機 PASS 與 Hosted browser acceptance；未覆蓋的 UI／版本組合或完整 ML 工況仍需個別列證，不宣稱全矩陣已驗收 |
 | BL-003 | High | In Progress | Vercel PoC 與本機 Jaal 視覺／互動一致 | PR #10–#15 已 Merge：真正 Jaal/Dash、可收合側欄、非 sticky 工具列、全版檢視、四案例與虛構企業郵件事件；**公網仍未驗證部署**（先前 Vercel HTTP 402、merge-only opt-in/secret）；後續僅於符合權限與額度時發布 exact merge SHA 並實測 HTTP/Chromium，未 READY 不宣稱完成 |
+| BL-004 | Medium | Pending | 上傳案例與原版 Jaal 五模式／Louvain／時間演化整合 | 使用不傳私有資料到伺服器的可驗證方案，獨立 browser acceptance 及安全 review；目前本機工作區僅提供 SVG 網狀／階層、局部子圖，不宣稱完整 Jaal parity |
 | BL-002 | Medium | In Progress | 乾淨外部 consumer 安裝與 Dash/Jaal 版本組合驗證 | 原有 Ubuntu／Windows clean Wheel、HTTP/JS/CSS 與 Dash 2.18.2／3.4.0／4.5.0 Hosted CI PASS；PR #16 新增的外部 consumer TemporalTimeline + Flask 同埠驗證已於 Windows/Ubuntu clean Wheel CI PASS；完整下游 Stage 4 和跨 Windows/Dash browser 仍需個別證據 |
 
 ## Candidate Ideas

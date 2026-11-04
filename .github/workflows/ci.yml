@@ -63,6 +63,8 @@ jobs:
           python tests/browser_acceptance.py --port 8098 --evidence browser-evidence/dash3
       - name: Validate deployed Flask entry through real Windows Chromium
         run: python tests/vercel_runtime_browser.py
+      - name: Verify private browser CSV workspace in Chromium (no server writes)
+        run: python tests/browser_cases_acceptance.py --evidence browser-evidence/local-cases
       - name: Build read-only static Vercel PoC without deploying
         run: node vercel-poc/build.mjs
       - name: Exercise real PoC graph interactions in Windows Chromium
@@ -119,6 +121,11 @@ jobs:
           source = Path(jaal_topology.__file__).resolve()
           assert source.is_relative_to(Path(sys.prefix).resolve()), (source, sys.prefix)
           assert ASSETS_DIR.is_dir()
+          from jaal_topology.browser_cases import _DIR as browser_cases_dir
+          assert (browser_cases_dir / "index.html").is_file()
+          assert (browser_cases_dir / "case_core.js").is_file()
+          assert (browser_cases_dir / "case_ui.js").is_file()
+          assert (browser_cases_dir / "cases.css").is_file()
           with tempfile.TemporaryDirectory() as scratch:
               edges = Path(scratch) / "edges.csv"
               edges.write_text("source,target\nRoot,Child\nChild,Root\n", encoding="utf-8")

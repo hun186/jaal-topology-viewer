@@ -13,6 +13,7 @@
 | ADR-0006 | 有界 Gallery 多 Dash route 取代同頁直接換 Graph | Accepted | 2026-11-03 |
 | ADR-0007 | 原版類別樹通訊示意與新合成郵件業務情境區分 | Accepted | 2026-11-03 |
 | ADR-0008 | 原事件流與時間片圖分離，先預算並以瀏覽器動畫播放 | Accepted | 2026-11-03 |
+| ADR-0010 | 客戶私人案例採 local-first browser storage 與獨立檢視 | Accepted | 2026-11-04 |
 | ADR-0009 | 精確半開區間及預設互斥分段，多粒度與 240 格硬上限 | Accepted | 2026-11-04 |
 
 ## ADR-0001 — 單一來源
@@ -81,3 +82,10 @@
 
 ## 維護
 新決策使用遞增不重用 ID；被取代時標記 Superseded 與新決策連結；不把一般 bugfix、猜測或秘密放入。
+
+## ADR-0010 — Private browser case workspace without server-side Jaal swapping
+
+- Requirement: customers upload their own relationship files and save/reopen graph cases with a friendly UI, optionally remembering a local path or browser cache.
+- Browsers cannot re-open arbitrary local files from a remembered path. Chosen design stores a bounded, validated typed graph in IndexedDB scoped to the current origin/browser profile and provides manual JSON export/import. No server POST/temporary upload/session store, cross-device sync or sensitive path logging.
+- Existing Jaal's Dash callback closure is bound to each startup graph. Swapping a user-owned graph into that same app would make Search/Filter/Color/Size stale, and transferring bytes to a shared/public server conflicts with local-first privacy. Therefore the user-workspace is a separate, clearly labeled native SVG browser renderer; the existing 5-mode Jaal gallery remains unchanged, without pretending feature parity.
+- Bound input, strict UTF-8/RFC4180 parser, DOM text-only rendering, CSP denying network connections, endpoint GET allowlist, browser-local persistence and opt-in plaintext backup. Storage eviction, shared browser profiles and JS-based drawing limits are explained in UI. Future full Jaal parity requires a separately reviewed secure client graph integration rather than an implied compatibility claim.
