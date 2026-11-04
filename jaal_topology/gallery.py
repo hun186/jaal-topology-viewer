@@ -104,4 +104,7 @@ def create_gallery_app(
             case_description=case.description, case_resources=case.resources,
             temporal_timeline=case.temporal_timeline,
         )
+    # Opt-in browser-local workbench is separated from preloaded Dash cases.
+    from .browser_cases import register_browser_case_workspace
+    register_browser_case_workspace(root_app.server)
     return root_app
