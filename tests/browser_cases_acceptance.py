@@ -114,6 +114,30 @@ def check(port, evidence):
                 expect(page.locator("#library-count")).to_have_text("1 / 20")
                 page.locator(".case-item").first.click()
                 expect(page.locator("#count-edges")).to_have_text("4")
+                stale = browser.new_page()
+                stale.goto(base + "/my-cases/", wait_until="domcontentloaded")
+                expect(stale.locator("#library-count")).to_have_text("1 / 20")
+                page.once("dialog", lambda dialog: dialog.accept())
+                page.get_by_role("button", name="刪除").first.click()
+                expect(page.locator("#library-count")).to_have_text("0 / 20")
+                stale.once("dialog", lambda dialog: dialog.accept("錯誤的更名"))
+                stale.get_by_role("button", name="更名").first.click()
+                expect(stale.locator("#notice")).to_contain_text(
+                    "已被其他分頁刪除")
+                expect(stale.locator("#library-count")).to_have_text("0 / 20")
+                stale.close()
+
+                # Self-directed relations are visible loops, not hidden
+                # degenerate lines behind the node.
+                page.locator("#case-name").fill("自我連線")
+                page.locator("#edge-files").set_input_files({
+                    "name": "self.csv", "mimeType": "text/csv",
+                    "buffer": b"from,to\nSolo,Solo\n"})
+                page.locator("#labels-file").set_input_files([])
+                page.locator("#preview-btn").click()
+                expect(page.locator("#count-edges")).to_have_text("1")
+                expect(page.locator("path.edge-line")).to_have_count(1)
+                assert page.locator("path.edge-line").get_attribute("d").startswith("M ")
 
                 assert not writes, "Local workbench sent unexpected writes: " + str(writes)
                 assert not errors, "Browser JavaScript errors: " + str(errors)

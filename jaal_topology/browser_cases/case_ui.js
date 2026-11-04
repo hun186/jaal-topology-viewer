@@ -85,6 +85,33 @@
         (tx.error && tx.error.message) || "保存案例失敗，請檢查儲存空間。"));
     });
   }
+  function renameExisting(id, title) {
+    // A stale tab must not recreate an already deleted case via IDB.put().
+    return new Promise((resolve, reject) => {
+      if (!state.db) {reject(Error("本機儲存不可用。")); return;}
+      const tx = state.db.transaction(STORE, "readwrite");
+      const store = tx.objectStore(STORE);
+      let reason = "";
+      const get = store.get(id);
+      get.onsuccess = () => {
+        if (!get.result) {
+          reason = "這個案例已被其他分頁刪除，請重新整理清單。";
+          tx.abort();
+          return;
+        }
+        try {
+          const validated = core.validateCase(get.result);
+          store.put({...validated, id, title, createdAt: get.result.createdAt});
+        } catch (e) {
+          reason = e.message;
+          tx.abort();
+        }
+      };
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(Error(reason ||
+        (tx.error && tx.error.message) || "更名失敗。"));
+    });
+  }
   function readRecords() {
     return new Promise((resolve, reject) => {
       if (!state.db) {resolve([]); return;}
@@ -131,8 +158,7 @@
           if (name === null) return;
           try {
             const modified = core.validateCase({...record, title: name});
-            await dbAction("readwrite", s => s.put({...modified,
-              id: record.id, createdAt: record.createdAt}));
+            await renameExisting(record.id, modified.title);
             if (state.savedId === record.id) {
               state.active = modified;
               $("case-name").value = modified.title;
@@ -140,7 +166,10 @@
             }
             await refreshLibrary();
             message("案例已更名。", "success");
-          } catch (e) {message(e.message, "error");}
+          } catch (e) {
+            await refreshLibrary().catch(() => {});
+            message(e.message, "error");
+          }
         }),
         button("匯出", "mini", () => download("jaal-case.json",
           JSON.stringify({format: "jaal-local-cases", schemaVersion: 1,
