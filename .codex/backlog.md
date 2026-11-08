@@ -10,7 +10,7 @@
 | BL-004 | Medium | In Progress | 上傳案例與原版 Jaal 五模式／Louvain／時間演化整合 | 已 Merge PR #22／#23 的本機 SVG 網狀／階層、局部子圖、加權流向著色與互動量尺寸；後續改善雙向箭頭重疊。原 Jaal 五模式、Louvain、時間演化仍未整合，不能宣稱完整 parity |
 | BL-002 | Medium | In Progress | 乾淨外部 consumer 安裝與 Dash/Jaal 版本組合驗證 | 原有 Ubuntu／Windows clean Wheel、HTTP/JS/CSS 與 Dash 2.18.2／3.4.0／4.5.0 Hosted CI PASS；PR #16 新增的外部 consumer TemporalTimeline + Flask 同埠驗證已於 Windows/Ubuntu clean Wheel CI PASS；完整下游 Stage 4 和跨 Windows/Dash browser 仍需個別證據 |
 
-- 2026-11-08 新增 500、3000、5000、20000 人與三個弱連通分量的瀏覽器 Canvas 實驗室；此新 PR 的 CI／Review 未完成前不得記為驗收或 Merge。Jaal 原本 3000/5000 限額及 Vercel merge-only 設定不變。
+- [PR #25](https://github.com/hun186/jaal-topology-viewer/pull/25) 已 Merge（`c7b10a2493753834c0e134b8aa4ae2bd630dd23c`）：舊 Canvas 獨立頁面壓測功能；使用者明確要求這不能取代 Jaal 全功能測試。新 PR 改為原 Gallery 按需載入全 Jaal，仍須 CI／Review／實機大圖壓測判斷流暢度，保留原一般匯入上限。
 
 ## Candidate Ideas
 - 目前無已採納的額外構想。PyPI、Docker、公網服務部署都是另需授權與安全 review 的議題，不能自動當成待實作事項。

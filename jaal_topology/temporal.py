@@ -22,14 +22,17 @@ MAX_TEMPORAL_FRAMES = 240
 class TemporalTimeline:
     """Time-ordered directed events with consistent naive-local or aware-UTC dates."""
 
-    def __init__(self, graph: Graph, events):
+    def __init__(self, graph: Graph, events, *, allow_large_demo=False):
         if not isinstance(graph, Graph) or not graph.edges:
             raise GraphInputError("Temporal timeline requires a populated Graph")
         events = tuple(events)
         if not 1 <= len(events) <= MAX_TEMPORAL_EVENTS:
             raise GraphInputError("Temporal event count is out of bounds")
-        if len(graph.nodes) > 3000 or len(graph.edges) > 5000:
+        max_nodes, max_edges = ((20_000, 50_000) if allow_large_demo
+                                else (3000, 5000))
+        if len(graph.nodes) > max_nodes or len(graph.edges) > max_edges:
             raise GraphInputError("Temporal source graph exceeds render bounds")
+        self.allow_large_demo = bool(allow_large_demo)
         edge_set = set(graph.edges)
         daily = {}
         timestamped = []
@@ -136,7 +139,7 @@ class TemporalTimeline:
             total_edges += len(snap.edges)
             if total_edges > MAX_TEMPORAL_FRAMES_EDGES:
                 raise GraphInputError("Temporal frame payload exceeds 180000 edges")
-            groups = detect_louvain(snap)
+            groups = detect_louvain(snap, allow_large_demo=self.allow_large_demo)
             rows.append({
                 **meta,
                 "edges": [
@@ -207,7 +210,7 @@ class TemporalTimeline:
             total_edges += len(snap.edges)
             if total_edges > MAX_TEMPORAL_FRAMES_EDGES:
                 raise GraphInputError("Temporal frame payload exceeds 180000 edges")
-            groups = detect_louvain(snap)
+            groups = detect_louvain(snap, allow_large_demo=self.allow_large_demo)
             start_iso = begin.isoformat(timespec="minutes")
             end_iso = finish.isoformat(timespec="minutes")
             rows.append({

@@ -36,7 +36,7 @@ def community_quotient_has_cycle(groups, directed_pairs) -> bool:
 
 
 def detect_louvain(graph: Graph, *, resolution: float = 1.0,
-                   seed: int = 42) -> CommunityResult:
+                   seed: int = 42, allow_large_demo: bool = False) -> CommunityResult:
     """Partition a selected graph; preserve directed aggregates independently.
 
     Group identifiers are local to a *single partition result*. They are not
@@ -48,7 +48,11 @@ def detect_louvain(graph: Graph, *, resolution: float = 1.0,
         not isfinite(resolution) or resolution <= 0
     ):
         raise GraphInputError("Louvain resolution must be a finite positive number")
-    if len(graph.nodes) > 3000 or len(graph.edges) > 5000:
+    # The larger ceiling is never the default; it is exclusively enabled for
+    # a reviewed, fictional, locally opted-in Gallery case.
+    max_nodes, max_edges = ((20_000, 50_000) if allow_large_demo
+                            else (3000, 5000))
+    if len(graph.nodes) > max_nodes or len(graph.edges) > max_edges:
         raise GraphInputError("Select a bounded graph before community analysis")
     if len(set(graph.nodes)) != len(graph.nodes):
         raise GraphInputError("Graph has duplicate node IDs")

@@ -97,3 +97,10 @@
 - 決策：保留 Jaal 3000 nodes/5000 edges 硬限與既有 Gallery callback 隔離；設計獨立 GET-only Canvas 實驗室，所有虛構人員／有向加權關係在瀏覽器由固定業務規則生成，摘要／局部／完整圖明確標示，20k 全圖不冒充 Jaal 原生容量。
 - 取捨：Canvas 不提供原生五模式、Louvain 與時間播放；不同瀏覽器對全量 20k 畫布耗時不同。只記實測生成／繪製時間，不作不受支持的效能承諾。三連通分量情境無跨群有向邊。
 - 既有部署 merge-only／禁用 PR 自動部署、私人工作區不傳資料及下游 exact pin 均不變。
+
+## ADR-0012 — User-requested real full-feature Jaal scaling, with local opt-in
+
+- The previous separate Canvas demonstration (ADR-0011) was insufficient for testing full functionality. Keep it only for existing URLs; new synthetic presets belong to the same Jaal Gallery selection and use real Jaal/visdcc + original controls.
+- Preserve the existing default public/consumer graph and temporal 3000-node / 5000-edge caps; allow at most 20000 nodes / 50000 directed edges exclusively via a trusted fixed, fictional local-only factory with `JAAL_ENABLE_LARGE_LOCAL=1`.
+- Deferred WSGI mounting (per-case lock) avoids constructing all large graph Python callbacks/Louvain/temporal slices during initial 77-person Gallery startup. Positions separate the three genuinely disconnected components for presentation but do not create edges.
+- Unbounded browser performance cannot be promised. Full 20k graph is intentionally a load test and disables global force physics by default. No Vercel deployment or service exposure without separate authorization.

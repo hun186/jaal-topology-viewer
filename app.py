@@ -6,6 +6,7 @@ live mail service access, arbitrary uploads, or database mutation.
 """
 from __future__ import annotations
 
+import os
 import json
 from collections import Counter
 from pathlib import Path
@@ -16,7 +17,7 @@ from jaal_topology import load_graph, select_subgraph
 from jaal_topology.email_simulation import (
     SEED, WORK_DAYS, WORKFLOW_LABELS, simulate_company_email,
 )
-from jaal_topology.gallery import GalleryCase, create_gallery_app
+from jaal_topology.gallery import GalleryCase, DeferredGalleryCase, create_gallery_app
 from jaal_topology.temporal import TemporalTimeline
 
 _ROOT = Path(__file__).resolve().parent
@@ -78,6 +79,50 @@ _CASES = (
         initial_mode="hierarchical",
     ),
 )
+
+# Opt-in only on a personally controlled localhost process, never the
+# public Vercel startup. The default four cases and their existing Dash
+# callbacks remain unchanged. Create huge Jaal cases only when selected.
+if os.environ.get("JAAL_ENABLE_LARGE_LOCAL") == "1":
+    from jaal_topology.scaled_demo import build_scaled_email_demo
+
+    def _deferred_scaled_case(slug, title):
+        def load():
+            model = build_scaled_email_demo(slug)
+            timeline = TemporalTimeline(
+                model.graph, model.events, allow_large_demo=True)
+            return GalleryCase(
+                "scale-" + slug, title, model.graph,
+                initial_mode=("hierarchical-collapsed"
+                              if slug == "3000-dag" else
+                              "network-community-collapsed"),
+                temporal_timeline=timeline,
+                initial_positions=model.positions,
+                allow_large_demo=True,
+                description=(
+                    f"固定規則虛構郵件資料：{len(model.graph.nodes)} 人、"
+                    f"{len(model.graph.edges)} 條實際有向收發關係、"
+                    f"{model.departments} 部門、{model.depth} 層深度。"
+                    f"弱連通分量 {model.components}；分量間絕無邊。"
+                    "原版 Jaal 五模式、搜尋、局部子圖、Louvain 與時間軸；"
+                    "這是僅限本機的真實容量壓測，不保證巨大圖能流暢渲染。"
+                ),
+            )
+        return load
+
+    _SCALE_CHOICES = (
+        ("500", "企業郵件｜500 人（全 Jaal）"),
+        ("3000", "企業郵件｜3,000 人（全 Jaal）"),
+        ("5000", "企業郵件｜5,000 人（全 Jaal）"),
+        ("20000", "企業郵件｜20,000 人（全 Jaal）"),
+        ("3000-dag", "企業郵件｜3,000 人（無環 DAG／五模式）"),
+        ("three-components", "企業郵件｜3 個互不連通群（500 人）"),
+    )
+    _CASES += tuple(
+        DeferredGalleryCase("scale-" + slug, title,
+                            _deferred_scaled_case(slug, title))
+        for slug, title in _SCALE_CHOICES
+    )
 
 dash_app = create_gallery_app(_CASES)
 app = dash_app.server  # Flask WSGI entrypoint auto-detected by Vercel.
