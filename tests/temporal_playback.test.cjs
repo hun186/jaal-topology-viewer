@@ -269,10 +269,14 @@ test("playing after expanding a community holds every member at the actual drawn
   const state = instance.__jaalCommunity;
   assert.ok(state.opened.has("first"));
   const ids = nn.getIds().sort();
-  assert.deepEqual(ids,["A","B","C",...nn.getIds().filter(id=>id!== "A"&&id!=="B"&&id!=="C")].sort());
-  // Drag A and D before playing. Both must stay exactly where placed.
+  const secondCluster = Object.entries(instance.__jaalCommunity.view.clusterToGroup)
+    .find(([, group]) => group==="second")[0];
+  assert.equal(ids.length,4);
+  assert.deepEqual(ids,["A","B","C",secondCluster].sort());
+  // Drag A and the remaining collapsed box before playing. Both should
+  // retain their actual current position through subsequent frames.
   nn.update([{id:"A",x:anchor.x+41,y:anchor.y-23},
-             {id:"D",x:anchor.x+310,y:anchor.y+140}]);
+             {id:secondCluster,x:anchor.x+310,y:anchor.y+140}]);
   const before = currentPositions();
   const eids = ee.getIds().sort();
   const firstEdges = ee.get();
