@@ -597,3 +597,10 @@ Changing the root, direction or hop count fits the *currently drawn*
 subgraph once, even if some original members have been summarized into a
 Louvain or structural bubble. Temporal playback does not continually
 recenter the camera. The underlying original source data/IDs remain intact.
+
+**Focus panel size (fullscreen):** Entering focus mode now defaults to
+**精簡資訊**; the overlay is capped at 520px wide and 105px (13dvh) tall,
+leaving the graph visible. **完整面板** remains available on demand via
+the focus toggle and is bounded to 740px wide and 180px (22dvh) tall with
+internal scrolling, instead of expanding to 1200×360px. Every new entry to
+focus resets to compact; the existing graph/timeline remains mounted.

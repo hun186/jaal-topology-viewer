@@ -394,13 +394,28 @@ def check(port: int, evidence: Path) -> None:
                 assert latest and latest["shown"] == 1, latest
                 assert latest["total"] == 77
                 # The 0-hop root must enter the actual camera viewport.
-                frame.wait_for_function("""(id) => {
-                    const c=window.__acceptanceNetwork;
-                    const p=c.net.getPositions()[id];
-                    const center=c.net.getViewPosition();
-                    return !!p && Math.hypot(center.x-p.x,center.y-p.y)<30 &&
-                      !window.dash_clientside?.jaal_local_focus?.pendingFit;
-                }""",arg=candidate,timeout=20000)
+                # FrameLocator has no wait_for_function API in Playwright.
+                # Read the embedded frame's real vis-network coordinates
+                # repeatedly until its optional fit animation settles.
+                deadline = time.monotonic() + 20
+                camera = None
+                while time.monotonic() < deadline:
+                    camera = frame.locator("body").evaluate("""(id) => {
+                        const c=window.__acceptanceNetwork;
+                        const p=c.net.getPositions()[id];
+                        const center=c.net.getViewPosition();
+                        return {p,center,pending:
+                            window.dash_clientside?.jaal_local_focus?.pendingFit};
+                    }""",candidate)
+                    if (camera["p"] and camera["center"] and
+                            not camera["pending"] and
+                            ((camera["p"]["x"]-camera["center"]["x"])**2 +
+                             (camera["p"]["y"]-camera["center"]["y"])**2) < 900):
+                        break
+                    page.wait_for_timeout(200)
+                else:
+                    raise AssertionError("New local subgraph remained out of view: " +
+                                         str(camera))
                 assert frame.locator(".vis-network canvas").first.is_visible()
                 # Clear in-place and recover the full source graph.
                 # Dash 4 renders an <a> with an accessible Clear selection

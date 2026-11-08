@@ -54,18 +54,24 @@ class VercelJaalRuntimeTests(unittest.TestCase):
             if "jaal-viewer-root.className" in key
             and "jaal-focus-panel-toggle.children" in key
         )
-        normal = callback(0, 0)
-        full = callback(1, 0)
-        compact = callback(1, 1)
-        restored = callback(1, 2)
-        out = callback(2, 1)
+        normal = callback(0, 0, {"focus_clicks": 0, "panel_baseline": 0})
+        # Focus must now default to the SMALL overlay, not inflate it.
+        compact = callback(1, 0, normal[-1])
+        expanded = callback(1, 1, compact[-1])
+        restored = callback(1, 2, expanded[-1])
+        out = callback(2, 2, restored[-1])
+        entered_again = callback(3, 2, out[-1])
         self.assertEqual(normal[0], "jaal-viewer-shell")
-        self.assertEqual(full[0], "jaal-viewer-shell jaal-focus-mode")
         self.assertEqual(compact[0],
                          "jaal-viewer-shell jaal-focus-mode jaal-focus-compact")
-        self.assertEqual(compact[3:], ("完整面板", "true"))
-        self.assertEqual(restored[3:], ("精簡資訊", "false"))
+        self.assertEqual(compact[3:5], ("完整面板", "true"))
+        self.assertEqual(expanded[0], "jaal-viewer-shell jaal-focus-mode")
+        self.assertEqual(expanded[3:5], ("精簡資訊", "false"))
+        self.assertEqual(restored[3:5], ("完整面板", "true"))
         self.assertEqual(out[0], "jaal-viewer-shell")
+        self.assertEqual(entered_again[0],
+                         "jaal-viewer-shell jaal-focus-mode jaal-focus-compact")
+        self.assertEqual(entered_again[3:5], ("完整面板", "true"))
         self.assertEqual(self.client.get("/_dash-layout").status_code, 200)
 
     def test_scale_lab_public_assets_are_allowed_only_for_reading(self):
