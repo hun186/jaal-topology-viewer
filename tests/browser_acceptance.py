@@ -126,10 +126,19 @@ def check(port: int, evidence: Path) -> None:
                 focus_toggle = frame.locator("#jaal-focus-toggle")
                 focus_toggle.click()
                 expect(frame.locator("#jaal-viewer-root")).to_have_class(
-                    "jaal-viewer-shell jaal-focus-mode", timeout=15000
+                    "jaal-viewer-shell jaal-focus-mode jaal-focus-compact",
+                    timeout=15000
                 )
                 expect(focus_toggle).to_have_attribute("aria-pressed", "true")
                 expect(frame.locator(".jaal-settings-col")).to_be_hidden()
+                # Non-temporal Jaal: focus shows only a tiny original
+                # graph-count overlay instead of inflating the toolbar.
+                summary = frame.locator("#jaal-focus-static-status")
+                expect(summary).to_be_visible()
+                expect(summary).to_contain_text("77 節點")
+                small = summary.bounding_box()
+                assert small and small["height"] < 75,small
+                expect(frame.locator("#jaal-focus-panel-toggle")).to_be_visible()
                 # The class callback and graph.options resize callback run
                 # independently; wait for the actual vis.js Canvas redraw.
                 focused_canvas_height = 0
