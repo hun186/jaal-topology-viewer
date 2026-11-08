@@ -36,6 +36,7 @@
   function updateSelection() {
     if (!state.graph) return;
     state.mode = $("view-mode").value;
+    $("stat-draw-ms").textContent = "—";
     state.indices = selectedNodes();
     const mask = new Uint8Array(state.graph.nodes.length);
     for (const i of state.indices) mask[i] = 1;

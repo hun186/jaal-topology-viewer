@@ -45,6 +45,16 @@ class VercelJaalRuntimeTests(unittest.TestCase):
         self.assertTrue(callbacks.get_json())
         self.assertTrue(self.dash_app.callback_map)
 
+    def test_scale_lab_public_assets_are_allowed_only_for_reading(self):
+        for path in ("/stress-lab/", "/stress-lab/scale_core.js",
+                     "/stress-lab/scale_ui.js", "/stress-lab/scale.css"):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200, path)
+            self.assertIn("connect-src 'none'",
+                          response.headers["Content-Security-Policy"])
+            self.assertEqual(self.client.post(path).status_code, 405)
+        self.assertEqual(self.client.get("/stress-lab/not-allowed").status_code, 404)
+
     def test_original_jaal_assets_and_only_synthetic_data(self):
         self.assertEqual(len(self.graph.nodes), 77)
         self.assertEqual(len(self.graph.edges), 169)
