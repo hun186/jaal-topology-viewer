@@ -280,7 +280,8 @@ test("playing after expanding a community holds every member at the actual drawn
   const before = currentPositions();
   const eids = ee.getIds().sort();
   const firstEdges = ee.get();
-  assert.ok(firstEdges.some(e => e.from==="A" && e.to==="D"));
+  assert.ok(firstEdges.some(e => e.from==="A" && e.to===secondCluster),
+    "expanded member must connect to the still-collapsed second community");
   assert.ok(firstEdges.every(e=>e.from===e.to ||
       e.smooth?.type==="curvedCW"),firstEdges);
   // Replay multiple frames and then return to the first: no force-layout,
