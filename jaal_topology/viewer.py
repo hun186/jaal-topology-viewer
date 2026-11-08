@@ -633,6 +633,11 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             ),
             dcc.Location(id="jaal-case-location", refresh=True),
         ], className="jaal-case-selector"))
+        controls_children.insert(1, html.A(
+            "＋ 我的案例／上傳 CSV", href="/my-cases/",
+            className="jaal-browser-cases-link",
+            title="在瀏覽器本機建立及保存私人圖形案例",
+        ))
     controls = html.Div(
         controls_children, id="jaal-compact-toolbar",
         className="jaal-compact-toolbar",

@@ -11,6 +11,7 @@
 | CONTRACT-004 | Flask WSGI 同埠 | `integration.py`, `viewer.py` |
 | CONTRACT-005 | 四種 legacy 模式＋實驗 Louvain 社群模式／browser assets | `modes.py`, `viewer.py`, `assets/` |
 | CONTRACT-006 | 多案例展示 Gallery API | `gallery.py`, `viewer.py`, `integration.py`, `test_gallery.py` |
+| CONTRACT-008 | Browser-local cases：CSV、IndexedDB 與 JSON 備份 | browser_cases.py, browser_cases/case_core.js, browser_cases/case_ui.js, browser_cases.test.cjs |
 | CONTRACT-007 | 可搜尋根節點與有向 k-hop 局部子圖 | `neighborhood.py`, `viewer.py`, `assets/22.jaal_local_focus.js`, `test_neighborhood.py` |
 
 ## CONTRACT-001 — CSV
@@ -59,3 +60,10 @@
 
 ## Cross-repo
 - 消費端固定 reviewed Git SHA；上游 merge 不自動改 consumer。更動接口需同步測試，breaking change 要記錄版本與遷移方案。
+
+## CONTRACT-008 — Browser-only user cases
+
+- Reusable Gallery only: GET /my-cases/, /my-cases/case_core.js, /my-cases/case_ui.js and /my-cases/cases.css. No POST endpoints, no arbitrary path reading, no Flask session/file/database writes. Strict CSP with connect-src 'none', same-origin scripts and styles.
+- Client imports up to five UTF-8 relationship CSV/TSV (headerless first two columns or parent/child, from/to, source/target, sender/recipient), optional ClassLabel/CT labels, optional count/weight header (positive bounded integer). Max 2MB per file, 250 nodes / 2,000 unique directed edges per case, max 20 browser cases. Bad fields, duplicate metadata translations, invalid weights and oversized input are rejected.
+- Format v1: schemaVersion=1, title (1..100 chars), nodes [{id,label}], directed edges [{from,to,weight}]. Stored records add browser-generated id and createdAt. JSON backup: format="jaal-local-cases", schemaVersion=1, cases=[...]. Validation always rebuilds accepted typed fields; untrusted HTML labels are text-only DOM/SVG, never JS commands.
+- Data remains on browser origin-scoped IndexedDB; no path persistence, cloud sync, server processing or upload. Graph preview is a dedicated native SVG engine with two layouts and directed BFS; it does not claim the original five Jaal modes, Louvain/temporal, or original Search/Filter/Color/Size callback parity. Backup is plaintext and browser data can be evicted.

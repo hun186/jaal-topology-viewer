@@ -7,7 +7,7 @@
   "functions": {
     "app.py": {
       "excludeFiles": "{tests/**,vercel-poc/**,.codex/**,.github/**,docs/**}",
-      "includeFiles": "{examples/*.csv,jaal_topology/assets/**}"
+      "includeFiles": "{examples/*.csv,jaal_topology/assets/**,jaal_topology/browser_cases/**}"
     }
   },
   "headers": [

@@ -14,8 +14,8 @@
 ## 使用者、輸入、輸出
 - 使用者：檢視分類樹或其他有向關係的 Python 開發者，以及下游 `text-category-profiler`。
 - 輸入：一個以上 parent/child CSV、可選 `ClassLabel,CT` metadata、root 與渲染上限。
-- 輸出：Dash/Jaal 互動圖（四種 legacy 模式加一個實驗 Louvain 社群收攏模式；中文名稱預設關閉）；**不回寫**任一 CSV。
-- 非目標：BertScript／TCFMain／WorkPool／模型訓練，consumer 的 root 搜尋下拉、sidebar 與 iframe autoheight，正式 Python Runtime 接受任意公開輸入、自動同步下游。Vercel PoC 已改為相同 Jaal/Dash 程式的受限公網展示，僅載入 77/169 虛構資料，不提供上傳。
+- 輸出：Gallery 為 Dash/Jaal 互動圖（四種 legacy 模式加一個實驗 Louvain 社群收攏模式；中文名稱預設關閉）；**不回寫**任一 CSV。
+- 非目標：BertScript／TCFMain／WorkPool／模型訓練，consumer 的 root 搜尋下拉、sidebar 與 iframe autoheight，正式 Python Runtime 接受任意公開輸入、自動同步下游。Vercel PoC 已改為相同 Jaal/Dash 程式的受限公網展示，僅載入 77/169 虛構資料，不提供伺服器端上傳；另有 GET-only /my-cases/ 瀏覽器本機工作區，IndexedDB 保存使用者 CSV 匯入案例。
 
 ## 技術與執行
 | 項目 | 已確認 | 證據 |
@@ -38,6 +38,7 @@
 | `email_simulation.py` | 固定種子、20 工作天的虛構業務流程發信事件與收發量彙總（人名／帳號／信件內容皆非真實） |
 | `assets/` | Browser JS（包含社群投影／收攏、時間片動畫與 22.jaal_local_focus.js 局部子圖投影）、Bootstrap CSS、精簡工具列 CSS，直接由套件提供 |
 | `integration.py` | `mount_flask`；Flask 同來源、同 port |
+| `browser_cases.py`, `browser_cases/` | Gallery 入口連至本機案例工作區；UTF-8 CSV/TSV 解析、原生 SVG 網狀／階層預覽、IndexedDB 與 JSON 備份在瀏覽器進行，伺服器僅 GET 靜態資產；不能視為原版五模式/Louvain/Temporal 已支援使用者檔案 |
 | `gallery.py` | 新的可選多案例 registry：1..20 明確登記的 GalleryCase，以同來源不同路徑各自掛載真實 Jaal/Dash，搜尋／收攏 callback 狀態隔離 |
 | `tests/`, `examples/` | Python/Node 測試、合成 CSV fixture、Windows Chromium 下真實 Jaal/visdcc 的根節點局部子圖互動驗證 |
 | `vercel-poc/`, `vercel.json`, `.github/workflows/vercel-poc-merge-only.yml` | Vercel 真實 Python Jaal PoC；舊 SVG 留作歷史對照；Git 自動部署禁止、相關 PR 合併後才可依 opt-in workflow 發布（預設關閉） |
