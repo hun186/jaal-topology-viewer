@@ -8,6 +8,12 @@ from __future__ import annotations
 import json
 import os
 import time
+import sys
+from pathlib import Path
+
+# Running python tests/... sets sys.path[0] to tests/, not the repo root
+# containing the Vercel WSGI app.py. Match our other standalone smokes.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 assert os.environ.get("VERCEL") == "1", "Vercel environment simulation required"
 assert os.environ.get("JAAL_ENABLE_LARGE_LOCAL") == "1"
