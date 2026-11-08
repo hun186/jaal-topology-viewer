@@ -817,3 +817,221 @@ body:has(.jaal-focus-mode) {
   }
   .jaal-local-scale-warning { flex-basis: 100%; min-width: 0; }
 }
+
+/* Root picker is its own full-width field, not a 60px flex item beside
+   "起始根節點". This fixes the unreadable vertical ID menu for large datasets.
+   React-Virtualized option rows MUST keep their native 35px height. */
+.jaal-local-details[open] { z-index: 410; }
+.jaal-local-body {
+  box-sizing: border-box;
+  width: min(610px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  gap: 10px 14px;
+  overflow: visible;
+}
+.jaal-local-root-field {
+  flex: 1 0 100%;
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+}
+.jaal-local-root-field > span { white-space: normal; }
+.jaal-local-root-field .jaal-local-root-picker {
+  flex: initial;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  display: block;
+  position: relative;
+}
+.jaal-local-hops-field,
+.jaal-local-direction-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 0;
+}
+.jaal-local-hops-field { flex: 0 0 180px; }
+.jaal-local-direction-field { flex: 1 1 250px; }
+.jaal-local-hops-field > span,
+.jaal-local-direction-field > span { white-space: nowrap; }
+.jaal-local-root-picker .Select-control { min-width: 0; width: 100%; }
+.jaal-local-root-picker .Select-menu-outer {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  max-height: min(55vh, 385px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 460;
+  box-shadow: 0 9px 24px rgba(15,23,42,.18);
+}
+.jaal-local-root-picker .VirtualizedSelectOption {
+  box-sizing: border-box;
+  height: 35px;
+  min-height: 0;
+  max-height: 35px;
+  padding: 5px 12px;
+  line-height: 25px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+.jaal-local-root-picker .Select-option {
+  box-sizing: border-box;
+  min-height: 35px;
+  padding: 5px 12px;
+  line-height: 25px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+}
+.jaal-local-root-picker .Select-value-label {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 650px) {
+  .jaal-local-body { right: 0; }
+  .jaal-local-hops-field { flex: 1 1 100%; }
+  .jaal-local-direction-field { flex: 1 1 100%; }
+}
+
+/* A selected case title deserves >= ~20 Chinese characters at desktop size.
+   Let the toolbar wrap other controls instead of squeezing this to one glyph. */
+.jaal-compact-toolbar .jaal-case-selector {
+  flex: 0 0 min(100%, 510px);
+  width: min(100%, 510px);
+  min-width: min(100%, 380px);
+  max-width: 510px;
+}
+.jaal-compact-toolbar .jaal-case-picker {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+.jaal-case-picker .Select-value,
+.jaal-case-picker .Select-placeholder,
+.jaal-case-picker .Select-input,
+.jaal-case-picker .Select-value-label { max-width: 100%; }
+.jaal-case-picker .Select-value-label { font-weight: 600; }
+@media (max-width: 700px) {
+  .jaal-compact-toolbar .jaal-case-selector {
+    flex-basis: 100%;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+/* Two focus information densities. Keep the same mounted visdcc canvas.
+   Full uses a wide, naturally wrapping timeline; compact shows only its
+   live time/statistics and the three playback buttons. */
+.jaal-focus-panel-toggle {
+  display: none;
+  padding: 4px 10px;
+  border: 1px solid #90a8c4;
+  border-radius: 6px;
+  background: rgba(245,249,255,.96);
+  color: #254d76;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.jaal-focus-mode .jaal-focus-panel-toggle {
+  display: inline-block;
+  margin-left: 7px;
+  box-shadow: 0 2px 10px rgba(15,23,42,.12);
+}
+.jaal-focus-static-status { display: none; }
+.jaal-focus-mode .jaal-focus-static-status {
+  display: block;
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  z-index: 2200;
+  border: 1px solid #d8e5f2;
+  border-radius: 7px;
+  background: rgba(245,249,255,.96);
+  padding: 8px 12px;
+  color: #294969;
+  font-size: 12px;
+}
+.jaal-focus-mode #jaal-temporal-controls {
+  box-sizing: border-box;
+  width: min(1200px, calc(100vw - 24px));
+  max-height: min(60dvh, 360px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  gap: 8px;
+  padding: 10px 13px 15px;
+}
+.jaal-focus-mode .jaal-temporal-navigation > span:first-child {
+  flex: 0 0 100%;
+  white-space: nowrap;
+}
+.jaal-focus-mode .jaal-temporal-navigation .jaal-temporal-range {
+  box-sizing: border-box;
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  padding: 14px 48px 34px;
+}
+.jaal-focus-mode .jaal-temporal-navigation .jaal-temporal-playhead {
+  flex: 1 1 320px;
+  max-width: none;
+  min-width: 170px;
+  padding: 6px 48px 28px;
+}
+.jaal-focus-mode .jaal-temporal-navigation .rc-slider-mark-text {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.jaal-focus-compact #jaal-temporal-controls {
+  width: min(630px, calc(100vw - 24px));
+  max-height: min(27dvh, 150px);
+  padding: 9px 12px;
+  gap: 7px;
+  overflow-y: auto;
+}
+.jaal-focus-compact #jaal-temporal-controls > .jaal-temporal-options,
+.jaal-focus-compact #jaal-temporal-controls > .jaal-temporal-live-window,
+.jaal-focus-compact .jaal-temporal-navigation > span,
+.jaal-focus-compact .jaal-temporal-navigation > .jaal-temporal-range,
+.jaal-focus-compact .jaal-temporal-navigation > .jaal-temporal-playhead,
+.jaal-focus-compact .jaal-temporal-navigation > .jaal-temporal-precision {
+  display: none !important;
+}
+.jaal-focus-compact .jaal-temporal-navigation {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 7px;
+}
+.jaal-focus-compact .jaal-temporal-navigation > button { min-height: 30px; }
+.jaal-focus-compact .jaal-temporal-status {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+@media (max-width: 700px) {
+  .jaal-focus-mode #jaal-temporal-controls {
+    bottom: 7px;
+    left: 7px;
+    width: calc(100vw - 14px);
+  }
+  .jaal-focus-mode .jaal-temporal-navigation .jaal-temporal-range {
+    padding-left: 35px;
+    padding-right: 35px;
+  }
+}
