@@ -5,3 +5,12 @@
 .case-tools .mini:hover{background:#e7f4ff}
 .case-tools .mini.danger{color:#a63e3e}
 .case-item{font-family:inherit}
+
+/* Optional local-graph visual encodings: directional weighted flow. */
+.flow-legend{display:flex;gap:8px 20px;flex-wrap:wrap;font-size:12px;margin:11px 0 0;color:#385674}
+.flow-legend[hidden]{display:none}
+.flow-out{color:#b15d20}.flow-in{color:#087d78}.flow-even{color:#7256b7}
+.node-circle.node-outgoing{fill:#ffe3bb;stroke:#b86b23}
+.node-circle.node-incoming{fill:#c3f2e9;stroke:#087d78}
+.node-circle.node-balanced{fill:#e9ddfa;stroke:#7256b7}
+.node-circle.node-root{fill:#f9dea6;stroke:#bf7e1a;stroke-width:3}

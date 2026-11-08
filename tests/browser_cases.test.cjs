@@ -39,6 +39,20 @@ test("TSV ignores quoted commas and weighted files preserve order-independent to
   assert.equal(core.importGraph("mixed",parts.slice().reverse(),"").edges[0].weight,8);
 });
 
+test("weighted node flow totals respect directions, reciprocal edges and self-loops", () => {
+  const g=core.importGraph("flow",[
+    "from,to,count\nA,B,3\nB,A,1\nB,C,2\nC,C,4\n"],"");
+  const {byId,maxTotal}=core.flowMetrics(g);
+  assert.deepEqual(byId.get("A"),{incoming:1,outgoing:3,total:4});
+  assert.deepEqual(byId.get("B"),{incoming:3,outgoing:3,total:6});
+  assert.deepEqual(byId.get("C"),{incoming:6,outgoing:4,total:10});
+  assert.equal(maxTotal,10);
+  const scope=core.flowMetrics(core.neighborhood(g,"A",1,"out"));
+  assert.equal(scope.byId.get("B").incoming,3);
+  assert.equal(scope.byId.get("B").outgoing,1);
+  assert.equal(scope.maxTotal,4);
+});
+
 test("root scope keeps directed reachability and original induced links", () => {
   const g=core.importGraph("scope",["from,to\nA,B\nB,C\nC,A\nD,A\n"],"");
   assert.deepEqual(core.neighborhood(g,"A",1,"out").nodes.map(n=>n.id),["A","B"]);

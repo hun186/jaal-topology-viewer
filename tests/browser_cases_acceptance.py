@@ -77,6 +77,18 @@ def check(port, evidence):
                 expect(page.locator("#active-name")).to_contain_text("尚未儲存")
                 page.screenshot(path=str(evidence / "02-preview-graph.png"),
                                 full_page=True)
+                # Flow coloring is weighted and directional; size tracks
+                # weighted in+out traffic for the visible induced graph.
+                page.locator("#node-color").select_option("flow")
+                page.locator("#node-size").select_option("traffic")
+                expect(page.locator("#flow-legend")).to_be_visible()
+                expect(page.locator(".node-outgoing")).to_have_count(1)
+                expect(page.locator(".node-balanced")).to_have_count(1)
+                expect(page.locator(".node-incoming")).to_have_count(2)
+                radii = page.locator(".node-circle").evaluate_all(
+                    "(nodes) => nodes.map(n => Number(n.getAttribute('r')))")
+                assert len(set(radii)) > 1, radii
+                assert max(radii) <= 28 and min(radii) >= 14, radii
 
                 page.locator("#root-filter").fill("Alice")
                 page.locator("#root-filter").press("Tab")
@@ -85,6 +97,7 @@ def check(port, evidence):
                 expect(page.locator("#count-visible")).to_have_text("2 / 2")
                 page.locator("#reset-view").click()
                 expect(page.locator("#count-visible")).to_have_text("4 / 4")
+                expect(page.locator(".node-circle")).to_have_count(4)
                 page.locator("#layout-mode").select_option("hierarchy")
                 expect(page.locator(".node-circle")).to_have_count(4)
                 page.screenshot(path=str(evidence / "03-hierarchy.png"),

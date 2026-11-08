@@ -66,9 +66,12 @@
             <label class="grow">局部起點<input id="root-filter" list="root-options" placeholder="輸入 ID 或中文名稱；留空＝全圖" autocomplete="off"><datalist id="root-options"></datalist></label>
             <label>方向<select id="direction"><option value="both">雙向 ↔</option><option value="out">向外 →</option><option value="in">向內 ←</option></select></label>
             <label>步數<select id="radius"><option value="1">1 步</option><option value="2" selected>2 步</option><option value="3">3 步</option><option value="5">5 步</option><option value="all">全部可達</option></select></label>
+            <label>節點顏色<select id="node-color"><option value="single">一致</option><option value="flow">依流入／流出</option></select></label>
+            <label>節點大小<select id="node-size"><option value="fixed">固定</option><option value="traffic">依加權互動量</option></select></label>
             <label class="checkbox"><input id="all-labels" type="checkbox">顯示所有標籤</label>
             <button class="subtle" id="reset-view" type="button">重設視野</button>
           </div>
+          <p id="flow-legend" class="flow-legend" hidden aria-label="流向顏色圖例"><span class="flow-out">● 流出較多</span><span class="flow-in">● 流入較多</span><span class="flow-even">● 流入流出相等</span></p>
           <p class="helpbar" id="graph-help">提示：節點可點擊作為局部起點；滾輪縮放、拖曳空白處平移。箭頭保留原始方向。</p>
           <div class="canvas-wrap">
             <svg id="graph-canvas" viewBox="0 0 1100 650" role="img" aria-label="有向關係互動圖">
