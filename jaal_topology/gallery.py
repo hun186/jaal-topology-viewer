@@ -107,4 +107,6 @@ def create_gallery_app(
     # Opt-in browser-local workbench is separated from preloaded Dash cases.
     from .browser_cases import register_browser_case_workspace
     register_browser_case_workspace(root_app.server)
+    from .stress_lab import register_stress_lab
+    register_stress_lab(root_app.server)
     return root_app

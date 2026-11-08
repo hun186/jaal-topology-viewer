@@ -329,6 +329,29 @@ render on import. Source parsing itself rejects more than 100,000 distinct
 edges. CSVs remain read-only. The renderer imports heavy dependencies only
 on `build_app()`, not `import jaal_topology`.
 
+## Synthetic corporate email stress laboratory (Canvas)
+
+The sample-only Gallery includes a same-origin **/stress-lab/** link for four
+fully generated fictional company sizes (500, 3,000, 5,000 and 20,000 employees)
+plus a 500-person case consisting of **exactly three weakly connected
+components**. Departments, reporting layers, directed manager replies,
+local peer traffic and sparse cross-department approvals scale deterministically;
+these graphs do not come from real corporate mail or a validated stochastic
+model. The user may switch between leadership summary, *actual complete*
+Canvas drawing and a direction-aware 1–3 hop local subgraph (local scope caps
+at 2,000 nodes, visibly reported). It measures current-browser generation and
+drawing durations with performance.now(), not a universal benchmark score.
+
+**Compatibility:** The stress laboratory is an independent client-side Canvas
+engine, *not* another Jaal mode. The original Jaal/Dash safety cap remains
+3,000 nodes / 5,000 edges and its five layout modes, Louvain and temporal
+playback do not apply to this stress demo. No 20k graph is silently truncated
+and passed off as full: the summary and local limits are labeled explicitly.
+All five stress scenarios are generated in the browser from fixed business
+rules, with no server transfer, third-party dependency, uploads or persistent
+private data. The Gallery still starts with the existing 77-node corporate
+email workflow and retains its four built-in Jaal cases.
+
 ## Larger example: fictional corporate communications
 
 This medium-size example is deliberately **not a strict tree**. It transforms the

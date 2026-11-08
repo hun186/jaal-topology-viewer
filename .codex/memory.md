@@ -27,11 +27,13 @@
 
 - [PR #22](https://github.com/hun186/jaal-topology-viewer/pull/22) 已於 2026-11-08 查證 Merge（`0afe6977f7168894a300f0c7bb2846399b6bac6d`）；browser-only IndexedDB、JSON 備份／還原、SVG 網狀／階層檢視已納入 main。最後 HEAD `396a0c1` Hosted CI 8/8 PASS，正式 Codex Review Summary completed／0 unresolved；公網部署及原 Jaal 五模式／Louvain/Temporal 對私人案例的支援仍不得宣稱完成。
 - [PR #23](https://github.com/hun186/jaal-topology-viewer/pull/23) 已於 2026-11-08 Merge（`51da9614a40f5d9ddb28bc11ef751fae75b52c8b`）；本機 SVG 案例新增加權流入／流出著色、流量尺寸及樣式回歸檢查；HEAD `1bc65c0` Hosted CI 8/8 PASS、正式 Codex Review completed／0 findings。原五模式、Louvain、時間演化仍未整合。
-- 下一項小改進：客戶本機案例中的雙向關係 A→B 與 B→A 使用不同弧線，避免箭頭重疊；維持原有有向邊、原資料與隱私界線。新 PR 未驗證／合併前不視為完成。
+- [PR #24](https://github.com/hun186/jaal-topology-viewer/pull/24) 已 Merge（`cc230aecd861791c49a3271a33725ec786712ad1`）：私人 SVG 雙向箭頭改分開弧線，HEAD `af2ef7a` Hosted CI 8/8 PASS／Codex Completed 0 findings。
+- 本輪 Current Focus：大型虛構企業郵件壓測；固定規則生成 500、3000、5000、20000 節點及三個獨立弱連通分量，Canvas 獨立於原版 Jaal，提供完整／摘要／局部模式和真實本機耗時。Hosted CI/正式 Review/合併狀態需以最新 PR HEAD 驗證。
 
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |
 | --- | --- | --- |
+| 2026-11-08 | [PR #24](https://github.com/hun186/jaal-topology-viewer/pull/24) 已 Merge | HEAD `af2ef7a` [Hosted CI 42455669286](https://github.com/hun186/jaal-topology-viewer/actions/runs/42455669286) 8/8 PASS、正式 Codex Review Completed／0 findings；Squash Merge `cc230aecd861791c49a3271a33725ec786712ad1`。 |
 | 2026-11-08 | [PR #23](https://github.com/hun186/jaal-topology-viewer/pull/23) 已 Merge | HEAD `1bc65c0` [Hosted CI 42455371002](https://github.com/hun186/jaal-topology-viewer/actions/runs/42455371002) 8/8 PASS、同 SHA 正式 Codex Review completed／0 findings，Squash Merge `51da9614a40f5d9ddb28bc11ef751fae75b52c8b`。 |
 | 2026-11-08 | [PR #22](https://github.com/hun186/jaal-topology-viewer/pull/22) 已 Merge | HEAD `396a0c1` [Hosted CI 41749491302](https://github.com/hun186/jaal-topology-viewer/actions/runs/41749491302) 8/8 PASS、Codex Summary 對相同 HEAD completed／0 unresolved；Squash Merge `0afe6977f7168894a300f0c7bb2846399b6bac6d`，本機案例不外傳。 |
 | 2026-11-04 | [PR #20](https://github.com/hun186/jaal-topology-viewer/pull/20) 已 Merge | HEAD `0a8c724` [Hosted CI 41741363056](https://github.com/hun186/jaal-topology-viewer/actions/runs/41741363056) 8/8 PASS、正式 Codex Review completed／0 Finding，Squash merge `fcb980d3c68465321987bc082dfca1f1943eb421`；支援局部子圖選取與還原。 |
@@ -41,7 +43,6 @@
 | 2026-11-03 | [PR #15](https://github.com/hun186/jaal-topology-viewer/pull/15) 已 Merge | HEAD `9e835cba849426d0bc2b23e5f806891a33d7998f` [Hosted CI 41659077144](https://github.com/hun186/jaal-topology-viewer/actions/runs/41659077144) 8/8 PASS，正式 Codex Review 完成 0 未解決 Finding，Squash merge `8fddffa1c94edeab0dce4cedafdd44a2ceeb1ac0`。動態時間片與佈局 physics 回歸測試已併入；不代表外部 consumer／公網部署完成。 |
 | 2026-11-03 | [PR #14](https://github.com/hun186/jaal-topology-viewer/pull/14) 已 Merge | `main` merge `b62a6b0f97767ca81e86f5b647c45d28786e5296`；新增固定種子的虛構企業郵件事件與明確頻次加權，保留 legacy 拓樸圖；不得誤認真實郵件／公網已部署。 |
 | 2026-11-03 | [PR #13](https://github.com/hun186/jaal-topology-viewer/pull/13) 已 Merge | `main` merge `dced7b5027ea565830de8630d5d900e72552e163`；獨立 GalleryCase、多路同埠 Jaal 案例隔離切換，舊單圖 API 不變。 |
-| 2026-11-03 | [PR #12](https://github.com/hun186/jaal-topology-viewer/pull/12) 已 Merge | Latest HEAD `e0b5822e77ad4acc840661fc4a79119f346c3cfb` Hosted CI [41618971626](https://github.com/hun186/jaal-topology-viewer/actions/runs/41618971626) 8/8 PASS；Windows 真 Canvas viewport height、Esc 還原驗證；Codex Review 0 Finding，merge `2562cd741203de2cdab0fd5f414a8a41ef49a038`；Vercel 仍因先前 HTTP402 未部署 Python。 |
 
 ## Open Handoffs
 - Windows browser：PR #5 upstream Windows Hosted Chromium PASS；consumer [PR #227](https://github.com/hun186/text-category-profiler/pull/227) 已 Merge，使用者提供的 Stage 4 候選實機驗收九項 PASS、該 PR Hosted 九項工作流程 PASS；不得外推至全部 Windows／Dash 版本及 ML 工況。

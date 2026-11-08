@@ -38,6 +38,7 @@
 | `email_simulation.py` | 固定種子、20 工作天的虛構業務流程發信事件與收發量彙總（人名／帳號／信件內容皆非真實） |
 | `assets/` | Browser JS（包含社群投影／收攏、時間片動畫與 22.jaal_local_focus.js 局部子圖投影）、Bootstrap CSS、精簡工具列 CSS，直接由套件提供 |
 | `integration.py` | `mount_flask`；Flask 同來源、同 port |
+| `stress_lab.py`, `stress_lab/` | 新增 GET-only 的虛構公司郵件 Canvas 壓測展示；離線生成 500／3000／5000／20000 人及 500 人三連通分量，管理層摘要／完整圖／局部圖，與 Jaal 原有 3000/5000 顯示限額隔離 |
 | `browser_cases.py`, `browser_cases/` | Gallery 入口連至本機案例工作區；UTF-8 CSV/TSV 解析、原生 SVG 網狀／階層預覽、IndexedDB 與 JSON 備份在瀏覽器進行，伺服器僅 GET 靜態資產；不能視為原版五模式/Louvain/Temporal 已支援使用者檔案 |
 | `gallery.py` | 新的可選多案例 registry：1..20 明確登記的 GalleryCase，以同來源不同路徑各自掛載真實 Jaal/Dash，搜尋／收攏 callback 狀態隔離 |
 | `tests/`, `examples/` | Python/Node 測試、合成 CSV fixture、Windows Chromium 下真實 Jaal/visdcc 的根節點局部子圖互動驗證 |

@@ -15,7 +15,8 @@
 | Browser local-cases Python | python -m unittest discover -s tests -p 'test_browser_cases.py' -v | GET-only Flask assets/CSP and gallery link |
 | Browser local-cases Chromium | python tests/browser_cases_acceptance.py --evidence browser-evidence/local-cases | Actual file upload, two layouts, IndexedDB reload and JSON backup/restore; runs in Windows hosted CI |
 | Python test | `python -m unittest discover -s tests -p "test_*.py" -v` | CI |
-| JS test | `node --test tests/*.test.cjs` | CI |
+| JS test | `node --test tests/*.test.cjs` | CI；包含 `tests/stress_lab.test.cjs`，驗證四種規模／三個連通分量／決定性／上限 |
+| Stress lab Flask smoke | `python -m unittest discover -s tests -p "test_stress_lab.py" -v` | 同源路由/CSP/GET-only/檔案 allowlist，整合 Windows `tests/browser_cases_acceptance.py` 真實 20k 畫布操作 |
 | CLI help smoke | `python -m jaal_topology --help` | CI |
 | 手動啟動 viewer | `jaal-topology --edges examples/relationships.csv --metadata examples/metadata.csv --root Root` | README；會持續提供 localhost server，非快速測試 |
 | 替代啟動 | `python -m jaal_topology --edges examples/relationships.csv --root Root -p 8059` | README |
