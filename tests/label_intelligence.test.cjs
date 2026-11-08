@@ -118,3 +118,30 @@ test("temporal fullLabels overrides smart-density label hiding", () => {
   temporal.fullLabels=false;
   engine.state.net=null;engine.state.instance=null;
 });
+
+
+test("language toggle invalidates hidden temporal name cache", () => {
+  const labels=globalThis.dash_clientside.jaal_visible_labels;
+  const oldResolve=labels.resolve, oldChinese=labels.preferChinese;
+  labels.resolve=(id,chinese)=>chinese?"員工-"+id:String(id);
+  const data=new Map(Array.from({length:105},(_,i)=>[
+    "USER-"+i,{id:"USER-"+i,label:i<12?"USER-"+i:"",x:120+i,y:150,hidden:false}
+  ]));
+  const nn={get:()=>[...data.values()].map(v=>({...v})),
+    update:rows=>rows.forEach(x=>data.set(x.id,{...data.get(x.id),...x}))};
+  const net={getScale:()=>0.5,
+    getPositions:()=>Object.fromEntries([...data.values()].map(v=>[v.id,{x:v.x,y:v.y}])),
+    canvasToDOM:p=>p,on:()=>{},setOptions:()=>{},
+    body:{container:{getBoundingClientRect:()=>({width:1000,height:500})}}};
+  engine.state.density="all";engine.state.remembered.clear();
+  engine.state.net=null;engine.state.instance=null;
+  labels.preferChinese=false;
+  engine.sync.call({nn,ee:{get:()=>[]},net});
+  assert.equal(data.get("USER-104").label,"USER-104");
+  labels.preferChinese=true;
+  engine.sync.call({nn,ee:{get:()=>[]},net});
+  assert.equal(data.get("USER-104").label,"員工-USER-104");
+  labels.preferChinese=oldChinese;
+  labels.resolve=oldResolve;
+  engine.state.net=null;engine.state.instance=null;
+});

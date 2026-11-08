@@ -234,7 +234,15 @@
   }
   function sync() {
     if (!this || !this.nn || !this.net) return;
-    if (state.instance && state.instance !== this) state.remembered.clear();
+    const labels = root.dash_clientside?.jaal_visible_labels;
+    const chinese = Boolean(labels?.preferChinese);
+    // Non-key temporal labels can be blank. Keeping an earlier English ID
+    // cache through an English->Chinese toggle would display the wrong name.
+    if (state.preferChinese !== chinese ||
+        (state.instance && state.instance !== this)) {
+      state.remembered.clear();
+      state.preferChinese = chinese;
+    }
     state.instance = this;
     attach(this);
     schedule();
