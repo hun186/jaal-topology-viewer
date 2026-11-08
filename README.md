@@ -329,6 +329,53 @@ render on import. Source parsing itself rejects more than 100,000 distinct
 edges. CSVs remain read-only. The renderer imports heavy dependencies only
 on `build_app()`, not `import jaal_topology`.
 
+## Full-feature original Jaal large-email scale gallery (localhost opt-in)
+
+The new **start-gallery.bat** launches the *original* Jaal/Dash Gallery on
+`127.0.0.1:8059` with five additional, fixed, **fictional** company-email
+scenarios in the SAME searchable case dropdown: 500, 3,000, 5,000, 20,000
+employees and three **actually disconnected weak components**
+(167 + 167 + 166 employees). No links exist between the three groups.
+All nodes and directed sender→recipient edges are truly loaded, with
+deterministic Chinese role names, 5–7 managerial levels, department chatter,
+reports/replies and dated fictitious mail events. The actual full-size cases
+use original **Jaal/visdcc Search/Filter/Color/Size, all five layout modes,
+Louvain community expansion, directed root/k-hop filtering and temporal
+playback**; this is not a Canvas imitation.
+
+Run in Windows **CMD or Anaconda Prompt** (Python 3.11 recommended):
+
+```bat
+python -m pip install -r requirements.txt
+python -m pip install -e .
+start-gallery.bat
+```
+
+Or set `JAAL_ENABLE_LARGE_LOCAL=1` before executing
+`python -m flask --app app:app run --host 127.0.0.1 --port 8059 --no-reload`.
+Large cases are **opt-in, locally served, lazily constructed on first
+selection**, to keep the original 77-person Gallery responsive at startup.
+This flag must not be enabled in a public deployment; the default public
+`app.py` remains four preloaded small cases. All files are read-only;
+no actual mail data is accessed.
+
+**Performance / scope honesty:** the normal import and default Jaal
+limits (3,000 nodes / 5,000 edges) are preserved. Only the trusted
+fixed synthetic scenarios can opt into the 20,000-node / 50,000-edge
+graph bound. Opening a 20k Jaal graph can consume significant CPU/RAM,
+including Louvain and time slices; physics is disabled for these opt-in
+cases, but this does **not** guarantee that client-side full expansion,
+hierarchical layout or all controls will perform well on every computer.
+First test 500 and 3,000 then increase. The three independent groups are
+initially given separated positions to improve readability; the real edge
+set, not colors or viewport placement, proves their disconnection.
+
+### Historical separate Canvas laboratory
+
+`/stress-lab/` remains accessible only as an older compatibility
+demonstration, but is intentionally **not linked in the main Jaal toolbar**.
+It does not replace full Jaal testing or represent support for its five modes.
+
 ## Synthetic corporate email stress laboratory (Canvas)
 
 The sample-only Gallery includes a same-origin **/stress-lab/** link for four

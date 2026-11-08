@@ -44,3 +44,8 @@
 - Fixture：`examples/relationships.csv`、`examples/metadata.csv`；測試使用 `tempfile` 不改寫來源。
 - 2026-11-04 主線 PR #20 merge `fcb980d3c68465321987bc082dfca1f1943eb421`：其 HEAD `0a8c724` [Hosted CI 41741363056](https://github.com/hun186/jaal-topology-viewer/actions/runs/41741363056) 8/8 PASS，Windows Chromium 覆蓋當次預設 Dash 4 的 root scope/reset；本工作新增釘版本 3.4/4.5 的雙版本 browser 以**本 PR 的最新 CI** 為準，不視為已執行。
 - 每個 PR 依 `REPOSITORY_SETUP.md` 執行最新 HEAD Hosted CI 與正式 Codex Review，0 unresolved findings 才能 Merge；不得以自己撰寫的備註冒充獨立 review。
+
+## Full Jaal local scale acceptance
+- CMD / Conda Prompt: `start-gallery.bat` (local fixed 500–20k + three-component options).
+- Full Graph factory/contracts: `python -m unittest discover -s tests -p 'test_scaled_demo.py' -v`.
+- Existing official CI + Windows browser acceptance remains required for each PR HEAD. Large Jaal 20k visual performance is hardware-dependent; CI correctness cannot replace on-device measurement.
