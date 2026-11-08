@@ -1035,3 +1035,56 @@ body:has(.jaal-focus-mode) {
     padding-right: 35px;
   }
 }
+
+/* Dash 4 / modern React Select uses BEM markup, not the legacy Dash 3
+   .Select-menu-outer and .VirtualizedSelectOption classes. Both must have
+   a full horizontal search menu rather than inheriting the tiny control. */
+.jaal-local-root-picker .Select__control {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+.jaal-local-root-picker .Select__menu {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  z-index: 460;
+  box-shadow: 0 9px 24px rgba(15,23,42,.18);
+}
+.jaal-local-root-picker .Select__menu-list {
+  max-height: min(55vh, 385px);
+  overflow-x: hidden;
+}
+.jaal-local-root-picker .Select__option {
+  box-sizing: border-box;
+  min-height: 35px;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 24px;
+  padding: 5px 12px;
+}
+.jaal-local-root-picker .Select__single-value,
+.jaal-case-picker .Select__single-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.jaal-case-picker .Select__menu {
+  min-width: min(100%, 360px);
+  max-width: min(540px, calc(100vw - 24px));
+  z-index: 220;
+}
+.jaal-case-picker .Select__option {
+  box-sizing: border-box;
+  min-height: 35px;
+  white-space: nowrap;
+  word-break: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 7px 12px;
+}

@@ -331,11 +331,20 @@ def check(port: int, evidence: Path) -> None:
                 # vertical strip: actual React-Select dropdown geometry.
                 root_box = root_picker.bounding_box()
                 assert root_box and root_box["width"] >= 300, root_box
-                root_menu = root_picker.locator(".Select-menu-outer")
+                # Dash 3 uses .Select-menu-outer; Dash 4/modern react-select
+                # uses .Select__menu, sometimes outside the dropdown wrapper.
+                root_menu = root_picker.locator(".Select-menu-outer, .Select__menu")
+                if not root_menu.count():
+                    root_menu = frame.locator(
+                        ".jaal-local-body .Select-menu-outer, "
+                        ".jaal-local-body .Select__menu, "
+                        ".Select__menu:visible, .Select-menu-outer:visible"
+                    ).last
                 expect(root_menu).to_be_visible(timeout=15000)
                 menu_box = root_menu.bounding_box()
                 assert menu_box and menu_box["width"] >= 300, menu_box
-                options = root_menu.locator(".VirtualizedSelectOption, .Select-option")
+                options = root_menu.locator(
+                    ".VirtualizedSelectOption, .Select-option, .Select__option")
                 assert options.count() > 0
                 assert options.first.evaluate(
                     "(el) => getComputedStyle(el).whiteSpace") == "nowrap"
