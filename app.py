@@ -140,6 +140,47 @@ if _large_local_cases_enabled(os.environ):
         for slug, title in _SCALE_CHOICES
     )
 
+def _public_500_enabled(environment):
+    """Vercel only: opt-in application mode with an emergency kill switch.
+
+    Never expose other scale scenarios just because local large-demo flag was
+    accidentally set. The allowed fixture is a single literal 500-person
+    synthetic email graph; custom CSV imports remain browser-local.
+    """
+    hosted = bool(environment.get("VERCEL") or environment.get("VERCEL_ENV"))
+    return hosted and environment.get("JAAL_VERCEL_500_ENABLED", "1") == "1"
+
+
+if _public_500_enabled(os.environ):
+    def _public_500_case():
+        from jaal_topology.scaled_demo import build_scaled_email_demo
+
+        dataset = build_scaled_email_demo("500")
+        # Public graph is within the unchanged 3000/5000 default caps.
+        # A future larger synthetic preset must not inherit this privilege.
+        if len(dataset.graph.nodes) != 500 or len(dataset.graph.edges) > 5000:
+            raise RuntimeError("Public Jaal case exceeds the exact 500-node boundary")
+        return GalleryCase(
+            "scale-500",
+            "企業郵件｜500 人（公網示範）",
+            dataset.graph,
+            initial_mode="network-community-collapsed",
+            temporal_timeline=TemporalTimeline(dataset.graph, dataset.events),
+            initial_positions=dataset.positions,
+            allow_large_demo=False,
+            description=(
+                "500 個完全虛構的企業郵件節點，包含部門、主管與員工、"
+                "有向寄收件、Louvain 社群及時間演化。"
+                "這是唯一允許於 Vercel 的大型合成案例；"
+                "3,000／5,000／20,000 節點仍限本機。"
+            ),
+        )
+
+    _CASES += (DeferredGalleryCase(
+        "scale-500", "企業郵件｜500 人（公網示範）", _public_500_case,
+    ),)
+
+
 dash_app = create_gallery_app(_CASES)
 app = dash_app.server  # Flask WSGI entrypoint auto-detected by Vercel.
 
