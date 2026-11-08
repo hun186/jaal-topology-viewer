@@ -186,3 +186,28 @@ test("scope camera waits for vis-network indexing, then fits once", () => {
     else globalThis.requestAnimationFrame=old;
   }
 });
+
+
+test("language change preserves wrapped structural Chinese names and descendant count", () => {
+  const labels=globalThis.dash_clientside.jaal_visible_labels;
+  const oldResolve=labels.resolve, oldChinese=labels.preferChinese;
+  const collapse=require("../jaal_topology/assets/17.jaal_structural_collapse.js");
+  const zh="部門極長中文名稱需要斷行才能完整閱讀超過十七個字";
+  labels.resolve=(id,enabled)=>enabled?zh:id;
+  const projected=collapse.displayName(zh)+"\n1";
+  const node={id:"B",label:projected,x:0,y:0,hidden:false};
+  const net={getScale:()=>1,getPositions:()=>({B:{x:0,y:0}}),
+    canvasToDOM:p=>p,on:()=>{},setOptions:()=>{},
+    body:{container:{getBoundingClientRect:()=>({width:800,height:600})}}};
+  engine.state.pinned.clear();engine.state.pinned.add("B");
+  engine.state.remembered.clear();
+  engine.state.instance=null;engine.state.net=null;
+  engine.state.preferChinese=false;
+  labels.preferChinese=true;
+  engine.sync.call({nn:{
+    get:()=>[{...node}], update:rows=>rows.forEach(row=>Object.assign(node,row))
+  },ee:{get:()=>[]},net});
+  assert.equal(node.label,projected);
+  labels.resolve=oldResolve;labels.preferChinese=oldChinese;
+  engine.state.pinned.clear();engine.state.net=null;engine.state.instance=null;
+});

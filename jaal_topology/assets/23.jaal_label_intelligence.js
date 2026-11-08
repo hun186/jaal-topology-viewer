@@ -134,8 +134,12 @@
       // old-language labels from the previous drawn DataSet. Do not
       // immediately re-cache them after invalidation. Structural labels
       // with a translated prefix plus count suffix remain authoritative.
+      const structural = root.dash_clientside?.jaal_structural_collapse;
+      const wrapped = typeof structural?.displayName === "function"
+        ? structural.displayName(current) : current;
       const valid = !changedLanguage || aggregate ||
-        raw === current || raw.startsWith(current + "\n");
+        raw === current || raw.startsWith(current + "\n") ||
+        raw === wrapped || raw.startsWith(wrapped + "\n");
       if (raw && valid && raw !== state.remembered.get(id)) {
         state.remembered.set(id,raw);
       }
