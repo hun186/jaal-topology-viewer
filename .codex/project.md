@@ -30,7 +30,7 @@
 ## 入口與 Repository 地圖
 | 路徑 | 作用 |
 | --- | --- |
-| `app.py`, `requirements.txt`, `vercel.json` | Vercel Flask WSGI 真正 Jaal/Dash 四案例展示（新增固定種子的企業郵件業務情境，保留原拓樸示意／組織樹／DAG）；唯讀 CSV 下載供驗證，不改本機 CLI |
+| `app.py`, `requirements.txt`, `vercel.json` | Vercel Flask WSGI 真正 Jaal/Dash 四個原始案例＋一個延遲載入 500 人虛構郵件案例（仍使用原版 Jaal，普通 3000/5000 上限保留）（新增固定種子的企業郵件業務情境，保留原拓樸示意／組織樹／DAG）；唯讀 CSV 下載供驗證，不改本機 CLI |
 | `jaal_topology/__init__.py`, `data.py` | `Graph`、`GraphInputError`、`load_graph`、`select_subgraph` |
 | `cli.py`, `__main__.py` | `jaal-topology` 與 `python -m jaal_topology` |
 | `viewer.py`, `modes.py`, `neighborhood.py` | `build_app`、五種模式、原版 Jaal Search/Filter/Color/Size；可搜尋原 ID／中文別名根節點，依 out/in/both 0–10 hop 或全部可達顯示唯讀局部誘導子圖，清除選擇還原全圖；左側可收合、非 sticky 工具列、Esc 全版退出，原版 Network 不卸載 |
@@ -38,7 +38,7 @@
 | `email_simulation.py` | 固定種子、20 工作天的虛構業務流程發信事件與收發量彙總（人名／帳號／信件內容皆非真實） |
 | `assets/` | Browser JS（包含社群投影／收攏、時間片動畫與 22.jaal_local_focus.js 局部子圖投影）、Bootstrap CSS、精簡工具列 CSS，直接由套件提供 |
 | `integration.py` | `mount_flask`；Flask 同來源、同 port |
-| `scaled_demo.py`, `start-gallery.bat` | 本機 opt-in 原版 Jaal 大型案例：固定規則完整 Graph + EmailEvent 500／3000／5000／20000 節點及 500 人三連通分量；從原 Gallery 選單按需載入，與公網預設 4 案例隔離 |
+| `scaled_demo.py`, `start-gallery.bat` | 本機 opt-in 原版 Jaal 大型案例：固定規則完整 Graph + EmailEvent 500／3000／5000／20000 節點及 500 人三連通分量；從原 Gallery 選單按需載入；Vercel 只額外公開 500 人案例，3k 以上以及三連通分量均維持本機專用 |
 | `stress_lab.py`, `stress_lab/` | PR #25 歷史 Canvas 實驗室仍可直接連線，但已從原 Gallery 工具列移除，不能誤當完整 Jaal 壓測 |
 | `browser_cases.py`, `browser_cases/` | Gallery 入口連至本機案例工作區；UTF-8 CSV/TSV 解析、原生 SVG 網狀／階層預覽、IndexedDB 與 JSON 備份在瀏覽器進行，伺服器僅 GET 靜態資產；不能視為原版五模式/Louvain/Temporal 已支援使用者檔案 |
 | `gallery.py` | 新的可選多案例 registry：1..20 明確登記的 GalleryCase，以同來源不同路徑各自掛載真實 Jaal/Dash，搜尋／收攏 callback 狀態隔離 |

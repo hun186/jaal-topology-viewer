@@ -55,3 +55,5 @@
 - Local Flask CLI on loopback now enables the six fixed synthetic large scenarios by default; set `JAAL_ENABLE_LARGE_LOCAL=0` to disable, or `1` to force local enabled. Vercel and ordinary WSGI imports remain four-case only. UI/banner and batch launcher warn of RAM/CPU cost. Windows Chromium validates all five temporal Dropdown popups, 35px options, nonoverlap, visible labels and viewport bounds.
 
 - 社群時間演化位置穩定性回歸：`node --test tests/temporal_playback.test.cjs` 須驗證在已展開社群播放時插入原始 visdcc DataSet 重建後仍維持畫面座標、拖曳後可更新定位、收攏／再次展開維持群組原錨點。Windows `python tests/large_gallery_browser.py --evidence browser-evidence/large-gallery` 驗證**真實 500 人**同案例，截圖播放前後及再次展開畫面。
+
+- 公網 500 人能力驗證：Hosted `vercel-flask (python 3.12)` 以 `VERCEL=1 JAAL_ENABLE_LARGE_LOCAL=1 python -u tests/vercel_public_500_smoke.py` 測試 Vercel WSGI 第五個固定延遲案例、原版 Jaal 500 nodes/1168 edges/Louvain/時間軸/局部與 `_dash-layout` 大小 < 4,000,000 bytes。環境 `JAAL_VERCEL_500_ENABLED=0` 可快速回退四案例，禁止公共路由載入 3k／5k／20k。仍需另外部署與公網實測；Git auto deploy 關閉。

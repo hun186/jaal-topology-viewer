@@ -30,9 +30,23 @@ the settings and graph controls without remounting the graph. The
 focus layout fills the current browser viewport (or the hosting iframe's
 viewport); it does not invoke the operating system fullscreen API.
 
-The root `app.py` remains the Vercel Flask entrypoint. Its optional browser-local
-workspace does not upload or persist private files on the server. This does not change
-the localhost CLI or the downstream `text-category-profiler` pin.
+The root `app.py` remains the Vercel Flask entrypoint. In a hosted
+`VERCEL`/`VERCEL_ENV` runtime its original four cases remain, plus exactly
+one **500-person fictional email** case at `/cases/scale-500/` using the
+original full Jaal/Dash controls, Louvain and temporal playback. It is
+**lazily initialized** on first visit, and remains subject to the ordinary
+3,000-node/5,000-edge core safety cap (500 nodes, 1,168 directed pairs).
+The 3,000/5,000/20,000 and three-island synthetic cases **remain local-only**.
+To disable the 500-person public case in a future Vercel deployment, set
+`JAAL_VERCEL_500_ENABLED=0`. This does not deploy automatically:
+`vercel.json` still disables Git-triggered deployments.
+
+The public fixture must also pass CI's simulated Vercel Flask WSGI smoke,
+including a conservative **4,000,000-byte uncompressed Dash layout** budget
+and rollback test; these are local CI checks, **not** proof of actual Vercel
+production deployment. The optional browser-local workspace does not upload
+or persist private files on the server. This does not change the localhost
+CLI or the downstream `text-category-profiler` pin.
 
 Vercel Git push/PR auto deployments remain disabled. The dedicated
 workflow can release **only a relevant merged PR** when its separate
@@ -95,6 +109,11 @@ separate SVG mockup. The public demo, as served by `app.py`, offers a searchable
 - **專案相依網路（多父 DAG）** — synthetic 19-node, 31-edge
   directed acyclic graph with shared successors, initially in hierarchy
   mode, at `/cases/project-dag/`
+- **企業郵件｜500 人（公網示範）** — only in Vercel-hosted Gallery,
+  a deterministic 500-person fictional enterprise network (1,168 directed
+  pairs), `/cases/scale-500/`. Runs actual Jaal, Louvain, modes, root
+  neighborhoods and email timeline. First request lazily constructs it;
+  larger fixed-scale cases remain localhost only.
 
 Changing cases navigates **on the same local/hosted domain and port**.
 Each page is a separately mounted original Dash/Jaal app with its own
@@ -372,10 +391,12 @@ now includes the six additional fictional scenarios by **default**.
 `start-gallery.bat` does likewise and prints a performance warning.
 Set `JAAL_ENABLE_LARGE_LOCAL=0` to hide them. Cases are still lazy:
 5,000 and 20,000 nodes are not initialized until selected and are
-marked with a load warning in the native Gallery. Vercel and non-CLI
-WSGI imports still provide only the four original bounded cases; avoid
-publishing the local Flask development server to a network. No actual
-mail data is accessed.
+marked with a load warning in the native Gallery. Vercel includes
+the four original cases **plus only its bounded 500-person hosted demo**;
+non-CLI WSGI imports outside Vercel retain the original four. Larger cases
+are not mounted on Vercel even when `JAAL_ENABLE_LARGE_LOCAL=1`.
+Avoid publishing the local Flask development server to a network.
+No actual mail data is accessed.
 
 **Performance / scope honesty:** the normal import and default Jaal
 limits (3,000 nodes / 5,000 edges) are preserved. Only the trusted
