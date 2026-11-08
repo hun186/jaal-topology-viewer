@@ -4,7 +4,8 @@
  */
 (function (root) {
   "use strict";
-  const state = {ids: null, root: null, pendingFit: false, signature: ""};
+  const state = {ids: null, root: null, pendingFit: false, signature: "",
+    fitQueued: false, fitAttempts: 0};
 
   function setSelection(packet) {
     const previous = state.signature;
@@ -28,7 +29,10 @@
     state.ids = ids;
     state.root = packet.root;
     state.signature = JSON.stringify([packet.root,packet.ids]);
-    if (previous !== state.signature) state.pendingFit = true;
+    if (previous !== state.signature) {
+      state.pendingFit = true;
+      state.fitAttempts = 0;
+    }
   }
 
   function scoped(source) {
@@ -74,22 +78,50 @@
   }
 
   function afterProjection() {
-    if (!state.pendingFit || !state.root || !this?.net || !this?.nn) return;
-    const net = this.net;
+    if (!state.pendingFit || !state.root || !this?.net || !this?.nn ||
+        state.fitQueued) return;
+    const component = this;
+    const net = component.net;
     if (typeof net.fit !== "function") return;
-    const all = this.nn.get?.() || [];
-    const visible = all.filter(n => !n.hidden).map(n => n.id);
-    if (!visible.length) return;
-    state.pendingFit = false;
-    // Fit the true projected visible graph, not source IDs that have been
-    // replaced by Louvain quotient groups or structure-collapse bubbles.
-    // Never repeat this on each playback tick or return to the full graph.
-    net.fit({
-      // Fit all visible IDs, including far-away branches beyond ID 2500.
-      nodes: visible,
-      animation: {duration:260,easingFunction:"easeInOutQuad"},
-      maxZoomLevel:1.3
-    });
+    state.fitQueued = true;
+    function tryFit() {
+      if (!state.pendingFit || !state.root) {
+        state.fitQueued = false;
+        return;
+      }
+      // visdcc's DataSet is updated synchronously, but vis-network does not
+      // necessarily reindex active nodes until its next redraw. Fitting on
+      // the same graph.run call can therefore target *zero* drawn nodes.
+      const visible = (component.nn.get?.() || [])
+        .filter(n => !n.hidden).map(n => n.id);
+      const positions = typeof net.getPositions === "function"
+        ? net.getPositions(visible) : null;
+      const drawable = !positions || visible.some(id => {
+        const p = positions[id];
+        return p && Number.isFinite(p.x) && Number.isFinite(p.y);
+      });
+      if ((!visible.length || !drawable) && state.fitAttempts < 45 &&
+          typeof root.requestAnimationFrame === "function") {
+        state.fitAttempts++;
+        root.requestAnimationFrame(tryFit);
+        return;
+      }
+      state.fitQueued = false;
+      // Never silently clear pendingFit if vis has no live nodes; a later
+      // source re-projection may still make the chosen root visible.
+      if (!visible.length || !drawable) return;
+      state.pendingFit = false;
+      // Fit every visible original/quotient member. Using the initial
+      // dataset-order 2500 IDs can exclude an outlying selected root.
+      net.fit({
+        nodes: visible,
+        animation: {duration:260,easingFunction:"easeInOutQuad"},
+        maxZoomLevel:1.3
+      });
+    }
+    if (typeof root.requestAnimationFrame === "function")
+      root.requestAnimationFrame(tryFit);
+    else tryFit();
   }
 
   root.dash_clientside = root.dash_clientside || {};
