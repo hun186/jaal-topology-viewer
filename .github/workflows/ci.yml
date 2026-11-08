@@ -232,6 +232,23 @@ jobs:
         run: |
           python -m pip check
           python -m unittest discover -s tests -p 'test_vercel_runtime.py' -v
+      - name: Simulate public Vercel 500-person case and 4 MB response budget
+        env:
+          VERCEL: "1"
+          JAAL_ENABLE_LARGE_LOCAL: "1"
+        run: python -u tests/vercel_public_500_smoke.py
+      - name: Confirm Vercel public 500 kill switch
+        env:
+          VERCEL: "1"
+          JAAL_VERCEL_500_ENABLED: "0"
+        run: |
+          python - <<'PY'
+          from app import _CASES, app
+          assert len(_CASES) == 4
+          assert "/cases/scale-500" not in app._jaal_topology_mounts
+          assert app.test_client().get("/").status_code == 200
+          print("VERCEL_500_ROLLBACK_PASS")
+          PY
 
 
   full-jaal-20k:

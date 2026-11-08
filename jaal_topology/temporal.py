@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import datetime, time, timedelta, timezone
+import json
 
 from .community import detect_louvain
 from .data import Graph, GraphInputError
@@ -22,7 +23,8 @@ MAX_TEMPORAL_FRAMES = 240
 class TemporalTimeline:
     """Time-ordered directed events with consistent naive-local or aware-UTC dates."""
 
-    def __init__(self, graph: Graph, events, *, allow_large_demo=False):
+    def __init__(self, graph: Graph, events, *, allow_large_demo=False,
+                 max_payload_bytes: int | None = None):
         if not isinstance(graph, Graph) or not graph.edges:
             raise GraphInputError("Temporal timeline requires a populated Graph")
         events = tuple(events)
@@ -32,6 +34,10 @@ class TemporalTimeline:
                                 else (3000, 5000))
         if len(graph.nodes) > max_nodes or len(graph.edges) > max_edges:
             raise GraphInputError("Temporal source graph exceeds render bounds")
+        if (max_payload_bytes is not None and
+                (type(max_payload_bytes) is not int or max_payload_bytes < 4096)):
+            raise GraphInputError("Invalid temporal response budget")
+        self.max_payload_bytes = max_payload_bytes
         self.allow_large_demo = bool(allow_large_demo)
         edge_set = set(graph.edges)
         daily = {}
@@ -192,6 +198,7 @@ class TemporalTimeline:
             )
         rows = []
         total_edges = 0
+        payload_bytes = 2048 if self.max_payload_bytes is not None else 0
         for offset in starts:
             lo = start_minute if mode == "cumulative" else offset
             hi = min(end_minute, offset + window_minutes)
@@ -213,7 +220,7 @@ class TemporalTimeline:
             groups = detect_louvain(snap, allow_large_demo=self.allow_large_demo)
             start_iso = begin.isoformat(timespec="minutes")
             end_iso = finish.isoformat(timespec="minutes")
-            rows.append({
+            row = {
                 "date": start_iso, "from": start_iso, "to": end_iso,
                 "to_exclusive": end_iso, "mode": mode,
                 "messages": sum(counts.values()),
@@ -225,7 +232,22 @@ class TemporalTimeline:
                 "step_minutes": step_minutes,
                 "axis_start": (lo - start_minute) / (end_minute - start_minute),
                 "axis_end": (hi - start_minute) / (end_minute - start_minute),
-            })
+            }
+            if self.max_payload_bytes is not None:
+                # Check each *fully materialized* row before appending it.
+                # Conservative ASCII-escaped byte length plus envelope margin
+                # also bounds Dash's JSON callback wrapper and avoids waiting
+                # until all 208 frames/Louvain partitions have been generated.
+                # Do not silently drop time frames or mutate source events.
+                payload_bytes += len(json.dumps(
+                    row, ensure_ascii=True, separators=(",", ":")
+                ).encode("utf-8")) + 1
+                if payload_bytes > self.max_payload_bytes:
+                    raise GraphInputError(
+                        "時間軸資料量超過公網回應上限；請縮短分析範圍、"
+                        "增加時間單位或區間長度，或改用滑動時間窗。"
+                    )
+            rows.append(row)
         return {
             "frames": rows,
             "start_index": 0, "end_index": len(rows) - 1,
