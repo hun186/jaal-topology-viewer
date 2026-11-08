@@ -62,6 +62,47 @@ def check(port):
                 help_details = page.locator("#jaal-original-help-details")
                 assert sidebar.is_visible() and panel.is_visible()
                 assert not help_details.evaluate("(el) => el.open")
+                # Regression: temporal Select popups used to inherit an 88px
+                # control width, placing each Chinese character vertically.
+                # Validate actual Dash 3.4 Chromium DOM, not just stylesheet
+                # presence or layout JSON.
+                for control_id, expected_label, min_menu_width in (
+                    ("jaal-temporal-unit", "1 分鐘", 160),
+                    ("jaal-temporal-window", "3 單位", 160),
+                    ("jaal-temporal-step", "1 單位", 160),
+                    ("jaal-temporal-speed", "標準", 160),
+                    ("jaal-temporal-overlap", "互斥（步長＝窗長）", 225),
+                ):
+                    control = page.locator("#" + control_id)
+                    expect(control).to_be_visible(timeout=15000)
+                    control.locator(".Select-control").click()
+                    menu = control.locator(".Select-menu-outer")
+                    expect(menu).to_be_visible(timeout=15000)
+                    bounds = menu.bounding_box()
+                    assert bounds and bounds["width"] >= min_menu_width, (
+                        control_id, bounds)
+                    assert bounds["x"] >= -1 and bounds["x"] + bounds["width"] <= 1441, (
+                        control_id, bounds)
+                    options = menu.locator(".VirtualizedSelectOption, .Select-option")
+                    assert options.count() > 0, control_id
+                    assert expected_label in menu.inner_text(), (control_id, menu.inner_text())
+                    rows = menu.locator(".VirtualizedSelectOption")
+                    if rows.count() >= 2:
+                        row_boxes = [rows.nth(i).bounding_box()
+                                     for i in range(min(rows.count(), 7))]
+                        for first, second in zip(row_boxes, row_boxes[1:]):
+                            assert first and second
+                            assert first["y"] + first["height"] <= second["y"] + 1, (
+                                control_id, first, second)
+                    # The full text must fit horizontally in a single item row.
+                    assert options.first.evaluate(
+                        "(el) => getComputedStyle(el).whiteSpace") == "nowrap", control_id
+                    if control_id == "jaal-temporal-overlap":
+                        proof = ROOT / "browser-evidence" / "temporal-dropdown-fixed.png"
+                        proof.parent.mkdir(exist_ok=True)
+                        page.screenshot(path=str(proof))
+                    page.keyboard.press("Escape")
+                    expect(menu).to_be_hidden(timeout=10000)
                 width_open = column.bounding_box()["width"]
                 canvas_open = page.locator(".vis-network canvas").first.bounding_box()["width"]
                 # The timeline adds a compact second control row; other

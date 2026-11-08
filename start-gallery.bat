@@ -31,6 +31,7 @@ set "JAAL_USE_CONDA_RUN=1"
 echo [JAAL] Real five-mode Jaal Gallery - fictional 500 / 3000 / 5000 / 20000 / 3000-DAG cases.
 echo [JAAL] Three truly disconnected companies are in the SAME case picker.
 echo [JAAL] http://127.0.0.1:8059/
+echo [JAAL] WARNING: 5000 / 20000 nodes can use substantial RAM and CPU.
 echo [JAAL] Large cases load only when selected. Ctrl+C stops the server.
 if defined JAAL_USE_CONDA_RUN (
   echo [JAAL] Python: Conda environment "jaal-viewer".

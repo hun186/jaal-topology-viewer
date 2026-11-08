@@ -51,3 +51,5 @@
 - Existing official CI + Windows browser acceptance remains required for each PR HEAD. Large Jaal 20k visual performance is hardware-dependent; CI correctness cannot replace on-device measurement.
 
 - Windows launch after Anaconda-base `comm` import failure: create dedicated `jaal-viewer` Python 3.11 Conda environment, install requirements and editable project there, then run `start-gallery.bat` (uses dedicated `.venv`/named Conda environment only, refuses mixed `base`).
+
+- Local Flask CLI on loopback now enables the six fixed synthetic large scenarios by default; set `JAAL_ENABLE_LARGE_LOCAL=0` to disable, or `1` to force local enabled. Vercel and ordinary WSGI imports remain four-case only. UI/banner and batch launcher warn of RAM/CPU cost. Windows Chromium validates all five temporal Dropdown popups, 35px options, nonoverlap, visible labels and viewport bounds.
