@@ -61,20 +61,44 @@ def check(port, evidence):
                 picker.click()
                 menu=page.locator("#jaal-case-picker .Select-menu-outer")
                 expect(menu).to_be_visible(timeout=15000)
-                options=page.locator("#jaal-case-picker .Select-option")
-                expect(options).to_have_count(10)
-                items=options.all_text_contents()
+                # React-Virtualized Select renders only visible rows; its
+                # options use .VirtualizedSelectOption on Dash 3/4. Parse
+                # the backend contract for complete choices, then separately
+                # verify a real visible menu and selectable search result.
+                payload=page.request.get(base+"/_dash-layout").json()
+                def find_picker(value):
+                    if isinstance(value,dict):
+                        if value.get("props",{}).get("id")=="jaal-case-picker":
+                            return value["props"]
+                        for child in value.values():
+                            found=find_picker(child)
+                            if found is not None:return found
+                    elif isinstance(value,list):
+                        for child in value:
+                            found=find_picker(child)
+                            if found is not None:return found
+                    return None
+                choices=find_picker(payload)["options"]
+                assert len(choices)==10,choices
+                labels=[item["label"] for item in choices]
                 for marker in ("500 人","3,000 人","5,000 人",
                                "20,000 人","無環 DAG","3 個互不連通群"):
-                    assert any(marker in text for text in items),(marker,items)
+                    assert any(marker in name for name in labels),(marker,labels)
+                rendered=menu.locator(
+                    ".VirtualizedSelectOption, .Select-option, [role='option']")
+                assert rendered.count()>0,menu.inner_text()
                 bounds=menu.bounding_box()
                 assert bounds and bounds["x"]>=-1 and (
                     bounds["x"]+bounds["width"]<=1441),bounds
                 assert bounds["height"]<=450,bounds
                 page.screenshot(path=str(target/"01-readable-native-gallery-dropdown.png"))
                 # Real native Dash/Jaal graph, not a Canvas or separate demo.
-                page.locator("#jaal-case-picker .Select-option").filter(
-                    has_text="500 人（全 Jaal）").click()
+                # Filter to the exact case; do not assume all rows are in
+                # the DOM when React-Virtualized only mounts visible entries.
+                page.locator("#jaal-case-picker input").first.fill("500 人（全 Jaal）")
+                match=menu.get_by_text("企業郵件｜500 人（全 Jaal）",exact=True)
+                expect(match).to_be_visible(timeout=15000)
+                match.click()
                 page.wait_for_url("**/cases/scale-500/",timeout=90000)
                 expect(page.locator("#jaal-temporal-controls")).to_be_visible(
                     timeout=90000)

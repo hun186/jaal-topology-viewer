@@ -704,3 +704,17 @@ body:has(.jaal-focus-mode) {
     min-width: 0;
   }
 }
+
+/* Dash's virtualized dropdown fixes item heights inline. Let the short
+   scenario labels use one comfortable row rather than letting multiline
+   text overlap the following virtualized item. The full string remains
+   available through typing in the searchable input. */
+.jaal-case-picker .VirtualizedSelectOption {
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  padding: 8px 12px;
+  line-height: 23px;
+  box-sizing: border-box;
+}
