@@ -13,6 +13,7 @@ from .email_simulation import EmailEvent, START_DAY
 
 SCALES = {"500": (500, 1), "3000": (3000, 1),
           "5000": (5000, 1), "20000": (20000, 1),
+          "3000-dag": (3000, 1),
           "three-components": (500, 3)}
 MAX_DEMO_NODES = 20_000
 MAX_DEMO_EDGES = 50_000
@@ -53,6 +54,7 @@ def build_scaled_email_demo(key: str) -> ScaledEmailDemo:
     if type(key) is not str or key not in SCALES:
         raise GraphInputError("Unknown fixed synthetic full-Jaal scenario")
     total, components = SCALES[key]
+    acyclic = key == "3000-dag"
     nodes, labels, positions = [], {}, {}
     pairs = {}
     dept_total, max_depth = 0, 0
@@ -78,7 +80,7 @@ def build_scaled_email_demo(key: str) -> ScaledEmailDemo:
             max_depth = max(max_depth, level)
             if manager is not None:
                 mail(node, manager)
-                if serial % 4 == 0:
+                if serial % 4 == 0 and not acyclic:
                     mail(manager, node)
             return node
 
@@ -124,7 +126,7 @@ def build_scaled_email_demo(key: str) -> ScaledEmailDemo:
             d["slot"] += 1
             if d["last"] is not None:
                 mail(worker, d["last"])
-                if i%5==0: mail(d["last"], worker)
+                if i%5==0 and not acyclic: mail(d["last"], worker)
             d["last"] = worker
             if i%17==0:
                 mail(worker,depts[(i+1)%len(depts)]["head"])

@@ -29,7 +29,7 @@
 - [PR #23](https://github.com/hun186/jaal-topology-viewer/pull/23) 已於 2026-11-08 Merge（`51da9614a40f5d9ddb28bc11ef751fae75b52c8b`）；本機 SVG 案例新增加權流入／流出著色、流量尺寸及樣式回歸檢查；HEAD `1bc65c0` Hosted CI 8/8 PASS、正式 Codex Review completed／0 findings。原五模式、Louvain、時間演化仍未整合。
 - [PR #24](https://github.com/hun186/jaal-topology-viewer/pull/24) 已 Merge（`cc230aecd861791c49a3271a33725ec786712ad1`）：私人 SVG 雙向箭頭改分開弧線，HEAD `af2ef7a` Hosted CI 8/8 PASS／Codex Completed 0 findings。
 - [PR #25](https://github.com/hun186/jaal-topology-viewer/pull/25) 已 Merge（`c7b10a2493753834c0e134b8aa4ae2bd630dd23c`），固定規則 Canvas 壓測 500／3000／5000／20000 與三分量案例，HEAD `b371b94` Hosted CI 8/8 PASS／正式 Codex 完成 0 findings，未部署 Vercel。
-- 使用者更正：Canvas 獨立頁面**不符合「大圖全功能壓測」**；本次新分支改讓五種案例進**同一原版 Jaal/Dash Gallery 選單**，保留 Louvain／五模式／Search/Filter/Color/Size／局部／時間軸，三個 connected components 必須是三沱完全沒有跨群邊。使用者另提供選單 UI 截圖，反映選項顯示不佳；已在新 PR 中調整選單寬度、換行與捲動。新 PR 未經最新 HEAD CI/Review/Merge 前不可宣稱完成。
+- 使用者更正：Canvas 獨立頁面**不符合「大圖全功能壓測」**；本次新分支改讓五種案例進**同一原版 Jaal/Dash Gallery 選單**，保留 Louvain／五模式／Search/Filter/Color/Size／局部／時間軸，三個 connected components 必須是三沱完全沒有跨群邊；另外新增 3000-node 無環 DAG 測原五模式，因一般回信造成的有向迴路不應解除結構收攏安全門檻。使用者另提供選單 UI 截圖，反映選項顯示不佳；已在新 PR 中調整選單寬度、換行與捲動。新 PR 未經最新 HEAD CI/Review/Merge 前不可宣稱完成。
 
 ## Recent Outcomes
 | 日期 | 事件 | 持久結果 |

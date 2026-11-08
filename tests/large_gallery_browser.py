@@ -62,10 +62,10 @@ def check(port, evidence):
                 menu=page.locator("#jaal-case-picker .Select-menu-outer")
                 expect(menu).to_be_visible(timeout=15000)
                 options=page.locator("#jaal-case-picker .Select-option")
-                expect(options).to_have_count(9)
+                expect(options).to_have_count(10)
                 items=options.all_text_contents()
                 for marker in ("500 人","3,000 人","5,000 人",
-                               "20,000 人","3 個互不連通群"):
+                               "20,000 人","無環 DAG","3 個互不連通群"):
                     assert any(marker in text for text in items),(marker,items)
                 bounds=menu.bounding_box()
                 assert bounds and bounds["x"]>=-1 and (

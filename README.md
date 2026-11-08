@@ -332,16 +332,20 @@ on `build_app()`, not `import jaal_topology`.
 ## Full-feature original Jaal large-email scale gallery (localhost opt-in)
 
 The new **start-gallery.bat** launches the *original* Jaal/Dash Gallery on
-`127.0.0.1:8059` with five additional, fixed, **fictional** company-email
+`127.0.0.1:8059` with six additional, fixed, **fictional** company-email
 scenarios in the SAME searchable case dropdown: 500, 3,000, 5,000, 20,000
-employees and three **actually disconnected weak components**
+employees, an extra 3,000-node **acyclic DAG** expressly to exercise
+both structural-collapse modes, and three **actually disconnected weak components**
 (167 + 167 + 166 employees). No links exist between the three groups.
 All nodes and directed sender→recipient edges are truly loaded, with
 deterministic Chinese role names, 5–7 managerial levels, department chatter,
 reports/replies and dated fictitious mail events. The actual full-size cases
-use original **Jaal/visdcc Search/Filter/Color/Size, all five layout modes,
-Louvain community expansion, directed root/k-hop filtering and temporal
-playback**; this is not a Canvas imitation.
+use original **Jaal/visdcc Search/Filter/Color/Size, Louvain community
+expansion, directed root/k-hop filtering and temporal playback**.
+Cyclic email-with-replies graphs correctly disable two unsafe structural
+collapse modes; the dedicated 3,000-node acyclic DAG verifies that **all five**
+layout modes remain selectable when topologically valid. This is not a
+Canvas imitation.
 
 Run in Windows **CMD or Anaconda Prompt** (Python 3.11 recommended):
 

@@ -93,7 +93,9 @@ if os.environ.get("JAAL_ENABLE_LARGE_LOCAL") == "1":
                 model.graph, model.events, allow_large_demo=True)
             return GalleryCase(
                 "scale-" + slug, title, model.graph,
-                initial_mode="network-community-collapsed",
+                initial_mode=("hierarchical-collapsed"
+                              if slug == "3000-dag" else
+                              "network-community-collapsed"),
                 temporal_timeline=timeline,
                 initial_positions=model.positions,
                 allow_large_demo=True,
@@ -113,6 +115,7 @@ if os.environ.get("JAAL_ENABLE_LARGE_LOCAL") == "1":
         ("3000", "企業郵件｜3,000 人（全 Jaal）"),
         ("5000", "企業郵件｜5,000 人（全 Jaal）"),
         ("20000", "企業郵件｜20,000 人（全 Jaal）"),
+        ("3000-dag", "企業郵件｜3,000 人（無環 DAG／五模式）"),
         ("three-components", "企業郵件｜3 個互不連通群（500 人）"),
     )
     _CASES += tuple(

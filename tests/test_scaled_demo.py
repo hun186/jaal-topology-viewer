@@ -48,6 +48,40 @@ class FullJaalSyntheticScaleTests(unittest.TestCase):
         self.assertGreater(model.positions["C02-N00001"][0],
                            model.positions["C01-N00001"][0])
 
+    def test_acyclic_3000_dag_enables_structural_collapse_modes(self):
+        from jaal_topology.data import assess_structural_collapse
+        from jaal_topology.temporal import TemporalTimeline
+        from jaal_topology.viewer import build_app
+        dag=self.scenarios["3000-dag"]
+        profile=assess_structural_collapse(dag.graph)
+        self.assertFalse(profile.has_cycle)
+        self.assertGreater(profile.multi_parent_nodes,0)
+        viewer=build_app(
+            dag.graph,initial_mode="hierarchical-collapsed",
+            temporal_timeline=TemporalTimeline(
+                dag.graph,dag.events,allow_large_demo=True),
+            allow_large_demo=True,initial_positions=dag.positions)
+        layout=viewer.server.test_client().get("/_dash-layout")
+        self.assertEqual(layout.status_code,200)
+        def find_modes(node):
+            if isinstance(node,dict):
+                if node.get("props",{}).get("id")=="jaal-original-layout-mode":
+                    return node["props"]["options"]
+                for child in node.values():
+                    found=find_modes(child)
+                    if found is not None:return found
+            elif isinstance(node,list):
+                for child in node:
+                    found=find_modes(child)
+                    if found is not None:return found
+            return None
+        options=find_modes(layout.get_json())
+        self.assertIsNotNone(options)
+        self.assertEqual(len(options),5)
+        self.assertFalse(any(opt.get("disabled",False) for opt in options))
+        self.assertEqual(viewer.server.test_client().get(
+            "/_dash-dependencies").status_code,200)
+
     def test_determinism_and_invalid_scale_rejection(self):
         a=self.scenarios["500"]
         b=build_scaled_email_demo("500")
