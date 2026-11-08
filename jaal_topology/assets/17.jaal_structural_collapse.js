@@ -361,6 +361,8 @@
         if (current.expanded.has(id)) current.expanded.delete(id);
         else current.expanded.add(id);
         project(component);
+        // A manual structural expand/collapse also bypasses graph.run.
+        root.dash_clientside?.jaal_label_intelligence?.sync?.call(component);
       });
       this.__jaalStructuralClickHook = true;
     }

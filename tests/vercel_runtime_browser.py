@@ -153,36 +153,44 @@ def check(port):
                     page.wait_for_timeout(200)
                 assert focused_canvas_height > 900, focused_canvas_height
                 assert page.locator("#graph").count() == 1
-                # Full panel should give the timeline slider a full-width row.
+                # User screenshot regression: entering full graph view
+                # MUST make panel smaller, not expand it to 1200x360px.
+                # Compact is the default on every new fullscreen entry.
                 panel_focus = page.locator("#jaal-temporal-controls")
                 expect(panel_focus).to_be_visible()
-                marks = [item.bounding_box() for item in
-                         page.locator("#jaal-temporal-range .rc-slider-mark-text").all()]
-                for left, right in zip(marks, marks[1:]):
-                    assert left and right and left["x"]+left["width"] <= right["x"]+3, (left,right)
-                assert panel_focus.bounding_box()["width"] >= 940
-                assert panel_focus.bounding_box()["height"] <= 365
                 density = page.locator("#jaal-focus-panel-toggle")
                 expect(density).to_be_visible()
-                expect(density).to_have_text("精簡資訊")
-                density.click()
                 expect(focus_shell).to_have_class(
                     "jaal-viewer-shell jaal-focus-mode jaal-focus-compact")
-                expect(density).to_have_attribute("aria-pressed", "true")
                 expect(density).to_have_text("完整面板")
+                expect(density).to_have_attribute("aria-pressed","true")
                 expect(page.locator("#jaal-temporal-range")).to_be_hidden()
                 expect(page.locator("#jaal-temporal-status")).to_be_visible()
                 assert "封信" in page.locator("#jaal-temporal-status").inner_text()
                 for id_ in ("back","play","forward"):
                     expect(page.locator("#jaal-temporal-"+id_)).to_be_visible()
-                assert panel_focus.bounding_box()["height"] < 155
+                compact_box = panel_focus.bounding_box()
+                assert compact_box["width"] <= 530,compact_box
+                assert compact_box["height"] <= 112,compact_box
+                assert compact_box["height"] / 960 < 0.13,compact_box
                 assert page.locator("#graph").count() == 1
-                compact_proof = ROOT / "browser-evidence" / "focus-compact-timeline.png"
-                compact_proof.parent.mkdir(exist_ok=True)
-                page.screenshot(path=str(compact_proof))
+                proof = ROOT / "browser-evidence" / "focus-compact-default.png"
+                proof.parent.mkdir(exist_ok=True)
+                page.screenshot(path=str(proof))
                 density.click()
                 expect(focus_shell).to_have_class("jaal-viewer-shell jaal-focus-mode")
+                expect(density).to_have_text("精簡資訊")
                 expect(page.locator("#jaal-temporal-range")).to_be_visible()
+                full_box = panel_focus.bounding_box()
+                assert full_box["width"] <= 750,full_box
+                assert full_box["height"] <= 185,full_box
+                assert full_box["height"] / 960 < .20,full_box
+                page.screenshot(path=str(ROOT / "browser-evidence" /
+                                         "focus-full-bounded.png"))
+                density.click()
+                expect(focus_shell).to_have_class(
+                    "jaal-viewer-shell jaal-focus-mode jaal-focus-compact")
+                expect(page.locator("#jaal-temporal-range")).to_be_hidden()
                 focus_button.press("Escape")
                 expect(focus_shell).to_have_class("jaal-viewer-shell", timeout=15000)
                 expect(focus_button).to_have_attribute("aria-pressed", "false")

@@ -59,3 +59,7 @@
 - 公網 500 人能力驗證：Hosted `vercel-flask (python 3.12)` 以 `VERCEL=1 JAAL_ENABLE_LARGE_LOCAL=1 python -u tests/vercel_public_500_smoke.py` 測試 Vercel WSGI 第五個固定延遲案例、原版 Jaal 500 nodes/1168 edges/Louvain/時間軸/局部與 `_dash-layout`、`_dash-update-component` 大小 < 4,000,000 bytes，3-hour cumulative 極端設定需回傳明確錯誤（回應短、無截斷），安全 rolling 設定仍要可播放。環境 `JAAL_VERCEL_500_ENABLED=0` 可快速回退四案例，禁止公共路由載入 3k／5k／20k。仍需另外部署與公網實測；Git auto deploy 關閉。
 
 - 全版顯示 UI：`jaal-focus-toggle` 保留畫布不卸載，`jaal-focus-panel-toggle` 在全版中切換原詳細時間軸與精簡時間／收發量狀態（仍有前進、後退、播放），非時間圖則顯示「原始全圖節點／有向邊」；root picker 獨立滿寬欄位、案例選取器至少 380px 桌面、時間選單與滑桿標籤不可重疊。Windows Chromium 要測兩種全版模式並保存正常／精簡畫面截圖。
+
+- 標籤／根節點鏡頭：`node --test tests/label_intelligence.test.cjs tests/test_browser.test.cjs` 驗證縮放密度／避讓／人工釘選與一次性 subgraph fit；Windows `tests/browser_acceptance.py` 驗證 0-hop 根節點入鏡；`tests/large_gallery_browser.py` 驗證真實 500 節點智慧標籤及釘選，不使用替代 Canvas。
+
+- 全版面板體積回歸：`tests/vercel_runtime_browser.py` Chromium 在 1440×960 檢查進全版即精簡（高度 ≤112px、螢幕高度佔比 <13%）、完整設定面板 ≤185px、可往返切換且沒有重掛圖形；`tests/test_vercel_runtime.py` 驗證再進全版仍預設精簡。不得以 CSS 有寫上限便聲稱實際符合，需驗真 DOM 幾何。

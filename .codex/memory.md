@@ -60,3 +60,5 @@ Current Focus 簡短；Recent Outcomes 上限 10，超過約 200 行／24 KB 濃
 - 2026-11-08 使用者實機圖指出時間演化下拉選單繼承 88px 控制寬造成中文字直排、重疊；要求本機預設啟用大型案例並提供警告。修補分支採 120px 控制／168–238px 浮動選單、標籤與選單同組換行、35px 選項點擊列，CI／正式 Review 完成前不宣稱 Merge。
 
 - 2026-11-08 使用者再次於真實 Windows 500 人「網狀（社群收攏・Louvain）」重現：手動展開社群 1 正常，播放後已展開成員瞬移至其他位置；暫停後收攏／重開又回到社群方框附近。上一版 PR #28 的「使用每一 tick 的 getPositions() 作為位置來源」仍可能在 visdcc 中途把原始 DataSet x/y 重新注入時錄下錯誤座標。本修復分支改為只信任上一個已提交的社群投影座標；顯式 click/dragEnd 才更新記憶。測試包括模擬 raw source rehydration 的 Node DataSet，以及 Windows 原版 500 人真瀏覽器展開→播放兩個 tick→暫停→收攏重開；只有最新 HEAD CI/正式 Review 後才能記為完成／可合併。
+
+- 2026-11-08 Windows 使用者指出原版全版檢視面板反而變大，與用途衝突。PR #32 同步修復：每次進入 focus 預設精簡狀態（帶 session baseline，避免退出再入狀態錯亂）；精簡面板 520px／105px／13dvh 上限，切到完整設定也維持 740px／180px／22dvh 上限與內部捲軸。Windows Chromium 與 Python callback 直接驗證佔比及再入，最新 HEAD CI/Review 結束前不宣稱合併。

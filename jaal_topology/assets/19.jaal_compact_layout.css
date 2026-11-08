@@ -968,12 +968,15 @@ body:has(.jaal-focus-mode) {
 }
 .jaal-focus-mode #jaal-temporal-controls {
   box-sizing: border-box;
-  width: min(1200px, calc(100vw - 24px));
-  max-height: min(60dvh, 360px);
+  /* Full controls should NEVER grow when entering a full graph viewport.
+     Keep within <=22% of viewport height; scroll inside on demand. */
+  width: min(740px, calc(100vw - 24px));
+  max-height: min(22dvh, 180px);
   overflow-y: auto;
   overflow-x: hidden;
-  gap: 8px;
-  padding: 10px 13px 15px;
+  overscroll-behavior: contain;
+  gap: 4px;
+  padding: 7px 10px;
 }
 .jaal-focus-mode .jaal-temporal-navigation > span:first-child {
   flex: 0 0 100%;
@@ -998,10 +1001,12 @@ body:has(.jaal-focus-mode) {
   white-space: nowrap;
 }
 .jaal-focus-compact #jaal-temporal-controls {
-  width: min(630px, calc(100vw - 24px));
-  max-height: min(27dvh, 150px);
-  padding: 9px 12px;
-  gap: 7px;
+  /* Default focus overlay: real time/status + three transport buttons,
+     occupying at most 13% of viewport height, and typically much less. */
+  width: min(520px, calc(100vw - 24px));
+  max-height: min(13dvh, 105px);
+  padding: 6px 9px;
+  gap: 4px;
   overflow-y: auto;
 }
 .jaal-focus-compact #jaal-temporal-controls > .jaal-temporal-options,
@@ -1140,3 +1145,34 @@ body:has(#jaal-local-root[data-state="open"]) [role="option"] {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Priority labels reuse vis-network: no second graph renderer. Tooltip uses
+   textContent so imported CSV labels are never interpreted as HTML. */
+.jaal-label-tools-details { position: relative; font-size: 12px; }
+.jaal-label-tools-details > summary {
+  cursor: pointer; padding: 3px 8px; border: 1px solid #b7c9dc;
+  border-radius: 5px; white-space: nowrap; background: #f6faff;
+}
+.jaal-label-tools-body {
+  position: absolute; top: calc(100% + 5px); right: 0; z-index: 380;
+  width: min(340px, calc(100vw - 24px)); background: white; padding: 12px;
+  border: 1px solid #c0d3e7; border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(15,23,42,.16);
+  display: flex; flex-direction: column; align-items: start; gap: 9px;
+}
+.jaal-label-tools-body button, .jaal-node-pin-button {
+  border: 1px solid #9fb9d5; border-radius: 6px; background: #edf5ff;
+  padding: 5px 9px; color: #174977; cursor: pointer;
+}
+#jaal-node-float-detail {
+  position: fixed; z-index: 30000; box-sizing: border-box;
+  width: 274px; max-width: calc(100vw - 16px);
+  border: 1px solid #adcae8; border-radius: 9px;
+  padding: 10px 12px; background: rgba(255,255,255,.98);
+  box-shadow: 0 8px 25px rgba(22,44,65,.22);
+  color: #244867; font-size: 13px; overflow-wrap: anywhere;
+}
+#jaal-node-float-detail[hidden] { display: none; }
+.jaal-node-float-title { font-weight: 700; font-size: 14px; }
+.jaal-node-float-id { font-size: 12px; color: #5c6f83; margin-top: 2px; }
+.jaal-node-float-hint { font-size: 11px; color: #67839d; margin: 6px 0; }

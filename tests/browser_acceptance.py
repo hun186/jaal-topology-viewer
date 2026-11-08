@@ -71,6 +71,7 @@ def check(port: int, evidence: Path) -> None:
                           "17.jaal_structural_collapse.js",
                           "18.jaal_community_collapse.js",
                           "22.jaal_local_focus.js",
+                           "23.jaal_label_intelligence.js",
                           "bootstrap.min.css", "19.jaal_compact_layout.css"):
                 with urlopen(target + "/topology/assets/" + asset, timeout=5) as response:
                     assert response.status == 200, asset
@@ -125,10 +126,19 @@ def check(port: int, evidence: Path) -> None:
                 focus_toggle = frame.locator("#jaal-focus-toggle")
                 focus_toggle.click()
                 expect(frame.locator("#jaal-viewer-root")).to_have_class(
-                    "jaal-viewer-shell jaal-focus-mode", timeout=15000
+                    "jaal-viewer-shell jaal-focus-mode jaal-focus-compact",
+                    timeout=15000
                 )
                 expect(focus_toggle).to_have_attribute("aria-pressed", "true")
                 expect(frame.locator(".jaal-settings-col")).to_be_hidden()
+                # Non-temporal Jaal: focus shows only a tiny original
+                # graph-count overlay instead of inflating the toolbar.
+                summary = frame.locator("#jaal-focus-static-status")
+                expect(summary).to_be_visible()
+                expect(summary).to_contain_text("77 節點")
+                small = summary.bounding_box()
+                assert small and small["height"] < 75,small
+                expect(frame.locator("#jaal-focus-panel-toggle")).to_be_visible()
                 # The class callback and graph.options resize callback run
                 # independently; wait for the actual vis.js Canvas redraw.
                 focused_canvas_height = 0
@@ -392,6 +402,47 @@ def check(port: int, evidence: Path) -> None:
                     page.wait_for_timeout(200)
                 assert latest and latest["shown"] == 1, latest
                 assert latest["total"] == 77
+                # The 0-hop root must enter the actual camera viewport.
+                # FrameLocator has no wait_for_function API in Playwright.
+                # Read the embedded frame's real vis-network coordinates
+                # repeatedly until its optional fit animation settles.
+                deadline = time.monotonic() + 20
+                camera = None
+                while time.monotonic() < deadline:
+                    camera = frame.locator("body").evaluate("""(id) => {
+                        const c=window.__acceptanceNetwork;
+                        // vis-network can report a temporarily null
+                        // getPositions() value for an isolated 0-hop node,
+                        // even while its active internal index and DataSet
+                        // have a finite, drawable x/y world coordinate.
+                        const active=c.nn.get().filter(n=>!n.hidden).map(n=>n.id);
+                        const live=c.net.getPositions()[id];
+                        const internal=c.net.body?.nodes?.[id];
+                        const saved=c.nn.get(id);
+                        const finite=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y);
+                        const p=finite(live)?live:
+                            finite(internal)?{x:internal.x,y:internal.y}:
+                            finite(saved)?{x:saved.x,y:saved.y}:null;
+                        const center=c.net.getViewPosition();
+                        return {p,center,pending:
+                            window.dash_clientside?.jaal_local_focus?.pendingFit,
+                            visible:active,
+                            activeIndices:c.net.body?.nodeIndices?.slice(0,8),
+                            candidate:id,
+                            source:finite(live)?"live":finite(internal)?"internal":
+                                finite(saved)?"dataset":"none"};
+                    }""",candidate)
+                    if (camera["p"] and camera["center"] and
+                            camera["visible"] == [candidate] and
+                            candidate in (camera["activeIndices"] or []) and
+                            not camera["pending"] and
+                            ((camera["p"]["x"]-camera["center"]["x"])**2 +
+                             (camera["p"]["y"]-camera["center"]["y"])**2) < 900):
+                        break
+                    page.wait_for_timeout(200)
+                else:
+                    raise AssertionError("New local subgraph remained out of view: " +
+                                         str(camera))
                 assert frame.locator(".vis-network canvas").first.is_visible()
                 # Clear in-place and recover the full source graph.
                 # Dash 4 renders an <a> with an accessible Clear selection

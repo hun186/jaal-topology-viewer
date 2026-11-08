@@ -550,6 +550,9 @@
         if (current.opened.has(group)) current.opened.delete(group);
         else current.opened.add(group);
         project(component, true);
+        // A manual Louvain expansion bypasses graph.run; refresh labels
+        // immediately, even when physics is frozen and no zoom occurs.
+        root.dash_clientside?.jaal_label_intelligence?.sync?.call(component);
       });
       this.__jaalCommunityClickHook = true;
     }
