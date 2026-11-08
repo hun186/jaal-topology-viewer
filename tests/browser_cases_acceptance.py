@@ -198,6 +198,33 @@ def check(port, evidence):
                 expect(second_tab.locator("#library-count")).to_have_text("2 / 20")
                 second_tab.close()
 
+                # Separate large synthetic company stress lab: all four
+                # requested node counts, real 20k Canvas draw, three weakly
+                # connected components and a bounded department local graph.
+                page.goto(base + "/stress-lab/", wait_until="domcontentloaded")
+                expect(page.locator("#stat-nodes")).to_have_text("500", timeout=15000)
+                expect(page.locator("#stat-components")).to_have_text("1")
+                for option, expected in (("3000", "3,000"), ("5000", "5,000"),
+                                         ("20000", "20,000")):
+                    page.locator("#scenario").select_option(option)
+                    expect(page.locator("#stat-nodes")).to_have_text(expected, timeout=20000)
+                    expect(page.locator("#stat-components")).to_have_text("1")
+                page.locator("#view-mode").select_option("full")
+                expect(page.locator("#stat-visible")).to_contain_text("20,000")
+                page.wait_for_function(
+                    "() => document.getElementById('stat-draw-ms').textContent !== '—'",
+                    timeout=20000,
+                )
+                page.screenshot(path=str(evidence / "04-20k-full-canvas.png"))
+                page.locator("#scenario").select_option("islands")
+                expect(page.locator("#stat-nodes")).to_have_text("500")
+                expect(page.locator("#stat-components")).to_have_text("3")
+                expect(page.locator("#component-breakdown")).to_contain_text("167")
+                page.locator("#dept-select").select_option(index=1)
+                expect(page.locator("#view-mode")).to_have_value("local")
+                expect(page.locator("#status")).to_contain_text("寄件者")
+                assert "500 /" not in page.locator("#stat-visible").inner_text()
+                page.screenshot(path=str(evidence / "05-three-components-local.png"))
                 assert not writes, "Local workbench sent unexpected writes: " + str(writes)
                 assert not errors, "Browser JavaScript errors: " + str(errors)
                 (evidence / "local-cases-acceptance.txt").write_text(

@@ -126,6 +126,9 @@ jobs:
           assert (browser_cases_dir / "case_core.js").is_file()
           assert (browser_cases_dir / "case_ui.js").is_file()
           assert (browser_cases_dir / "cases.css").is_file()
+          from jaal_topology.stress_lab import _DIR as scale_lab_dir
+          for filename in ("index.html", "scale_core.js", "scale_ui.js", "scale.css"):
+              assert (scale_lab_dir / filename).is_file(), filename
           with tempfile.TemporaryDirectory() as scratch:
               edges = Path(scratch) / "edges.csv"
               edges.write_text("source,target\nRoot,Child\nChild,Root\n", encoding="utf-8")

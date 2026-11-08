@@ -18,6 +18,7 @@
 | `assets/` | JS 中文 label／structural collapse／Louvain community projection、local Bootstrap CSS |
 | `integration.py` | `DispatcherMiddleware` 在既有 Flask WSGI 同 port 掛載 child Dash |
 | `gallery.py` | 選擇有限、明確列出的 Graph；每案獨立 Dash/Flask WSGI mount；下拉透過 URL 導向另一案，避免 Jaal 綁定舊 graph callback |
+| `stress_lab.py`、`stress_lab/` | 同源 GET-only 靜態 Canvas 壓測頁；預設 500/3000/5000/20000 節點及三連通分量，全資料在客戶端生成，絕不交由 Jaal 3000/5000 bounded renderer |
 
 1. `load_graph` 逐份讀關係 CSV；保留有向邊與多父／環，去除相同的邊。
 2. 以可選 `ClassLabel,CT` metadata 附加顯示名稱，不改原始 ID。

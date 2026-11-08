@@ -14,6 +14,7 @@
 | ADR-0007 | 原版類別樹通訊示意與新合成郵件業務情境區分 | Accepted | 2026-11-03 |
 | ADR-0008 | 原事件流與時間片圖分離，先預算並以瀏覽器動畫播放 | Accepted | 2026-11-03 |
 | ADR-0010 | 客戶私人案例採 local-first browser storage 與獨立檢視 | Accepted | 2026-11-04 |
+| ADR-0011 | 超大合成圖隔離 Canvas，保留原版 Jaal 限額 | Accepted | 2026-11-08 |
 | ADR-0009 | 精確半開區間及預設互斥分段，多粒度與 240 格硬上限 | Accepted | 2026-11-04 |
 
 ## ADR-0001 — 單一來源
@@ -89,3 +90,10 @@
 - Browsers cannot re-open arbitrary local files from a remembered path. Chosen design stores a bounded, validated typed graph in IndexedDB scoped to the current origin/browser profile and provides manual JSON export/import. No server POST/temporary upload/session store, cross-device sync or sensitive path logging.
 - Existing Jaal's Dash callback closure is bound to each startup graph. Swapping a user-owned graph into that same app would make Search/Filter/Color/Size stale, and transferring bytes to a shared/public server conflicts with local-first privacy. Therefore the user-workspace is a separate, clearly labeled native SVG browser renderer; the existing 5-mode Jaal gallery remains unchanged, without pretending feature parity.
 - Bound input, strict UTF-8/RFC4180 parser, DOM text-only rendering, CSP denying network connections, endpoint GET allowlist, browser-local persistence and opt-in plaintext backup. Storage eviction, shared browser profiles and JS-based drawing limits are explained in UI. Future full Jaal parity requires a separately reviewed secure client graph integration rather than an implied compatibility claim.
+
+## ADR-0011 — Scale stress lab isolated from bounded Jaal
+
+- 需求：展示 500／3000／5000／20000 人、更多部門與管理層，及三個真正互不連通的郵件群。
+- 決策：保留 Jaal 3000 nodes/5000 edges 硬限與既有 Gallery callback 隔離；設計獨立 GET-only Canvas 實驗室，所有虛構人員／有向加權關係在瀏覽器由固定業務規則生成，摘要／局部／完整圖明確標示，20k 全圖不冒充 Jaal 原生容量。
+- 取捨：Canvas 不提供原生五模式、Louvain 與時間播放；不同瀏覽器對全量 20k 畫布耗時不同。只記實測生成／繪製時間，不作不受支持的效能承諾。三連通分量情境無跨群有向邊。
+- 既有部署 merge-only／禁用 PR 自動部署、私人工作區不傳資料及下游 exact pin 均不變。

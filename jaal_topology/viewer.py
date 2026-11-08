@@ -638,6 +638,11 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             className="jaal-browser-cases-link",
             title="在瀏覽器本機建立及保存私人圖形案例",
         ))
+        controls_children.insert(2, html.A(
+            "⚡ 大型郵件壓測（500～20,000）", href="/stress-lab/",
+            className="jaal-browser-cases-link",
+            title="完全虛構的多部門郵件網路，含 3 個連通分量；獨立 Canvas 實驗室",
+        ))
     controls = html.Div(
         controls_children, id="jaal-compact-toolbar",
         className="jaal-compact-toolbar",
