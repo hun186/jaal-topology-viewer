@@ -116,7 +116,10 @@
     const {top,cap} = candidates(visible,edges,positions,screen,scale,rootId);
     // Preserve unchanged behavior for original small cases (regression
     // expectations of real Jaal), unless an explicit local focus is active.
-    const all = state.density === "all" || (!rootId && visible.length <= 90);
+    // Respect the existing temporal "顯示全部節點名稱" checkbox.
+    const temporal = root.dash_clientside?.jaal_temporal;
+    const all = state.density === "all" || Boolean(temporal?.fullLabels) ||
+      (!rootId && visible.length <= 90);
     const selected = choose(top,cap,all);
     state.shown = selected;
     const changes = [];

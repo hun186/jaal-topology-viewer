@@ -82,3 +82,39 @@ test("adaptive engine projects smart labels in vis DataSet, never rewrites origi
   engine.togglePin("USER-119");
   engine.state.net=null; engine.state.instance=null;
 });
+
+
+test("subgraph fit includes full 3000-node visible extent and farthest root", () => {
+  const ids=Array.from({length:3000},(_,i)=>"N"+i);
+  let fitted;
+  focus.setSelection({root:"N2999",ids,hops:10,direction:"out"});
+  focus.afterProjection.call({nn:{get:()=>ids.map(id=>({id,hidden:false}))},
+    net:{fit:args=>{fitted=args.nodes;}}});
+  assert.equal(fitted.length,3000);
+  assert.ok(fitted.includes("N0") && fitted.includes("N2999"));
+  assert.equal(focus.pendingFit,false);
+});
+
+test("temporal fullLabels overrides smart-density label hiding", () => {
+  const temporal=require("../jaal_topology/assets/21.jaal_temporal_playback.js");
+  globalThis.dash_clientside=globalThis.dash_clientside||{};
+  globalThis.dash_clientside.jaal_temporal=temporal;
+  temporal.fullLabels=true;
+  const nodes=Array.from({length:105},(_,i)=>({id:"T"+i,label:"T"+i,
+    hidden:false,x:100+i,y:100}));
+  const data=new Map(nodes.map(n=>[n.id,{...n}]));
+  const nn={get:()=>[...data.values()].map(n=>({...n})),
+    update:rows=>rows.forEach(row=>data.set(row.id,{...data.get(row.id),...row}))};
+  const net={getScale:()=>0.1,
+    getPositions:()=>Object.fromEntries(nodes.map(n=>[n.id,{x:n.x,y:n.y}])),
+    canvasToDOM:p=>p,on:()=>{},setOptions:()=>{},
+    body:{container:{getBoundingClientRect:()=>({width:1000,height:600})}}};
+  engine.state.density="smart";
+  engine.state.instance=null;engine.state.net=null;engine.state.pinned.clear();
+  engine.state.remembered.clear();
+  focus.setSelection({root:null});
+  engine.sync.call({nn,ee:{get:()=>[]},net});
+  assert.equal([...data.values()].filter(n=>n.label).length,105);
+  temporal.fullLabels=false;
+  engine.state.net=null;engine.state.instance=null;
+});

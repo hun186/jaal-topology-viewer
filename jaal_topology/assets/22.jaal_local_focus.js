@@ -85,7 +85,8 @@
     // replaced by Louvain quotient groups or structure-collapse bubbles.
     // Never repeat this on each playback tick or return to the full graph.
     net.fit({
-      nodes: visible.length <= 2500 ? visible : visible.slice(0,2500),
+      // Fit all visible IDs, including far-away branches beyond ID 2500.
+      nodes: visible,
       animation: {duration:260,easingFunction:"easeInOutQuad"},
       maxZoomLevel:1.3
     });
