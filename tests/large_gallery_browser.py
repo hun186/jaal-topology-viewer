@@ -189,21 +189,35 @@ def check(port, evidence):
                     const c=window.__scale500Network;
                     const state=c.__jaalCommunity;
                     const now=c.net.getPositions();
-                    const disappeared=[],moved=[];
+                    const disappeared=[],moved=[],lostAnchors=[],cachedMoved=[];
                     for(const [id,p] of Object.entries(before.coordinates)) {
+                        // vis.js intentionally omits inactive/hidden nodes
+                        // from getPositions() in a rolling mail window.
+                        // They must still retain their own saved anchor.
+                        const cached=state.visualPositions?.[id];
+                        if(!cached) lostAnchors.push(id);
+                        else if(Math.hypot(cached.x-p.x,cached.y-p.y)>2)
+                            cachedMoved.push({id,cached,before:p});
                         if(!now[id]) {disappeared.push(id);continue;}
                         const d=Math.hypot(now[id].x-p.x,now[id].y-p.y);
                         if(d>2)moved.push({id,delta:d,from:p,to:now[id]});
                     }
                     return {stillOpened:state.opened.has(before.group),
+                        totalSample:Object.keys(before.coordinates).length,
+                        visibleCount:Object.keys(before.coordinates).length-disappeared.length,
                         maxDelta:Math.max(0,...moved.map(m=>m.delta)),
                         moved:moved.slice(0,10),disappeared,
+                        cachedMoved,lostAnchors,
                         camera:{position:c.net.getViewPosition(),scale:c.net.getScale()},
                         activeEdges:c.ee.get().filter(e=>!e.hidden && e.from!==e.to)
                           .every(e=>e.smooth?.type==='curvedCW')};
                 }""")
                 assert after["stillOpened"] and not after["moved"],(start,after)
-                assert not after["disappeared"],(start,after)
+                assert after["visibleCount"]>=5,(start,after)
+                assert not after["cachedMoved"] and not after["lostAnchors"],(start,after)
+                # Temporary invisibility is expected when a rolling time
+                # window contains no mail for those employees. A missing
+                # cached anchor, or movement among the visible subset, is not.
                 assert after["activeEdges"],"Playback must not restore dynamic edge hooks"
                 assert abs(after["camera"]["scale"]-start["camera"]["scale"])<.025
                 for axis in ("x","y"):
@@ -231,7 +245,7 @@ def check(port, evidence):
                     return {anchor,reopened:state.opened.has(before.group),
                         count:distances.length,max:Math.max(...distances)};
                 }""")
-                assert restored["reopened"] and restored["count"]>=12,restored
+                assert restored["reopened"] and restored["count"]>=5,restored
                 assert restored["max"]<380,restored
                 page.screenshot(path=str(
                     target/"06-scale500-reexpanded-near-own-box.png"))
