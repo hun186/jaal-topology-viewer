@@ -347,13 +347,24 @@ collapse modes; the dedicated 3,000-node acyclic DAG verifies that **all five**
 layout modes remain selectable when topologically valid. This is not a
 Canvas imitation.
 
-Run in Windows **CMD or Anaconda Prompt** (Python 3.11 recommended):
+Run in **Anaconda Prompt / CMD** on Windows. Do not install Jaal
+into a mixed Anaconda `(base)` environment: Dash's Jupyter `comm`
+plugin can fail at import time if Conda/base and user-site packages are
+mixed. One-time setup (Python 3.11 recommended):
 
 ```bat
+conda create -n jaal-viewer python=3.11 -y
+conda activate jaal-viewer
 python -m pip install -r requirements.txt
 python -m pip install -e .
 start-gallery.bat
 ```
+
+The launcher uses a project-local `.venv` if available, otherwise the
+active `jaal-viewer` Conda env or an existing `jaal-viewer` env via
+`conda run`; it deliberately **does not use `(base)`**. If the
+environment is missing, it prints the setup commands instead of a
+misleading Flask-missing error.
 
 Or set `JAAL_ENABLE_LARGE_LOCAL=1` before executing
 `python -m flask --app app:app run --host 127.0.0.1 --port 8059 --no-reload`.

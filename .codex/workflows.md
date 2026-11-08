@@ -49,3 +49,5 @@
 - CMD / Conda Prompt: `start-gallery.bat` (local fixed 500–20k + three-component options).
 - Full Graph factory/contracts: `python -m unittest discover -s tests -p 'test_scaled_demo.py' -v`.
 - Existing official CI + Windows browser acceptance remains required for each PR HEAD. Large Jaal 20k visual performance is hardware-dependent; CI correctness cannot replace on-device measurement.
+
+- Windows launch after Anaconda-base `comm` import failure: create dedicated `jaal-viewer` Python 3.11 Conda environment, install requirements and editable project there, then run `start-gallery.bat` (uses dedicated `.venv`/named Conda environment only, refuses mixed `base`).
