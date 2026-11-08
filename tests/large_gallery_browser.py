@@ -87,6 +87,17 @@ def check(port, evidence):
                 rendered=menu.locator(
                     ".VirtualizedSelectOption, .Select-option, [role='option']")
                 assert rendered.count()>0,menu.inner_text()
+                # Virtualized Dash rows have a fixed 35px allocation. Their
+                # computed hit boxes must not overlap the next selectable row.
+                visible_rows=menu.locator(".VirtualizedSelectOption")
+                if visible_rows.count()>=2:
+                    boxes=[visible_rows.nth(i).bounding_box()
+                           for i in range(min(visible_rows.count(),8))]
+                    boxes=[box for box in boxes if box]
+                    for first,second in zip(boxes,boxes[1:]):
+                        assert first["y"]+first["height"] <= second["y"]+1,(
+                            first,second)
+                    assert all(box["height"]<=36 for box in boxes),boxes
                 bounds=menu.bounding_box()
                 assert bounds and bounds["x"]>=-1 and (
                     bounds["x"]+bounds["width"]<=1441),bounds

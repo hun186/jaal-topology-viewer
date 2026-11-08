@@ -680,8 +680,7 @@ body:has(.jaal-focus-mode) {
   box-shadow: 0 12px 30px rgba(22,42,65,.22);
 }
 .jaal-case-picker .Select-menu { max-height: none; overflow: visible; }
-.jaal-case-picker .Select-option,
-.jaal-case-picker .VirtualizedSelectOption {
+.jaal-case-picker .Select-option {
   min-height: 40px;
   padding: 10px 13px;
   white-space: normal;
@@ -705,16 +704,19 @@ body:has(.jaal-focus-mode) {
   }
 }
 
-/* Dash's virtualized dropdown fixes item heights inline. Let the short
-   scenario labels use one comfortable row rather than letting multiline
-   text overlap the following virtualized item. The full string remains
-   available through typing in the searchable input. */
+/* React-Virtualized in Dash 3.4 allocates 35px for each option. Exactly
+   match that hit-box: never give a virtualized row a 40px min-height or let
+   padding/line-height grow beyond the fixed allocation. Search exposes the
+   complete label when the display ellipsizes. */
 .jaal-case-picker .VirtualizedSelectOption {
   display: block;
+  box-sizing: border-box;
+  height: 35px;
+  max-height: 35px;
+  min-height: 0;
+  padding: 5px 12px;
+  line-height: 25px;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  padding: 8px 12px;
-  line-height: 23px;
-  box-sizing: border-box;
 }
