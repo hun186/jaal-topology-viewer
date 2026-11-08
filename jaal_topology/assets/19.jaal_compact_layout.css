@@ -597,7 +597,7 @@ body:has(.jaal-focus-mode) {
   box-shadow: none;
   background: transparent;
 }
-.jaal-focus-mode .jaal-compact-toolbar > :not(#jaal-focus-toggle):not(#jaal-temporal-controls) {
+.jaal-focus-mode .jaal-compact-toolbar > :not(#jaal-focus-toggle):not(#jaal-focus-panel-toggle):not(#jaal-focus-static-status):not(#jaal-temporal-controls) {
   display: none !important;
 }
 .jaal-focus-mode #jaal-temporal-controls {
