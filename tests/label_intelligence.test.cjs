@@ -140,8 +140,20 @@ test("language toggle invalidates hidden temporal name cache", () => {
   engine.sync.call({nn,ee:{get:()=>[]},net});
   assert.equal(data.get("USER-104").label,"USER-104");
   labels.preferChinese=true;
+  // Reproduce the genuine temporal projection FIRST: key nodes receive
+  // current-language names while non-key nodes get an empty label.
+  for (let i=0;i<105;i++) {
+    const id="USER-"+i;
+    data.set(id,{...data.get(id),label:i<12?"員工-"+id:""});
+  }
   engine.sync.call({nn,ee:{get:()=>[]},net});
+  assert.equal(data.get("USER-0").label,"員工-USER-0");
   assert.equal(data.get("USER-104").label,"員工-USER-104");
+  // A subsequent language change before data projection finishes must
+  // ALSO avoid re-ingesting stale Chinese labels from vis-network.
+  labels.preferChinese=false;
+  engine.sync.call({nn,ee:{get:()=>[]},net});
+  assert.equal(data.get("USER-104").label,"USER-104");
   labels.preferChinese=oldChinese;
   labels.resolve=oldResolve;
   engine.state.net=null;engine.state.instance=null;
