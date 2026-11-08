@@ -33,6 +33,7 @@ class VercelJaalRuntimeTests(unittest.TestCase):
         ):
             self.assertIn(f'"value": "{mode}"', serialized)
         self.assertIn("jaal-focus-toggle", serialized)
+        self.assertIn("jaal-focus-panel-toggle", serialized)
         self.assertIn("jaal-viewer-root", serialized)
         self.assertIn("jaal-sidebar-toggle", serialized)
         self.assertIn("jaal-original-help-details", serialized)
@@ -44,6 +45,28 @@ class VercelJaalRuntimeTests(unittest.TestCase):
         self.assertEqual(callbacks.status_code, 200)
         self.assertTrue(callbacks.get_json())
         self.assertTrue(self.dash_app.callback_map)
+
+    def test_focus_panel_density_toggles_without_replacing_graph(self):
+        """The root Dash callback changes only CSS and button labels."""
+        callback = next(
+            config["callback"].__wrapped__
+            for key, config in self.dash_app.callback_map.items()
+            if "jaal-viewer-root.className" in key
+            and "jaal-focus-panel-toggle.children" in key
+        )
+        normal = callback(0, 0)
+        full = callback(1, 0)
+        compact = callback(1, 1)
+        restored = callback(1, 2)
+        out = callback(2, 1)
+        self.assertEqual(normal[0], "jaal-viewer-shell")
+        self.assertEqual(full[0], "jaal-viewer-shell jaal-focus-mode")
+        self.assertEqual(compact[0],
+                         "jaal-viewer-shell jaal-focus-mode jaal-focus-compact")
+        self.assertEqual(compact[3:], ("完整面板", "true"))
+        self.assertEqual(restored[3:], ("精簡資訊", "false"))
+        self.assertEqual(out[0], "jaal-viewer-shell")
+        self.assertEqual(self.client.get("/_dash-layout").status_code, 200)
 
     def test_scale_lab_public_assets_are_allowed_only_for_reading(self):
         for path in ("/stress-lab/", "/stress-lab/scale_core.js",

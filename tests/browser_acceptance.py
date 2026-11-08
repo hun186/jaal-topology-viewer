@@ -327,6 +327,36 @@ def check(port: int, evidence: Path) -> None:
                 # variant changes input nesting; never mutate Dash state.
                 root_picker = frame.locator("#jaal-local-root")
                 root_picker.click()
+                # A Chinese/ID root option must never occupy a 60px wide
+                # vertical strip: actual React-Select dropdown geometry.
+                root_box = root_picker.bounding_box()
+                assert root_box and root_box["width"] >= 300, root_box
+                # Dash 3 uses .Select-menu-outer; Dash 4/modern react-select
+                # uses .Select__menu, sometimes outside the dropdown wrapper.
+                root_menu = root_picker.locator(".Select-menu-outer, .Select__menu")
+                if not root_menu.count():
+                    # Dash 4 renders a <button class="dash-dropdown"> plus
+                    # a Radix portal outside the button with role=listbox.
+                    root_menu = frame.locator(
+                        '[role="listbox"]:visible, '
+                        '[data-radix-popper-content-wrapper]:visible'
+                    ).last
+                expect(root_menu).to_be_visible(timeout=15000)
+                menu_box = root_menu.bounding_box()
+                assert menu_box and menu_box["width"] >= 300, menu_box
+                options = root_menu.locator(
+                    '.VirtualizedSelectOption, .Select-option, .Select__option, '
+                    '[role="option"]')
+                assert options.count() > 0 or root_menu.inner_text().strip(), (
+                    "Root listbox must have actual selectable content")
+                if options.count():
+                    assert options.first.evaluate(
+                        "(el) => getComputedStyle(el).whiteSpace") == "nowrap"
+                rows = root_menu.locator(".VirtualizedSelectOption")
+                if rows.count() >= 2:
+                    first, second = rows.nth(0).bounding_box(), rows.nth(1).bounding_box()
+                    assert first and second and first["y"] + first["height"] <= second["y"] + 1
+                page.screenshot(path=str(evidence / "06-root-picker-readable.png"))
                 print("TRACE_ROOT_PICKER=" + ascii(root_picker.evaluate(
                     "(el) => el.outerHTML.slice(0, 1400)"
                 )), flush=True)

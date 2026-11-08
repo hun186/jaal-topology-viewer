@@ -153,6 +153,36 @@ def check(port):
                     page.wait_for_timeout(200)
                 assert focused_canvas_height > 900, focused_canvas_height
                 assert page.locator("#graph").count() == 1
+                # Full panel should give the timeline slider a full-width row.
+                panel_focus = page.locator("#jaal-temporal-controls")
+                expect(panel_focus).to_be_visible()
+                marks = [item.bounding_box() for item in
+                         page.locator("#jaal-temporal-range .rc-slider-mark-text").all()]
+                for left, right in zip(marks, marks[1:]):
+                    assert left and right and left["x"]+left["width"] <= right["x"]+3, (left,right)
+                assert panel_focus.bounding_box()["width"] >= 940
+                assert panel_focus.bounding_box()["height"] <= 365
+                density = page.locator("#jaal-focus-panel-toggle")
+                expect(density).to_be_visible()
+                expect(density).to_have_text("精簡資訊")
+                density.click()
+                expect(focus_shell).to_have_class(
+                    "jaal-viewer-shell jaal-focus-mode jaal-focus-compact")
+                expect(density).to_have_attribute("aria-pressed", "true")
+                expect(density).to_have_text("完整面板")
+                expect(page.locator("#jaal-temporal-range")).to_be_hidden()
+                expect(page.locator("#jaal-temporal-status")).to_be_visible()
+                assert "封信" in page.locator("#jaal-temporal-status").inner_text()
+                for id_ in ("back","play","forward"):
+                    expect(page.locator("#jaal-temporal-"+id_)).to_be_visible()
+                assert panel_focus.bounding_box()["height"] < 155
+                assert page.locator("#graph").count() == 1
+                compact_proof = ROOT / "browser-evidence" / "focus-compact-timeline.png"
+                compact_proof.parent.mkdir(exist_ok=True)
+                page.screenshot(path=str(compact_proof))
+                density.click()
+                expect(focus_shell).to_have_class("jaal-viewer-shell jaal-focus-mode")
+                expect(page.locator("#jaal-temporal-range")).to_be_visible()
                 focus_button.press("Escape")
                 expect(focus_shell).to_have_class("jaal-viewer-shell", timeout=15000)
                 expect(focus_button).to_have_attribute("aria-pressed", "false")
@@ -198,6 +228,15 @@ def check(port):
                 # Dash can rerender this control after mode/label callbacks.
                 # Wait for genuine visibility rather than sampling mid-render.
                 expect(picker).to_be_visible(timeout=20000)
+                box = picker.bounding_box()
+                assert box and box["width"] >= 280, box
+                selected = picker.locator(".Select-value-label").first
+                if selected.count():
+                    assert selected.evaluate("(el) => el.scrollWidth <= el.clientWidth + 3"), (
+                        selected.evaluate("(el) => el.outerHTML"))
+                proof = ROOT / "browser-evidence" / "case-picker-readable.png"
+                proof.parent.mkdir(exist_ok=True)
+                page.screenshot(path=str(proof))
 
                 def choose_case(text, url_suffix):
                     page.locator("#jaal-case-picker").click()

@@ -327,6 +327,12 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             title="拓撲圖佔滿視窗；再按一次退出全版",
             **{"aria-pressed": "false"},
         ),
+        html.Button(
+            "精簡資訊", id="jaal-focus-panel-toggle", n_clicks=0,
+            className="jaal-focus-panel-toggle",
+            title="全版檢視時切換完整時間面板與精簡統計浮窗",
+            **{"aria-pressed": "false"},
+        ),
         html.Span(
             "圖形：" + type_labels[structure.graph_kind],
             id="jaal-original-graph-profile",
@@ -355,8 +361,9 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             html.Summary("局部子圖／根節點",
                          title="搜尋英文 ID 或中文別名，選擇起點及幾步內可達節點"),
             html.Div([
-                html.Span("起始根節點（清除選擇＝顯示全圖）"),
-                dcc.Dropdown(
+                html.Div([
+                    html.Span("起始根節點（清除選擇＝顯示全圖）"),
+                    dcc.Dropdown(
                     id="jaal-local-root",
                     options=[
                         {
@@ -370,9 +377,11 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     placeholder="搜尋節點 ID／中文名稱…",
                     value=None, searchable=True, clearable=True,
                     className="jaal-local-root-picker",
-                ),
-                html.Span("最短步數"),
-                dcc.Dropdown(
+                    ),
+                ], className="jaal-local-root-field"),
+                html.Div([
+                    html.Span("最短步數"),
+                    dcc.Dropdown(
                     id="jaal-local-hops",
                     options=[
                         {"label": f"{n} 步", "value": n}
@@ -380,16 +389,19 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     ] + [{"label": "全部可達", "value": "all"}],
                     value=2, clearable=False, searchable=False,
                     className="jaal-local-radius-picker",
-                ),
-                html.Span("可達方向"),
-                dcc.RadioItems(
+                    ),
+                ], className="jaal-local-hops-field"),
+                html.Div([
+                    html.Span("可達方向"),
+                    dcc.RadioItems(
                     id="jaal-local-direction", value="out", inline=True,
                     options=[
                         {"label": "向外 →", "value": "out"},
                         {"label": "向內 ←", "value": "in"},
                         {"label": "雙向 ↔", "value": "both"},
                     ], className="jaal-local-direction",
-                ),
+                    ),
+                ], className="jaal-local-direction-field"),
                 html.Div(
                     f"目前顯示全圖：{len(graph.nodes)} 節點、{len(graph.edges)} 有向邊",
                     id="jaal-local-status", role="status",
@@ -459,6 +471,12 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         dcc.Interval(id="jaal-original-physics-restore",
                      interval=300, disabled=True, n_intervals=0),
     ]
+    if temporal_frames is None:
+        controls_children.append(html.Div(
+            f"原始全圖：{len(graph.nodes)} 節點・{len(graph.edges)} 條有向連線",
+            id="jaal-focus-static-status", className="jaal-focus-static-status",
+            role="status",
+        ))
     if temporal_frames is not None:
         from datetime import datetime, time, timedelta, timezone
         days = temporal_timeline.days
@@ -717,16 +735,24 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         Output("jaal-viewer-root", "className"),
         Output("jaal-focus-toggle", "children"),
         Output("jaal-focus-toggle", "aria-pressed"),
+        Output("jaal-focus-panel-toggle", "children"),
+        Output("jaal-focus-panel-toggle", "aria-pressed"),
         Input("jaal-focus-toggle", "n_clicks"),
+        Input("jaal-focus-panel-toggle", "n_clicks"),
     )
-    def toggle_focus_view(clicks):
-        """Overlay a viewport-sized graph without replacing the real visdcc canvas."""
+    def toggle_focus_view(clicks, compact_clicks):
+        """Switch focus panel density without remounting Jaal or resetting the timeline."""
         focused = bool((clicks or 0) % 2)
+        compact = bool((compact_clicks or 0) % 2)
+        shell = ("jaal-viewer-shell jaal-focus-mode" +
+                 (" jaal-focus-compact" if compact else "")
+                 if focused else "jaal-viewer-shell")
         return (
-            "jaal-viewer-shell jaal-focus-mode"
-            if focused else "jaal-viewer-shell",
+            shell,
             "退出全版 ✕" if focused else "全版檢視 ⛶",
             "true" if focused else "false",
+            "完整面板" if compact else "精簡資訊",
+            "true" if compact else "false",
         )
 
     @app.callback(

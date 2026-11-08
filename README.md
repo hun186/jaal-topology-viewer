@@ -28,7 +28,12 @@ Use **全版檢視 ⛶** to temporarily show only the actual Jaal/visdcc
 graph across the available window; **退出全版 ✕** or **Escape** restores
 the settings and graph controls without remounting the graph. The
 focus layout fills the current browser viewport (or the hosting iframe's
-viewport); it does not invoke the operating system fullscreen API.
+viewport); it does not invoke the operating system fullscreen API. In focus
+mode, **精簡資訊 / 完整面板** switches between the full time-axis controls
+and a small overlay with the *live* timeline interval, mail/node/edge totals
+and playback transport. Static graphs instead show explicitly labeled
+full-source node/edge totals. Switching panel density does not remount the
+graph, reset the current frame or change upstream Jaal callbacks.
 
 The root `app.py` remains the Vercel Flask entrypoint. In a hosted
 `VERCEL`/`VERCEL_ENV` runtime its original four cases remain, plus exactly
@@ -163,7 +168,11 @@ post-Merge release is separately verified.
 
 ## Interactive root-neighborhood focus (all graph cases)
 
-The compact toolbar includes **局部子圖／根節點**. Its searchable dropdown
+The compact toolbar includes **局部子圖／根節點**. Its root selector
+uses a separate full-width search row and readable horizontal ID/name
+options even for 5,000-node local demos. The Gallery case picker likewise
+reserves a readable desktop title width rather than compressing the
+selected name into one character. Its searchable dropdown
 accepts literal English node IDs and Chinese aliases (ClassTable metadata);
 clearing the selection restores the entire loaded graph. Choose a shortest
 path radius **0–5 steps, 10 steps or 全部可達**, and a traversal direction:
