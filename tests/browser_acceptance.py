@@ -71,6 +71,7 @@ def check(port: int, evidence: Path) -> None:
                           "17.jaal_structural_collapse.js",
                           "18.jaal_community_collapse.js",
                           "22.jaal_local_focus.js",
+                           "23.jaal_label_intelligence.js",
                           "bootstrap.min.css", "19.jaal_compact_layout.css"):
                 with urlopen(target + "/topology/assets/" + asset, timeout=5) as response:
                     assert response.status == 200, asset
@@ -392,6 +393,14 @@ def check(port: int, evidence: Path) -> None:
                     page.wait_for_timeout(200)
                 assert latest and latest["shown"] == 1, latest
                 assert latest["total"] == 77
+                # The 0-hop root must enter the actual camera viewport.
+                frame.wait_for_function("""(id) => {
+                    const c=window.__acceptanceNetwork;
+                    const p=c.net.getPositions()[id];
+                    const center=c.net.getViewPosition();
+                    return !!p && Math.hypot(center.x-p.x,center.y-p.y)<30 &&
+                      !window.dash_clientside?.jaal_local_focus?.pendingFit;
+                }""",arg=candidate,timeout=20000)
                 assert frame.locator(".vis-network canvas").first.is_visible()
                 # Clear in-place and recover the full source graph.
                 # Dash 4 renders an <a> with an accessible Clear selection

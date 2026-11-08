@@ -249,6 +249,26 @@ def check(port, evidence):
                 assert restored["max"]<380,restored
                 page.screenshot(path=str(
                     target/"06-scale500-reexpanded-near-own-box.png"))
+                # Genuine 500-person Jaal (not separate Canvas) renders
+                # smart label thinning and per-user manual priority pins.
+                page.get_by_label("網狀（全展開）",exact=True).check()
+                page.wait_for_function(
+                    "() => window.dash_clientside?.jaal_label_intelligence?.state?.instance?.nn?.get()?.length >= 500",
+                    timeout=60000)
+                proof=page.evaluate("""() => {
+                    const api=window.dash_clientside.jaal_label_intelligence;
+                    const nodes=api.state.instance.nn.get().filter(n=>!n.hidden);
+                    const marked=nodes.filter(n=>n.label);
+                    const candidate=nodes.at(-1).id;
+                    api.togglePin(candidate);
+                    return {total:nodes.length,marked:marked.length,candidate};
+                }""")
+                page.wait_for_function("""(id) => {
+                    const api=window.dash_clientside?.jaal_label_intelligence;
+                    return Boolean(api?.state?.instance?.nn?.get(id)?.label);
+                }""",arg=proof["candidate"],timeout=15000)
+                assert proof["total"]==500 and proof["marked"]<500,proof
+                page.screenshot(path=str(target/"07-original-500-smart-labels.png"))
                 page.goto(base+"/cases/scale-three-components/",
                           wait_until="domcontentloaded",timeout=90000)
                 page.locator(".vis-network canvas").first.wait_for(

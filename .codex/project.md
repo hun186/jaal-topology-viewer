@@ -33,7 +33,7 @@
 | `app.py`, `requirements.txt`, `vercel.json` | Vercel Flask WSGI 真正 Jaal/Dash 四個原始案例＋一個延遲載入 500 人虛構郵件案例（仍使用原版 Jaal，普通 3000/5000 上限保留）（新增固定種子的企業郵件業務情境，保留原拓樸示意／組織樹／DAG）；唯讀 CSV 下載供驗證，不改本機 CLI |
 | `jaal_topology/__init__.py`, `data.py` | `Graph`、`GraphInputError`、`load_graph`、`select_subgraph` |
 | `cli.py`, `__main__.py` | `jaal-topology` 與 `python -m jaal_topology` |
-| `viewer.py`, `modes.py`, `neighborhood.py` | `build_app`、五種模式、原版 Jaal Search/Filter/Color/Size；可搜尋原 ID／中文別名根節點，依 out/in/both 0–10 hop 或全部可達顯示唯讀局部誘導子圖，清除選擇還原全圖；左側可收合、非 sticky 工具列、Esc 全版退出，原版 Network 不卸載 |
+| `viewer.py`, `modes.py`, `neighborhood.py` | `build_app`、五種模式、原版 Jaal Search/Filter/Color/Size；可搜尋原 ID／中文別名根節點，依 out/in/both 0–10 hop 或全部可達顯示唯讀局部誘導子圖，換子圖自動定位一次且播放時不重新定位；大型圖加入智慧標籤、滑鼠浮窗與人工釘選重要名稱；清除選擇還原全圖；左側可收合、非 sticky 工具列、Esc 全版退出，原版 Network 不卸載 |
 | `community.py` | 原有拓樸分群保持不變；僅具明確逐邊郵件數的示範圖使用事件量加權 Louvain，社群邊數仍是獨立寄收件對數 |
 | `email_simulation.py` | 固定種子、20 工作天的虛構業務流程發信事件與收發量彙總（人名／帳號／信件內容皆非真實） |
 | `assets/` | Browser JS（包含社群投影／收攏、時間片動畫與 22.jaal_local_focus.js 局部子圖投影）、Bootstrap CSS、精簡工具列 CSS，直接由套件提供 |

@@ -582,3 +582,18 @@ and verifies its own Stage 4 WSGI and browser compatibility. Do not
 publish a new release until independent PR review, hosted CI and appropriate
 browser acceptance pass; publishing to PyPI, Docker or a public web server are
 separate security/release decisions.
+
+## Smart labels, node detail and focused subgraph camera
+
+The genuine Jaal/vis-network view offers **標籤／重點節點**. On dense graphs
+or active local subgraphs, node labels are pruned by zoom and collision,
+prioritizing the selected root, community summaries and high-degree nodes.
+Hover to see a floating detail card with full text, then click **釘選重要名稱**
+or right-click a node to force its name to display; pins remain in page
+memory only, not on a remote server. **標籤：智慧顯示／全部顯示**
+switches density; all-label mode can overlap in very dense graphs.
+
+Changing the root, direction or hop count fits the *currently drawn*
+subgraph once, even if some original members have been summarized into a
+Louvain or structural bubble. Temporal playback does not continually
+recenter the camera. The underlying original source data/IDs remain intact.
