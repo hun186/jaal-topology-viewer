@@ -80,10 +80,26 @@ _CASES = (
     ),
 )
 
-# Opt-in only on a personally controlled localhost process, never the
-# public Vercel startup. The default four cases and their existing Dash
-# callbacks remain unchanged. Create huge Jaal cases only when selected.
-if os.environ.get("JAAL_ENABLE_LARGE_LOCAL") == "1":
+def _large_local_cases_enabled(environment):
+    """Default to large demos only for an interactive local Flask CLI run.
+
+    Importing app as WSGI, including from Vercel, preserves the four-case
+    gallery; explicit 0 disables the local setting. Large graphs are lazy.
+    """
+    if environment.get("VERCEL") or environment.get("VERCEL_ENV"):
+        return False
+    switch = environment.get("JAAL_ENABLE_LARGE_LOCAL")
+    if switch is not None:
+        return switch == "1"
+    return (
+        environment.get("FLASK_RUN_FROM_CLI", "").lower() == "true"
+        and environment.get("CI", "").lower() not in ("1", "true")
+    )
+
+
+# Local Flask CLI enables large fictional cases by default with load warning.
+# Public WSGI/CI remains bounded; explicit JAAL_ENABLE_LARGE_LOCAL=0 disables.
+if _large_local_cases_enabled(os.environ):
     from jaal_topology.scaled_demo import build_scaled_email_demo
 
     def _deferred_scaled_case(slug, title):
@@ -113,8 +129,8 @@ if os.environ.get("JAAL_ENABLE_LARGE_LOCAL") == "1":
     _SCALE_CHOICES = (
         ("500", "企業郵件｜500 人（全 Jaal）"),
         ("3000", "企業郵件｜3,000 人（全 Jaal）"),
-        ("5000", "企業郵件｜5,000 人（全 Jaal）"),
-        ("20000", "企業郵件｜20,000 人（全 Jaal）"),
+        ("5000", "企業郵件｜5,000 人（全 Jaal）⚠ 高負載"),
+        ("20000", "企業郵件｜20,000 人（全 Jaal）⚠ 極高負載"),
         ("3000-dag", "企業郵件｜3,000 人（無環 DAG／五模式）"),
         ("three-components", "企業郵件｜3 個互不連通群（500 人）"),
     )
