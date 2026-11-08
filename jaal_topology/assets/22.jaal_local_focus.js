@@ -5,7 +5,7 @@
 (function (root) {
   "use strict";
   const state = {ids: null, root: null, pendingFit: false, signature: "",
-    fitQueued: false, fitAttempts: 0};
+    fitQueued: false, fitAttempts: 0, anchorPositions: Object.create(null)};
 
   function setSelection(packet) {
     const previous = state.signature;
@@ -56,14 +56,33 @@
     const source = temporal && typeof temporal.stableSource === "function"
       ? temporal.stableSource(original) : original;
     const ids = state.ids;
-    const nodes = source.nodes.map(n => ({
-      ...n, hidden: Boolean(n.hidden) || Boolean(ids && !ids.has(String(n.id))),
-    }));
+    const net = this.net;
+    if (state.pendingFit && ids && net &&
+        typeof net.getPositions === "function") {
+      // Remember the last actually visible coordinates BEFORE reducing to
+      // the local subset. Isolated 0-hop nodes can temporarily have no
+      // getPositions() entry after their surrounding edges are hidden.
+      const before = net.getPositions();
+      for (const id of ids) {
+        const p = before[id];
+        if (p && Number.isFinite(p.x) && Number.isFinite(p.y)) {
+          state.anchorPositions[id] = {x:p.x,y:p.y};
+        }
+      }
+    }
+    const nodes = source.nodes.map(n => {
+      const visible = !Boolean(n.hidden) && (!ids || ids.has(String(n.id)));
+      const old = state.pendingFit && ids && ids.has(String(n.id))
+        ? state.anchorPositions[String(n.id)] : null;
+      return {
+        ...n, hidden: !visible,
+        ...(old ? {x:old.x,y:old.y} : {}),
+      };
+    });
     const edges = source.edges.map(e => ({
       ...e, hidden: Boolean(e.hidden) ||
         Boolean(ids && (!ids.has(String(e.from)) || !ids.has(String(e.to)))),
     }));
-    const net = this.net;
     const camera = net && typeof net.getViewPosition === "function" &&
       typeof net.getScale === "function" ? {
         position: net.getViewPosition(), scale: net.getScale(),
@@ -107,8 +126,23 @@
         return;
       }
       state.fitQueued = false;
-      // Never silently clear pendingFit if vis has no live nodes; a later
-      // source re-projection may still make the chosen root visible.
+      // Last-resort isolated-root positioning: vis-network may temporarily
+      // return null from getPositions despite its DataSet and nodeIndices
+      // showing the selected node. Use its pre-filter world position rather
+      // than snapping the camera to an unrelated full-graph cluster.
+      if (visible.length === 1 && !drawable &&
+          typeof net.moveTo === "function") {
+        const anchor = state.anchorPositions[String(visible[0])];
+        if (anchor && Number.isFinite(anchor.x) && Number.isFinite(anchor.y)) {
+          net.moveTo({
+            position: {x:anchor.x,y:anchor.y}, scale:1,
+            animation:{duration:260,easingFunction:"easeInOutQuad"}
+          });
+          state.pendingFit = false;
+          return;
+        }
+      }
+      // Never silently clear pendingFit if no usable world position exists.
       if (!visible.length || !drawable) return;
       state.pendingFit = false;
       // Fit every visible original/quotient member. Using the initial
