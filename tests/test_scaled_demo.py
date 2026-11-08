@@ -122,7 +122,22 @@ class FullJaalSyntheticScaleTests(unittest.TestCase):
         self.assertEqual(count,[])
         home=client.get("/_dash-layout")
         self.assertEqual(home.status_code,200)
-        self.assertIn("/cases/scaled/",home.get_data(as_text=True))
+        # Dash escapes / in raw JSON. Inspect parsed option values instead.
+        def picker_options(node):
+            if isinstance(node,dict):
+                if node.get("props",{}).get("id")=="jaal-case-picker":
+                    return node["props"]["options"]
+                for child in node.values():
+                    found=picker_options(child)
+                    if found is not None: return found
+            elif isinstance(node,list):
+                for child in node:
+                    found=picker_options(child)
+                    if found is not None: return found
+            return None
+        options=picker_options(home.get_json())
+        self.assertIsNotNone(options)
+        self.assertIn("/cases/scaled/",[o["value"] for o in options])
         self.assertEqual(count,[])
         self.assertEqual(client.get("/cases/scaled/_dash-layout").status_code,200)
         self.assertEqual(count,[1])
