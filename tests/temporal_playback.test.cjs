@@ -214,6 +214,94 @@ test("temporal community holds one partition and open state across rolling ticks
   assert.equal(instance.ee.getIds().length, graph.edges.length);
 });
 
+test("playing after expanding a community holds every member at the actual drawn anchor and uses static directed curves", () => {
+  const community = require("../jaal_topology/assets/18.jaal_community_collapse.js");
+  const nodes = ["A","B","C","D","E","F"].map((id, i) =>
+    // Simulate source coordinates that differ from the positions after
+    // interactive dragging/expansion. Playback must not write them back.
+    ({id, label:id, x:1000+i*50, y:1000-i*10}));
+  const graph = {
+    nodes,
+    edges: [
+      {id:"a-d",from:"A",to:"D"},
+      {id:"d-a",from:"D",to:"A"},
+      {id:"b-e",from:"B",to:"E"},
+      {id:"c-f",from:"C",to:"F"},
+      {id:"a-b",from:"A",to:"B"},
+    ],
+  };
+  community.partition = {A:"first",B:"first",C:"first",
+    D:"second",E:"second",F:"second"};
+  // vis.js getPositions reflects the current visible DataSet, as it does
+  // after the user drags a cluster. These locations differ from source x/y.
+  const nn = new DataSet(nodes);
+  const ee = new DataSet(graph.edges);
+  const currentPositions = () => Object.fromEntries(nn.get().map(n => [
+    n.id, {x:n.x,y:n.y},
+  ]));
+  let click;
+  let cameraUpdates = 0, optionsUpdates = 0;
+  const instance = {
+    props: {data:graph}, nn, ee,
+    net: {
+      on: (type, fn) => {if (type==="click") click=fn;},
+      getPositions: currentPositions,
+      getViewPosition: () => ({x:150,y:80}),
+      getScale: () => 1.1,
+      moveTo: args => {
+        assert.deepEqual(args.position,{x:150,y:80});
+        assert.equal(args.scale,1.1);
+        cameraUpdates++;
+      },
+      setOptions: () => {optionsUpdates++;},
+    },
+  };
+  const day1 = {...frame, date:"2026-10-05",
+    edges:[["A","D",4],["D","A",2],["A","B",5]]};
+  const day2 = {...frame, date:"2026-10-06",
+    edges:[["B","E",6],["C","F",3]]};
+  temporal.setFrame(day1);
+  community.activate.call(instance);
+  const cluster = Object.entries(instance.__jaalCommunity.view.clusterToGroup)
+    .find(([, group]) => group==="first")[0];
+  const anchor = {...currentPositions()[cluster]};
+  click({nodes:[cluster]});
+  const state = instance.__jaalCommunity;
+  assert.ok(state.opened.has("first"));
+  const ids = nn.getIds().sort();
+  assert.deepEqual(ids,["A","B","C",...nn.getIds().filter(id=>id!== "A"&&id!=="B"&&id!=="C")].sort());
+  // Drag A and D before playing. Both must stay exactly where placed.
+  nn.update([{id:"A",x:anchor.x+41,y:anchor.y-23},
+             {id:"D",x:anchor.x+310,y:anchor.y+140}]);
+  const before = currentPositions();
+  const eids = ee.getIds().sort();
+  const firstEdges = ee.get();
+  assert.ok(firstEdges.some(e => e.from==="A" && e.to==="D"));
+  assert.ok(firstEdges.every(e=>e.from===e.to ||
+      e.smooth?.type==="curvedCW"),firstEdges);
+  // Replay multiple frames and then return to the first: no force-layout,
+  // stale-source coordinates, edge ID changes or camera jumps.
+  for(const next of [day2,day1,day2,day1]) {
+    temporal.setFrame(next);
+    community.activate.call(instance);
+    const after = currentPositions();
+    for (const id of ids) {
+      assert.deepEqual(after[id],before[id],id+" moved during playback");
+    }
+    assert.deepEqual(nn.getIds().sort(),ids);
+    assert.deepEqual(ee.getIds().sort(),eids);
+    assert.ok(ee.get().every(e=>e.from===e.to ||
+      e.smooth?.type==="curvedCW"));
+    assert.strictEqual(instance.__jaalCommunity,state);
+    assert.ok(state.opened.has("first"));
+    assert.equal(instance.__jaalCommunity.filtered,false);
+  }
+  assert.ok(cameraUpdates>=5);
+  assert.equal(optionsUpdates,1,"physics is frozen once, not reset per tick");
+  temporal.setFrame(null);
+  community.restore.call(instance);
+});
+
 test("temporal community retains quotient IDs even when whole groups go silent", () => {
   const community = require("../jaal_topology/assets/18.jaal_community_collapse.js");
   const nodes = ["A","B","C","D","E","F"].map(id => ({id,hidden:false}));
