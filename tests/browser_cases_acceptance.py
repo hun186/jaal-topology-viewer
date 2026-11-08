@@ -85,6 +85,11 @@ def check(port, evidence):
                 expect(page.locator(".node-outgoing")).to_have_count(1)
                 expect(page.locator(".node-balanced")).to_have_count(1)
                 expect(page.locator(".node-incoming")).to_have_count(2)
+                flow_fills = {
+                    kind: page.locator(".node-" + kind).first.evaluate(
+                        "(el) => getComputedStyle(el).fill")
+                    for kind in ("outgoing", "incoming", "balanced")
+                }
                 radii = page.locator(".node-circle").evaluate_all(
                     "(nodes) => nodes.map(n => Number(n.getAttribute('r')))")
                 assert len(set(radii)) > 1, radii
@@ -95,6 +100,14 @@ def check(port, evidence):
                 page.locator("#direction").select_option("out")
                 page.locator("#radius").select_option("1")
                 expect(page.locator("#count-visible")).to_have_text("2 / 2")
+                expect(page.locator(".node-root.node-outgoing")).to_have_count(1)
+                assert page.locator(".node-root.node-outgoing").evaluate(
+                    "(el) => getComputedStyle(el).fill") == flow_fills["outgoing"]
+                page.locator("#root-filter").fill("Bob")
+                page.locator("#root-filter").press("Tab")
+                expect(page.locator(".node-root.node-balanced")).to_have_count(1)
+                assert page.locator(".node-root.node-balanced").evaluate(
+                    "(el) => getComputedStyle(el).fill") == flow_fills["balanced"]
                 page.locator("#reset-view").click()
                 expect(page.locator("#count-visible")).to_have_text("4 / 4")
                 expect(page.locator(".node-circle")).to_have_count(4)

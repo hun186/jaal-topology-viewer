@@ -14,3 +14,8 @@
 .node-circle.node-incoming{fill:#c3f2e9;stroke:#087d78}
 .node-circle.node-balanced{fill:#e9ddfa;stroke:#7256b7}
 .node-circle.node-root{fill:#f9dea6;stroke:#bf7e1a;stroke-width:3}
+/* Keep directional hues when the local root is highlighted; thick outline
+   still identifies selection without contradicting the flow legend. */
+.node-circle.node-root.node-outgoing{fill:#ffe3bb;stroke:#b86b23;stroke-width:4}
+.node-circle.node-root.node-incoming{fill:#c3f2e9;stroke:#087d78;stroke-width:4}
+.node-circle.node-root.node-balanced{fill:#e9ddfa;stroke:#7256b7;stroke-width:4}
