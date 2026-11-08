@@ -3,6 +3,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const engine = require("../jaal_topology/assets/23.jaal_label_intelligence.js");
 const focus = require("../jaal_topology/assets/22.jaal_local_focus.js");
+require("../jaal_topology/assets/16.jaal_visible_labels.js");
 
 test("smart density avoids collisions but important pins and root always survive", () => {
   engine.state.pinned.clear();
