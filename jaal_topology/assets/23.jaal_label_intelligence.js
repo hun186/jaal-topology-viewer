@@ -9,6 +9,7 @@
     net: null, instance: null, pinned: new Set(), density: "smart",
     remembered: new Map(), shown: new Set(), pending: false,
     tooltip: null, hovered: null, count: 0, preferChinese: false,
+    languageChanged: false,
   };
   const doc = root.document || null;
   const ownedPrefix = "__jaal_internal_community__";
@@ -123,20 +124,29 @@
     const selected = choose(top,cap,all);
     state.shown = selected;
     const changes = [];
+    const changedLanguage = state.languageChanged;
     for (const node of nodes) {
       const id = String(node.id);
-      if (typeof node.label === "string" && node.label &&
-          (node.label !== state.remembered.get(id) ||
-           !state.remembered.has(id))) {
-        state.remembered.set(id,node.label);
+      const raw = typeof node.label === "string" ? node.label : "";
+      const aggregate = id.startsWith(ownedPrefix);
+      const current = originalName(id, id);
+      // During a language switch, temporal non-key nodes may still carry
+      // old-language labels from the previous drawn DataSet. Do not
+      // immediately re-cache them after invalidation. Structural labels
+      // with a translated prefix plus count suffix remain authoritative.
+      const valid = !changedLanguage || aggregate ||
+        raw === current || raw.startsWith(current + "\n");
+      if (raw && valid && raw !== state.remembered.get(id)) {
+        state.remembered.set(id,raw);
       }
-      const base = id.startsWith(ownedPrefix)
+      const base = aggregate
         ? (state.remembered.get(id) || "社群")
-        : (state.remembered.get(id) || originalName(id, id));
+        : (state.remembered.get(id) || current);
       const text = node.hidden ? (node.label || "") :
         selected.has(id) ? base : "";
       if (String(node.label ?? "") !== text) changes.push({id:node.id,label:text});
     }
+    state.languageChanged = false;
     if (changes.length) instance.nn.update(changes);
   }
   function schedule() {
@@ -242,6 +252,7 @@
         (state.instance && state.instance !== this)) {
       state.remembered.clear();
       state.preferChinese = chinese;
+      state.languageChanged = true;
     }
     state.instance = this;
     attach(this);
