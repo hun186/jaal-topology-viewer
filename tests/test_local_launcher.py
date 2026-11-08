@@ -13,7 +13,7 @@ class WindowsLauncherSafetyTests(unittest.TestCase):
         script = (root / "start-gallery.bat").read_text(encoding="utf-8")
         self.assertIn('if exist ".venv\\Scripts\\python.exe"', script)
         self.assertIn('if /I "%CONDA_DEFAULT_ENV%"=="jaal-viewer"', script)
-        self.assertIn('conda run -n jaal-viewer --no-capture-output', script)
+        self.assertIn('call conda run -n jaal-viewer --no-capture-output python -c', script)
         self.assertIn("goto :missing_environment", script)
         self.assertIn("Refusing to use Anaconda (base)", script)
         self.assertIn("Not necessarily a missing Flask package".lower(),

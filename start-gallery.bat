@@ -23,7 +23,7 @@ rem 3. Double-clicking from outside Anaconda Prompt can still use the
 rem dedicated Conda environment if the conda command is available.
 where conda >nul 2>&1
 if errorlevel 1 goto :missing_environment
-conda run -n jaal-viewer --no-capture-output python -c "import sys" >nul 2>&1
+call conda run -n jaal-viewer --no-capture-output python -c "import sys" >nul 2>&1
 if errorlevel 1 goto :missing_environment
 set "JAAL_USE_CONDA_RUN=1"
 
