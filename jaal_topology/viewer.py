@@ -330,9 +330,12 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         html.Button(
             "精簡資訊", id="jaal-focus-panel-toggle", n_clicks=0,
             className="jaal-focus-panel-toggle",
-            title="全版檢視時切換完整時間面板與精簡統計浮窗",
+            title="全版預設精簡；按下可展開完整時間設定",
             **{"aria-pressed": "false"},
         ),
+        dcc.Store(id="jaal-focus-panel-session",
+                  data={"focus_clicks": 0, "panel_baseline": 0},
+                  storage_type="memory"),
         html.Span(
             "圖形：" + type_labels[structure.graph_kind],
             id="jaal-original-graph-profile",
@@ -747,13 +750,26 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         Output("jaal-focus-toggle", "aria-pressed"),
         Output("jaal-focus-panel-toggle", "children"),
         Output("jaal-focus-panel-toggle", "aria-pressed"),
+        Output("jaal-focus-panel-session", "data"),
         Input("jaal-focus-toggle", "n_clicks"),
         Input("jaal-focus-panel-toggle", "n_clicks"),
+        State("jaal-focus-panel-session", "data"),
     )
-    def toggle_focus_view(clicks, compact_clicks):
-        """Switch focus panel density without remounting Jaal or resetting the timeline."""
+    def toggle_focus_view(clicks, panel_clicks, session):
+        """Default to the smallest overlay EACH time focus mode is entered.
+
+        Full controls remain reachable via the density button, and the same
+        visdcc Network and active timeline are maintained in both modes.
+        """
         focused = bool((clicks or 0) % 2)
-        compact = bool((compact_clicks or 0) % 2)
+        focus_clicks = clicks or 0
+        panel_clicks = panel_clicks or 0
+        stored = session if isinstance(session, dict) else {}
+        old_focus_clicks = stored.get("focus_clicks", -1)
+        baseline = stored.get("panel_baseline", 0)
+        if focus_clicks != old_focus_clicks:
+            baseline = panel_clicks
+        compact = focused and ((panel_clicks - baseline) % 2 == 0)
         shell = ("jaal-viewer-shell jaal-focus-mode" +
                  (" jaal-focus-compact" if compact else "")
                  if focused else "jaal-viewer-shell")
@@ -763,6 +779,7 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             "true" if focused else "false",
             "完整面板" if compact else "精簡資訊",
             "true" if compact else "false",
+            {"focus_clicks": focus_clicks, "panel_baseline": baseline},
         )
 
     @app.callback(

@@ -968,12 +968,15 @@ body:has(.jaal-focus-mode) {
 }
 .jaal-focus-mode #jaal-temporal-controls {
   box-sizing: border-box;
-  width: min(1200px, calc(100vw - 24px));
-  max-height: min(60dvh, 360px);
+  /* Full controls should NEVER grow when entering a full graph viewport.
+     Keep within <=22% of viewport height; scroll inside on demand. */
+  width: min(740px, calc(100vw - 24px));
+  max-height: min(22dvh, 180px);
   overflow-y: auto;
   overflow-x: hidden;
-  gap: 8px;
-  padding: 10px 13px 15px;
+  overscroll-behavior: contain;
+  gap: 4px;
+  padding: 7px 10px;
 }
 .jaal-focus-mode .jaal-temporal-navigation > span:first-child {
   flex: 0 0 100%;
@@ -998,10 +1001,12 @@ body:has(.jaal-focus-mode) {
   white-space: nowrap;
 }
 .jaal-focus-compact #jaal-temporal-controls {
-  width: min(630px, calc(100vw - 24px));
-  max-height: min(27dvh, 150px);
-  padding: 9px 12px;
-  gap: 7px;
+  /* Default focus overlay: real time/status + three transport buttons,
+     occupying at most 13% of viewport height, and typically much less. */
+  width: min(520px, calc(100vw - 24px));
+  max-height: min(13dvh, 105px);
+  padding: 6px 9px;
+  gap: 4px;
   overflow-y: auto;
 }
 .jaal-focus-compact #jaal-temporal-controls > .jaal-temporal-options,
