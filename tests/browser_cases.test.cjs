@@ -53,6 +53,18 @@ test("weighted node flow totals respect directions, reciprocal edges and self-lo
   assert.equal(scope.maxTotal,4);
 });
 
+test("reciprocal pairs are detected only when both directed edges remain visible", () => {
+  const g = core.importGraph("two-way", ["from,to\nA,B\nB,A\nA,C\nC,C\n"], "");
+  const both = core.reciprocalKeys(g);
+  assert.equal(both.size, 2);
+  assert.equal(both.has(JSON.stringify(["A","B"])), true);
+  assert.equal(both.has(JSON.stringify(["B","A"])), true);
+  assert.equal(both.has(JSON.stringify(["A","C"])), false);
+  assert.equal(both.has(JSON.stringify(["C","C"])), false);
+  assert.equal(core.reciprocalKeys(core.neighborhood(g,"A",0,"out")).size, 0);
+  assert.equal(core.reciprocalKeys(core.neighborhood(g,"A",1,"out")).size, 2);
+});
+
 test("root scope keeps directed reachability and original induced links", () => {
   const g=core.importGraph("scope",["from,to\nA,B\nB,C\nC,A\nD,A\n"],"");
   assert.deepEqual(core.neighborhood(g,"A",1,"out").nodes.map(n=>n.id),["A","B"]);
