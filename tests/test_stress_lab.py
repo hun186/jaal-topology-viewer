@@ -35,7 +35,7 @@ class StressLabRoutingTests(unittest.TestCase):
         self.assertEqual(len(_CASES), 4)
         layout = self.client.get("/_dash-layout")
         self.assertEqual(layout.status_code, 200)
-        self.assertIn("stress-lab", layout.get_data(as_text=True))
+        self.assertNotIn("/stress-lab/", layout.get_data(as_text=True))
         self.assertIn("jaal-case-picker", layout.get_data(as_text=True))
         self.assertEqual(self.client.get("/healthz").status_code, 200)
 
