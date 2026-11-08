@@ -165,7 +165,10 @@ if _public_500_enabled(os.environ):
             "企業郵件｜500 人（公網示範）",
             dataset.graph,
             initial_mode="network-community-collapsed",
-            temporal_timeline=TemporalTimeline(dataset.graph, dataset.events),
+            temporal_timeline=TemporalTimeline(
+                dataset.graph, dataset.events,
+                max_payload_bytes=3_600_000,
+            ),
             initial_positions=dataset.positions,
             allow_large_demo=False,
             description=(
