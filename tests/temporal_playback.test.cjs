@@ -239,12 +239,15 @@ test("playing after expanding a community holds every member at the actual drawn
   const currentPositions = () => Object.fromEntries(nn.get().map(n => [
     n.id, {x:n.x,y:n.y},
   ]));
-  let click;
+  let click, dragEnd;
   let cameraUpdates = 0, optionsUpdates = 0;
   const instance = {
     props: {data:graph}, nn, ee,
     net: {
-      on: (type, fn) => {if (type==="click") click=fn;},
+      on: (type, fn) => {
+        if (type==="click") click=fn;
+        if (type==="dragEnd") dragEnd=fn;
+      },
       getPositions: currentPositions,
       getViewPosition: () => ({x:150,y:80}),
       getScale: () => 1.1,
@@ -277,7 +280,8 @@ test("playing after expanding a community holds every member at the actual drawn
   // retain their actual current position through subsequent frames.
   nn.update([{id:"A",x:anchor.x+41,y:anchor.y-23},
              {id:secondCluster,x:anchor.x+310,y:anchor.y+140}]);
-  const before = currentPositions();
+  dragEnd({nodes:["A",secondCluster]});
+  const before = Object.fromEntries(ids.map(id => [id, currentPositions()[id]]));
   const eids = ee.getIds().sort();
   const firstEdges = ee.get();
   assert.ok(firstEdges.some(e => e.from==="A" && e.to===secondCluster),
@@ -286,8 +290,19 @@ test("playing after expanding a community holds every member at the actual drawn
       e.smooth?.type==="curvedCW"),firstEdges);
   // Replay multiple frames and then return to the first: no force-layout,
   // stale-source coordinates, edge ID changes or camera jumps.
-  for(const next of [day2,day1,day2,day1]) {
+  for(const [index,next] of [day2,day1,day2,day1].entries()) {
     temporal.setFrame(next);
+    // Reproduce a visdcc raw-data refresh between callback phases. In
+    // production the old code trusted getPositions() here and accepted the
+    // source's completely different x/y, even though the drawn Louvain
+    // layout had already been anchored around its previous community.
+    if(index%2===0) {
+      nn.remove(nn.getIds());
+      nn.update(graph.nodes);
+      ee.remove(ee.getIds());
+      ee.update(graph.edges);
+      assert.equal(nn.rows.get("A").x,1000);
+    }
     community.activate.call(instance);
     const after = currentPositions();
     for (const id of ids) {
@@ -303,6 +318,20 @@ test("playing after expanding a community holds every member at the actual drawn
   }
   assert.ok(cameraUpdates>=5);
   assert.equal(optionsUpdates,1,"physics is frozen once, not reset per tick");
+  // Pausing, collapsing and expanding again must recover the SAME local
+  // anchor, not teleport to the raw source's distant starting coordinates.
+  click({nodes:["A"]});
+  assert.ok(!state.opened.has("first"));
+  const closedBox = currentPositions()[cluster];
+  assert.ok(closedBox);
+  click({nodes:[cluster]});
+  assert.ok(state.opened.has("first"));
+  const reopened = currentPositions();
+  for(const id of ["A","B","C"]) {
+    assert.ok(Math.hypot(reopened[id].x-closedBox.x,
+                          reopened[id].y-closedBox.y)<160,
+      id+" must expand beside its own box after playback");
+  }
   temporal.setFrame(null);
   community.restore.call(instance);
 });

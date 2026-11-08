@@ -263,7 +263,7 @@
       ? focus.scoped(stable) : stable;
   }
 
-  function project(instance) {
+  function project(instance, interaction = false) {
     const state = instance.__jaalCommunity;
     if (!state || !state.active || !instance.nn || !instance.ee) return;
     const source = sourceData(instance);
@@ -295,36 +295,51 @@
       net && typeof net.getPositions === "function"
         ? net.getPositions() : {});
     const nodePositions = state.positions || Object.create(null);
+    const visualPositions = state.visualPositions || Object.create(null);
     state.clusterPositions = state.clusterPositions || Object.create(null);
-    // Once a user expands a cluster, every following time frame must keep
-    // existing original members at their ACTUAL current on-screen locations.
-    // Fresh source node x/y (or a previous hidden frame's coordinates) must
-    // not replace these drawn positions. Newly exposed nodes are still
-    // handled by the anchoredMember placement below.
     const oldIdSet = new Set(instance.nn.getIds().map(String));
-    if (temporalActive) {
-      for (const node of view.nodes) {
-        const id = String(node.id);
-        if (!oldIdSet.has(id) || !point(oldPos[id])) continue;
-        node.x = oldPos[id].x;
-        node.y = oldPos[id].y;
+    const previouslyDrawn = new Set((state.view?.nodes || []).map(n => String(n.id)));
+    // visdcc may rehydrate its DataSets from raw source x/y before graph.run
+    // invokes activate(). The displayed quotient's committed coordinates,
+    // NOT that transient raw DataSet, are the trustworthy playback anchor.
+    // Refresh from actual screen positions only on an intentional click,
+    // dragEnd, or first layout. Every temporal tick reuses the snapshot.
+    const trustCurrent = !temporalActive || interaction || !state.view;
+    if (trustCurrent) {
+      for (const id of previouslyDrawn) {
+        if (oldIdSet.has(id) && point(oldPos[id])) {
+          visualPositions[id] = {x: oldPos[id].x, y: oldPos[id].y};
+        }
       }
     }
     for (const clusterId of Object.keys(state.view?.clusterToGroup || {})) {
-      if (point(oldPos[clusterId])) state.clusterPositions[clusterId] = oldPos[clusterId];
+      const previous = trustCurrent && point(oldPos[clusterId])
+        ? oldPos[clusterId] : visualPositions[clusterId];
+      if (point(previous)) state.clusterPositions[clusterId] = {...previous};
     }
-    for (const [id, pos] of Object.entries(oldPos)) {
-      if (Number.isFinite(pos.x) && Number.isFinite(pos.y) &&
-          !id.startsWith("__jaal_internal_community__")) {
-        nodePositions[id] = pos;
+    if (trustCurrent) {
+      for (const [id, pos] of Object.entries(oldPos)) {
+        if (point(pos) && !id.startsWith("__jaal_internal_community__")) {
+          nodePositions[id] = {x: pos.x, y: pos.y};
+        }
+      }
+    }
+    if (temporalActive) {
+      for (const node of view.nodes) {
+        const id = String(node.id);
+        if (!previouslyDrawn.has(id) || !point(visualPositions[id])) continue;
+        node.x = visualPositions[id].x;
+        node.y = visualPositions[id].y;
       }
     }
     // Reuse cached original positions when members are exposed again;
     // new members start near the cluster they came from, without camera fit.
     if (!filtered && view.members) {
       for (const node of view.nodes) {
-        if (oldIdSet.has(String(node.id))) continue;
+        // Rehydration can reinsert all raw IDs; previous quotient visibility,
+        // not the transient full DataSet, determines whether a member is new.
         const id = String(node.id);
+        if ((temporalActive ? previouslyDrawn : oldIdSet).has(id)) continue;
         const group = Object.prototype.hasOwnProperty.call(state.partition, id)
           ? String(state.partition[id]) : null;
         const clusterId = group !== null &&
@@ -350,8 +365,9 @@
         if (!group) continue;
         // Preserve the CURRENT drawn position of an already present cluster.
         // Recomputing its member centroid would undo the user's drag.
-        if (oldIdSet.has(String(node.id))) {
-          const current = oldPos[String(node.id)];
+        if ((temporalActive ? previouslyDrawn : oldIdSet).has(String(node.id))) {
+          const current = temporalActive
+            ? visualPositions[String(node.id)] : oldPos[String(node.id)];
           if (current && Number.isFinite(current.x) && Number.isFinite(current.y)) {
             node.x = current.x;
             node.y = current.y;
@@ -407,6 +423,22 @@
       }
     }
     state.spacing = stateAPI.edgeLength;
+    // Commit newly expanded members immediately, before the next frame.
+    // Previously only pre-update DataSet positions were cached, so a raw
+    // source rerender could overwrite the freshly anchored constellation.
+    if (temporalActive) {
+      for (const node of view.nodes) {
+        if (!point(node)) continue;
+        const id = String(node.id);
+        visualPositions[id] = {x: node.x, y: node.y};
+        if (!id.startsWith("__jaal_internal_community__")) {
+          nodePositions[id] = {...visualPositions[id]};
+        } else if (view.clusterToGroup[id]) {
+          state.clusterPositions[id] = {...visualPositions[id]};
+        }
+      }
+    }
+    state.visualPositions = visualPositions;
     // No new fit() call. The temporal quotient keeps all IDs and only
     // updates hidden/weight fields. Normal static mode retains legacy reset.
     if (!temporalActive) {
@@ -465,6 +497,8 @@
       state = {
         key: currentKey, opened: new Set(),
         positions: state && state.positions ? state.positions : Object.create(null),
+        visualPositions: state && state.visualPositions
+          ? state.visualPositions : Object.create(null),
         clusterPositions: state && state.clusterPositions
           ? state.clusterPositions : Object.create(null),
       };
@@ -475,6 +509,28 @@
     state.zh = Boolean(preferChinese);
     if (!this.__jaalCommunityClickHook) {
       const component = this;
+      // Dragging is an intentional layout change. Record only dragged IDs.
+      this.net.on("dragEnd", function (event) {
+        const current = component.__jaalCommunity;
+        if (!current || !current.active || !component.net ||
+            typeof component.net.getPositions !== "function") return;
+        const ids = Array.isArray(event?.nodes) ? event.nodes.map(String) : [];
+        if (!ids.length) return;
+        const positions = component.net.getPositions(ids);
+        current.visualPositions = current.visualPositions || Object.create(null);
+        current.clusterPositions = current.clusterPositions || Object.create(null);
+        for (const id of ids) {
+          const position = positions[id];
+          if (!point(position)) continue;
+          current.visualPositions[id] = {x: position.x, y: position.y};
+          if (current.view?.clusterToGroup[id]) {
+            current.clusterPositions[id] = {x: position.x, y: position.y};
+          } else {
+            current.positions = current.positions || Object.create(null);
+            current.positions[id] = {x: position.x, y: position.y};
+          }
+        }
+      });
       this.net.on("click", function (event) {
         const current = component.__jaalCommunity;
         if (!current || !current.active || current.filtered || !current.view) return;
@@ -493,7 +549,7 @@
         if (group === null) return;
         if (current.opened.has(group)) current.opened.delete(group);
         else current.opened.add(group);
-        project(component);
+        project(component, true);
       });
       this.__jaalCommunityClickHook = true;
     }

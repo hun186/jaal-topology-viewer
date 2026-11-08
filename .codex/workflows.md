@@ -53,3 +53,5 @@
 - Windows launch after Anaconda-base `comm` import failure: create dedicated `jaal-viewer` Python 3.11 Conda environment, install requirements and editable project there, then run `start-gallery.bat` (uses dedicated `.venv`/named Conda environment only, refuses mixed `base`).
 
 - Local Flask CLI on loopback now enables the six fixed synthetic large scenarios by default; set `JAAL_ENABLE_LARGE_LOCAL=0` to disable, or `1` to force local enabled. Vercel and ordinary WSGI imports remain four-case only. UI/banner and batch launcher warn of RAM/CPU cost. Windows Chromium validates all five temporal Dropdown popups, 35px options, nonoverlap, visible labels and viewport bounds.
+
+- 社群時間演化位置穩定性回歸：`node --test tests/temporal_playback.test.cjs` 須驗證在已展開社群播放時插入原始 visdcc DataSet 重建後仍維持畫面座標、拖曳後可更新定位、收攏／再次展開維持群組原錨點。Windows `python tests/large_gallery_browser.py --evidence browser-evidence/large-gallery` 驗證**真實 500 人**同案例，截圖播放前後及再次展開畫面。

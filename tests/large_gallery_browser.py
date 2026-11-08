@@ -120,6 +120,135 @@ def check(port, evidence):
                 assert page.locator("#jaal-original-layout-mode").count()==1
                 assert page.locator("#search_graph").count()==1
                 page.screenshot(path=str(target/"02-original-jaal-500.png"))
+                # User's exact scenario: the 500-person native Louvain case.
+                # Expand an actual cluster, start playback and ensure its
+                # member constellation never teleports to raw source coords.
+                page.evaluate("""() => {
+                    const community=window.dash_clientside?.jaal_community_collapse;
+                    if (!community || typeof community.activate!=='function')
+                        throw Error('Native Louvain runtime unavailable');
+                    const original=community.activate;
+                    community.activate=function(...args) {
+                        window.__scale500Network=this;
+                        return original.apply(this,args);
+                    };
+                }""")
+                page.locator("#jaal-temporal-back").click()
+                page.wait_for_function(
+                    "() => Boolean(window.__scale500Network?.__jaalCommunity?.view)",
+                    timeout=60000)
+                start=page.evaluate("""() => {
+                    const c=window.__scale500Network;
+                    const view=c.__jaalCommunity.view;
+                    const box=Object.keys(view.clusterToGroup)[0];
+                    if(!box) throw Error('500-person case did not collapse');
+                    const group=view.clusterToGroup[box];
+                    const origin=c.net.getPositions()[box];
+                    if(!origin) throw Error('Missing rendered group anchor');
+                    c.net.body.emitter.emit('click',{nodes:[box],edges:[]});
+                    const state=c.__jaalCommunity;
+                    if(!state.opened.has(group)) throw Error('Group did not expand');
+                    const ids=[...(state.view.members.get(group)||[])];
+                    const positions=c.net.getPositions();
+                    const sample=[...new Set([...ids.slice(0,20),...ids.slice(-8)])]
+                        .filter(id=>positions[id]);
+                    if(sample.length<12)throw Error('Too few real members');
+                    const coordinates=Object.fromEntries(sample.map(id=>
+                        [id,{x:positions[id].x,y:positions[id].y}]));
+                    const screenshot={box,group,origin,coordinates,
+                        camera:{position:c.net.getViewPosition(),
+                                scale:c.net.getScale()},
+                        date:window.dash_clientside.jaal_temporal.lastRendered.date};
+                    window.__scale500VisualAnchor=screenshot;
+                    return screenshot;
+                }""")
+                page.screenshot(path=str(
+                    target/"04-scale500-open-community-before-play.png"))
+                page.locator("#jaal-temporal-forward").click()
+                page.wait_for_function(
+                    "(date) => window.dash_clientside?.jaal_temporal?.lastRendered?.date !== date",
+                    arg=start["date"],timeout=60000)
+                # From the latest day, Play restarts at the first interval;
+                # an additional auto-tick tests a second real frame.
+                page.locator("#jaal-temporal-play").click()
+                expect(page.locator("#jaal-temporal-play")).to_have_text(
+                    "⏸ 暫停",timeout=15000)
+                page.wait_for_function(
+                    "(date) => window.dash_clientside?.jaal_temporal?.lastRendered?.date !== date",
+                    arg=start["date"],timeout=60000)
+                tick=page.evaluate(
+                    "() => window.dash_clientside.jaal_temporal.lastRendered.date")
+                page.wait_for_function(
+                    "(date) => window.dash_clientside?.jaal_temporal?.lastRendered?.date !== date",
+                    arg=tick,timeout=60000)
+                page.locator("#jaal-temporal-play").click()
+                expect(page.locator("#jaal-temporal-play")).to_have_text(
+                    "▶ 播放",timeout=15000)
+                after=page.evaluate("""() => {
+                    const before=window.__scale500VisualAnchor;
+                    const c=window.__scale500Network;
+                    const state=c.__jaalCommunity;
+                    const now=c.net.getPositions();
+                    const disappeared=[],moved=[],lostAnchors=[],cachedMoved=[];
+                    for(const [id,p] of Object.entries(before.coordinates)) {
+                        // vis.js intentionally omits inactive/hidden nodes
+                        // from getPositions() in a rolling mail window.
+                        // They must still retain their own saved anchor.
+                        const cached=state.visualPositions?.[id];
+                        if(!cached) lostAnchors.push(id);
+                        else if(Math.hypot(cached.x-p.x,cached.y-p.y)>2)
+                            cachedMoved.push({id,cached,before:p});
+                        if(!now[id]) {disappeared.push(id);continue;}
+                        const d=Math.hypot(now[id].x-p.x,now[id].y-p.y);
+                        if(d>2)moved.push({id,delta:d,from:p,to:now[id]});
+                    }
+                    return {stillOpened:state.opened.has(before.group),
+                        totalSample:Object.keys(before.coordinates).length,
+                        visibleCount:Object.keys(before.coordinates).length-disappeared.length,
+                        maxDelta:Math.max(0,...moved.map(m=>m.delta)),
+                        moved:moved.slice(0,10),disappeared,
+                        cachedMoved,lostAnchors,
+                        camera:{position:c.net.getViewPosition(),scale:c.net.getScale()},
+                        activeEdges:c.ee.get().filter(e=>!e.hidden && e.from!==e.to)
+                          .every(e=>e.smooth?.type==='curvedCW')};
+                }""")
+                assert after["stillOpened"] and not after["moved"],(start,after)
+                assert after["visibleCount"]>=5,(start,after)
+                assert not after["cachedMoved"] and not after["lostAnchors"],(start,after)
+                # Temporary invisibility is expected when a rolling time
+                # window contains no mail for those employees. A missing
+                # cached anchor, or movement among the visible subset, is not.
+                assert after["activeEdges"],"Playback must not restore dynamic edge hooks"
+                assert abs(after["camera"]["scale"]-start["camera"]["scale"])<.025
+                for axis in ("x","y"):
+                    assert abs(after["camera"]["position"][axis]-
+                               start["camera"]["position"][axis])<2
+                page.screenshot(path=str(
+                    target/"05-scale500-open-community-after-play.png"))
+                # Re-collapse and re-open near its remembered group anchor.
+                restored=page.evaluate("""() => {
+                    const c=window.__scale500Network;
+                    const before=window.__scale500VisualAnchor;
+                    const state=c.__jaalCommunity;
+                    const member=Object.keys(before.coordinates)[0];
+                    c.net.body.emitter.emit('click',{nodes:[member],edges:[]});
+                    if(state.opened.has(before.group))throw Error('Did not collapse');
+                    const anchor=c.net.getPositions()[before.box];
+                    if(!anchor)throw Error('Box did not return');
+                    c.net.body.emitter.emit('click',{nodes:[before.box],edges:[]});
+                    if(!state.opened.has(before.group))throw Error('Did not reopen');
+                    const positions=c.net.getPositions();
+                    const ids=Object.keys(before.coordinates);
+                    const distances=ids.filter(id=>positions[id]).map(id=>
+                        Math.hypot(positions[id].x-anchor.x,
+                                   positions[id].y-anchor.y));
+                    return {anchor,reopened:state.opened.has(before.group),
+                        count:distances.length,max:Math.max(...distances)};
+                }""")
+                assert restored["reopened"] and restored["count"]>=5,restored
+                assert restored["max"]<380,restored
+                page.screenshot(path=str(
+                    target/"06-scale500-reexpanded-near-own-box.png"))
                 page.goto(base+"/cases/scale-three-components/",
                           wait_until="domcontentloaded",timeout=90000)
                 page.locator(".vis-network canvas").first.wait_for(
