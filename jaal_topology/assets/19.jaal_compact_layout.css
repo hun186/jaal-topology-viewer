@@ -720,3 +720,100 @@ body:has(.jaal-focus-mode) {
   text-overflow: ellipsis;
   overflow: hidden;
 }
+
+/* Dropdown menus in the temporal toolbar must not inherit the tiny 88px
+   closed-control width. A popup should be wide enough to display Chinese
+   words horizontally, and its 35px hitboxes must never overlap. */
+.jaal-temporal-field {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  position: relative;
+  min-width: 0;
+}
+.jaal-temporal-field-label {
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.jaal-temporal-field .jaal-temporal-select {
+  flex: 0 0 120px;
+  width: 120px;
+  min-width: 120px;
+  position: relative;
+}
+.jaal-temporal-field .jaal-temporal-overlap-select {
+  flex: 0 0 170px;
+  width: 170px;
+  min-width: 170px;
+  position: relative;
+}
+.jaal-temporal-controls,
+.jaal-temporal-options,
+.jaal-temporal-navigation {
+  overflow: visible;
+}
+.jaal-temporal-field:has(.Select.is-open) {
+  z-index: 225;
+}
+.jaal-temporal-controls .jaal-temporal-select .Select-menu-outer,
+.jaal-temporal-controls .jaal-temporal-overlap-select .Select-menu-outer {
+  width: max(100%, 168px);
+  min-width: 168px;
+  max-width: min(260px, calc(100vw - 24px));
+  max-height: min(50vh, 360px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  z-index: 230;
+  border: 1px solid #b7cce0;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(19,45,77,.20);
+}
+.jaal-temporal-controls .jaal-temporal-overlap-select .Select-menu-outer {
+  width: max(100%, 238px);
+  min-width: 238px;
+  left: auto;
+  right: 0;
+}
+.jaal-temporal-controls .jaal-temporal-select .Select-option,
+.jaal-temporal-controls .jaal-temporal-overlap-select .Select-option {
+  box-sizing: border-box;
+  min-height: 35px;
+  line-height: 23px;
+  padding: 6px 10px;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  font-size: 13px;
+}
+.jaal-temporal-controls .jaal-temporal-select .VirtualizedSelectOption,
+.jaal-temporal-controls .jaal-temporal-overlap-select .VirtualizedSelectOption {
+  box-sizing: border-box;
+  min-height: 0;
+  height: 35px;
+  max-height: 35px;
+  padding: 5px 10px;
+  line-height: 25px;
+  white-space: nowrap;
+  word-break: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.jaal-local-scale-warning {
+  font-size: 12px;
+  color: #85551d;
+  flex: 1 1 310px;
+  min-width: 200px;
+  line-height: 1.5;
+}
+@media (max-width: 700px) {
+  .jaal-temporal-field { flex: 0 1 auto; }
+  .jaal-temporal-field .jaal-temporal-select {
+    flex-basis: 112px; width: 112px; min-width: 112px;
+  }
+  .jaal-temporal-field .jaal-temporal-overlap-select {
+    flex-basis: 154px; width: 154px; min-width: 154px;
+  }
+  .jaal-local-scale-warning { flex-basis: 100%; min-width: 0; }
+}
