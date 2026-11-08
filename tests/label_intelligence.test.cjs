@@ -158,3 +158,31 @@ test("language toggle invalidates hidden temporal name cache", () => {
   labels.resolve=oldResolve;
   engine.state.net=null;engine.state.instance=null;
 });
+
+
+test("scope camera waits for vis-network indexing, then fits once", () => {
+  const old=globalThis.requestAnimationFrame;
+  const callbacks=[];
+  globalThis.requestAnimationFrame=cb=>{callbacks.push(cb);};
+  let visiblePositions=false, fits=0;
+  try {
+    focus.setSelection({root:"TARGET",ids:["TARGET"],hops:0,direction:"out"});
+    const net={
+      getPositions:()=>visiblePositions?{TARGET:{x:25,y:80}}:{},
+      fit:args=>{fits++;assert.deepEqual(args.nodes,["TARGET"]);}
+    };
+    focus.afterProjection.call({nn:{get:()=>[{id:"TARGET",hidden:false}]},net});
+    assert.equal(fits,0,"do not fit before vis has indexed the node");
+    callbacks.shift()();
+    assert.equal(fits,0);
+    visiblePositions=true;
+    callbacks.shift()();
+    assert.equal(fits,1);
+    assert.equal(focus.pendingFit,false);
+    focus.afterProjection.call({nn:{get:()=>[]},net});
+    assert.equal(fits,1,"do not recenter repeatedly");
+  } finally {
+    if(old === undefined) delete globalThis.requestAnimationFrame;
+    else globalThis.requestAnimationFrame=old;
+  }
+});

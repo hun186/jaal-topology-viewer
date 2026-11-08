@@ -414,7 +414,10 @@ def check(port: int, evidence: Path) -> None:
                         const p=c.net.getPositions()[id];
                         const center=c.net.getViewPosition();
                         return {p,center,pending:
-                            window.dash_clientside?.jaal_local_focus?.pendingFit};
+                            window.dash_clientside?.jaal_local_focus?.pendingFit,
+                            visible:c.nn.get().filter(n=>!n.hidden).map(n=>n.id),
+                            indexed:Object.keys(c.net.getPositions()).slice(0,8),
+                            activeIndices:c.net.body?.nodeIndices?.slice(0,8)};
                     }""",candidate)
                     if (camera["p"] and camera["center"] and
                             not camera["pending"] and
