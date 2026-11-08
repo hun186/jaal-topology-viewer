@@ -58,6 +58,28 @@ test("synthetic edges are fixed, flow directions are not invented and presets re
   assert.throws(() => core.buildScenario("__proto__"),/只允許/);
 });
 
+test("reverse emails produce distinct curved routes and recipient-directed arrow tangents", () => {
+  const graph=core.buildScenario("500");
+  const pairs=core.reciprocalKeys(graph);
+  assert.ok(pairs.size > 0, "manager replies must include A→B and B→A");
+  const edge=graph.edges.find(e => pairs.has(e.source+":"+e.target));
+  const reverse=graph.edges.find(e => e.source===edge.target && e.target===edge.source);
+  assert.ok(reverse);
+  const a=core.directedRoute(graph.nodes[edge.source],
+    graph.nodes[edge.target],true);
+  const b=core.directedRoute(graph.nodes[reverse.source],
+    graph.nodes[reverse.target],true);
+  assert.equal(a.curved,true);
+  assert.equal(b.curved,true);
+  assert.notDeepEqual([a.controlX,a.controlY],[b.controlX,b.controlY],
+    "reverse arcs have control points on different sides");
+  assert.ok(Number.isFinite(a.endX) && Number.isFinite(a.endY));
+  assert.ok(Number.isFinite(a.tangentX) && Number.isFinite(a.tangentY));
+  const straight=core.directedRoute({x:0,y:0},{x:100,y:0},false);
+  assert.equal(straight.curved,false);
+  assert.ok(straight.tangentX>0 && straight.endX<100);
+});
+
 test("local view is direction-aware and capped without mutating full data", () => {
   const graph=core.buildScenario("3000"), start=graph.departments[0].head;
   const original=graph.edges.length;

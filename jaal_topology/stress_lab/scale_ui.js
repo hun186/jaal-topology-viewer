@@ -6,7 +6,7 @@
   const state = {
     graph: null, mode: "summary", focus: null, indices: null,
     selectedEdges: 0, limited: false, view: {scale: 1, x: 0, y: 0},
-    drag: null, scheduled: false, buildMs: 0, drawMs: 0,
+    drag: null, scheduled: false, buildMs: 0, drawMs: 0, reciprocals: new Set(),
   };
   const integer = x => Number(x).toLocaleString("en-US");
 
@@ -53,6 +53,9 @@
         " 節點和 " + integer(state.graph.edges.length) + " 條有向連線。"
       : "局部誘導圖：依指定方向與步數保留真正可達的員工與連線。";
     if (state.limited) detail += " 已達 2,000 節點安全上限，局部顯示被截斷。";
+    detail += state.mode === "full"
+      ? " 放大後可辨識郵件方向箭頭；相反方向用兩條弧線表示。"
+      : " 箭頭代表寄件者 → 收件者，雙向信件分為兩條弧線。";
     status(detail);
     $("graph-title").textContent = state.graph.label + "／" +
       $("view-mode").selectedOptions[0].textContent;
@@ -110,6 +113,8 @@
     ctx.lineWidth=Math.max(0.5, Math.min(2, 1.3/Math.max(scale,0.3)));
     ctx.strokeStyle=fullLarge?"rgba(54,80,110,.085)":"rgba(75,105,139,.30)";
     ctx.beginPath();
+    const showArrows = state.mode !== "full" || scale >= 0.7;
+    const arrows = [];
     const pad=25/Math.max(scale,0.06);
     const vx=(-x/scale)-pad,vy=(-y/scale)-pad;
     const vw=cssWidth/scale+2*pad,vh=cssHeight/scale+2*pad;
@@ -118,9 +123,32 @@
       const a=graph.nodes[edge.source],b=graph.nodes[edge.target];
       if ((a.x<vx && b.x<vx)||(a.x>vx+vw && b.x>vx+vw)||
           (a.y<vy && b.y<vy)||(a.y>vy+vh && b.y>vy+vh)) continue;
-      ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+      const radius = state.mode==="summary"?7:(graph.nodes.length>5000?3.2:4.6);
+      const isReciprocal = state.reciprocals.has(edge.source+":"+edge.target);
+      const route = core.directedRoute(a,b,isReciprocal,radius,radius);
+      ctx.moveTo(route.startX,route.startY);
+      if (route.curved) {
+        ctx.quadraticCurveTo(route.controlX,route.controlY,route.endX,route.endY);
+      } else {
+        ctx.lineTo(route.endX,route.endY);
+      }
+      if (showArrows) arrows.push(route);
     }
     ctx.stroke();
+    if (showArrows) {
+      // One filled batch is cheaper than re-stroking every directed link.
+      ctx.fillStyle = "rgba(54,79,110,.76)";
+      ctx.beginPath();
+      const size = Math.min(11, 7 / Math.max(scale,0.6));
+      for (const a of arrows) {
+        const {endX:x, endY:y, tangentX:ux, tangentY:uy} = a;
+        ctx.moveTo(x,y);
+        ctx.lineTo(x-ux*size-uy*size*.48,y-uy*size+ux*size*.48);
+        ctx.lineTo(x-ux*size+uy*size*.48,y-uy*size-ux*size*.48);
+        ctx.closePath();
+      }
+      ctx.fill();
+    }
     const radius=state.mode==="summary"?7:(graph.nodes.length>5000?3.2:4.6);
     for (const index of state.indices) {
       const n=graph.nodes[index];
@@ -150,6 +178,7 @@
   function regenerate() {
     const key=$("scenario").value, start=root.performance.now();
     state.graph=core.buildScenario(key);
+    state.reciprocals=core.reciprocalKeys(state.graph);
     state.buildMs=root.performance.now()-start;
     state.focus=null;
     $("node-query").value="";

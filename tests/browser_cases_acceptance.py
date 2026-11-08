@@ -222,6 +222,7 @@ def check(port, evidence):
                 expect(page.locator("#component-breakdown")).to_contain_text("167")
                 page.locator("#dept-select").select_option(index=1)
                 expect(page.locator("#view-mode")).to_have_value("local")
+                expect(page.locator("#status")).to_contain_text("寄件者")
                 assert "500 /" not in page.locator("#stat-visible").inner_text()
                 page.screenshot(path=str(evidence / "05-three-components-local.png"))
                 assert not writes, "Local workbench sent unexpected writes: " + str(writes)

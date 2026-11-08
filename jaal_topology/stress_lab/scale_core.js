@@ -205,6 +205,39 @@
     return sizes.sort((a,b) => b-a);
   }
 
+  // Reciprocal sender→recipient relationships need separate curves so a
+  // reply cannot appear to be the same undirected segment.
+  function reciprocalKeys(graph) {
+    const pairs = new Set(graph.edges.map(e => e.source + ":" + e.target));
+    return new Set(graph.edges.filter(e =>
+      pairs.has(e.target + ":" + e.source))
+      .map(e => e.source + ":" + e.target));
+  }
+
+  // Geometry is pure and deterministic, allowing direction/curve regression
+  // tests without needing a browser Canvas. The tangent always points into
+  // the recipient's node, including for reversed curved relationships.
+  function directedRoute(from, to, curved, sourceRadius = 5, targetRadius = 5) {
+    const dx = to.x - from.x, dy = to.y - from.y;
+    const distance = Math.max(0.0001, Math.hypot(dx, dy));
+    const ux = dx / distance, uy = dy / distance;
+    const bend = curved ? Math.min(40, distance * 0.3) : 0;
+    const controlX = (from.x + to.x) / 2 - uy * bend;
+    const controlY = (from.y + to.y) / 2 + ux * bend;
+    const vx = curved ? to.x - controlX : dx;
+    const vy = curved ? to.y - controlY : dy;
+    const tangentDistance = Math.max(0.0001, Math.hypot(vx, vy));
+    const tangentX = vx / tangentDistance, tangentY = vy / tangentDistance;
+    return {
+      startX: from.x + ux * sourceRadius,
+      startY: from.y + uy * sourceRadius,
+      controlX, controlY,
+      endX: to.x - tangentX * (targetRadius + 1),
+      endY: to.y - tangentY * (targetRadius + 1),
+      tangentX, tangentY, curved: Boolean(curved),
+    };
+  }
+
   function selectLocal(graph, nodeIndex, hops, direction, maxVisible = 2000) {
     if (!Number.isInteger(nodeIndex) || nodeIndex < 0 ||
         nodeIndex >= graph.nodes.length || ![1,2,3].includes(hops) ||
@@ -226,5 +259,6 @@
     }
     return {indices: seen, limited};
   }
-  return {PRESETS, MAX_NODES, MAX_EDGES, buildScenario, weakComponentSizes, selectLocal};
+  return {PRESETS, MAX_NODES, MAX_EDGES, buildScenario, weakComponentSizes,
+    reciprocalKeys, directedRoute, selectLocal};
 });
