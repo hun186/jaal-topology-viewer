@@ -398,6 +398,7 @@
       options.append(opt);
     }
     const locations = coordinates(graph, mode);
+    const reciprocals = core.reciprocalKeys(graph);
     const degree = new Map([...byId].map(([id, value]) => [id, value.total]));
     const shownNames = new Set([...degree.entries()]
       .sort((a,b) => b[1]-a[1]).slice(0, 32).map(x=>x[0]));
@@ -415,6 +416,16 @@
             " C "+(from.x-loopWidth)+" "+(from.y-loopHeight)+
             " "+(from.x+loopWidth)+" "+(from.y-loopHeight)+
             " "+(from.x+fromRadius*0.8)+" "+(from.y-fromRadius*0.65),
+          class: "edge-line" + (edge.weight>1 ? " weighted" : ""),
+          "marker-end": "url(#arrowhead)",
+        })
+        : reciprocals.has(JSON.stringify([edge.from, edge.to]))
+        ? svg("path", {
+          // Reverse arcs use opposite normals, so A→B and B→A no longer
+          // overdraw each other; the arrow follows each path's own tangent.
+          d: "M "+(from.x+ux*(fromRadius+1))+" "+(from.y+uy*(fromRadius+1))+
+            " Q "+((from.x+to.x)/2-uy*34)+" "+((from.y+to.y)/2+ux*34)+
+            " "+(to.x-ux*(toRadius+7))+" "+(to.y-uy*(toRadius+7)),
           class: "edge-line" + (edge.weight>1 ? " weighted" : ""),
           "marker-end": "url(#arrowhead)",
         })

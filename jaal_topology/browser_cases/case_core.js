@@ -255,6 +255,15 @@
     return {byId, maxTotal};
   }
 
+  // Only reverse directed edges of the *visible* graph receive separate arcs.
+  // Self-links already have dedicated loop paths.
+  function reciprocalKeys(graph) {
+    const keys = new Set(graph.edges.map(e => JSON.stringify([e.from, e.to])));
+    return new Set(graph.edges
+      .filter(e => e.from !== e.to && keys.has(JSON.stringify([e.to, e.from])))
+      .map(e => JSON.stringify([e.from, e.to])));
+  }
+
   function topology(value) {
     const graph = validateCase(value);
     const indegree = new Map(graph.nodes.map(n => [n.id, 0]));
@@ -276,6 +285,6 @@
       nodes: graph.nodes.length, edges: graph.edges.length};
   }
 
-  return {parseDelimited, importGraph, validateCase, neighborhood, topology, flowMetrics,
+  return {parseDelimited, importGraph, validateCase, neighborhood, topology, flowMetrics, reciprocalKeys,
     MAX_NODES, MAX_EDGES, MAX_CASES, MAX_FILE_CHARS};
 });

@@ -75,6 +75,14 @@ def check(port, evidence):
                 expect(page.locator("#count-edges")).to_have_text("4")
                 expect(page.locator(".node-circle")).to_have_count(4)
                 expect(page.locator("#active-name")).to_contain_text("尚未儲存")
+                # Reciprocal Alice→Bob/Bob→Alice must be individually
+                # inspectable curved arrows, not two overlapping straight lines.
+                two_way_paths = page.locator("path.edge-line")
+                expect(two_way_paths).to_have_count(2)
+                bends = two_way_paths.evaluate_all(
+                    "(paths) => paths.map(p => p.getAttribute('d'))")
+                assert all(" Q " in bend for bend in bends), bends
+                assert bends[0] != bends[1], bends
                 page.screenshot(path=str(evidence / "02-preview-graph.png"),
                                 full_page=True)
                 # Flow coloring is weighted and directional; size tracks
@@ -100,6 +108,7 @@ def check(port, evidence):
                 page.locator("#direction").select_option("out")
                 page.locator("#radius").select_option("1")
                 expect(page.locator("#count-visible")).to_have_text("2 / 2")
+                expect(page.locator("path.edge-line")).to_have_count(2)
                 expect(page.locator(".node-root.node-outgoing")).to_have_count(1)
                 assert page.locator(".node-root.node-outgoing").evaluate(
                     "(el) => getComputedStyle(el).fill") == flow_fills["outgoing"]
@@ -113,6 +122,7 @@ def check(port, evidence):
                 expect(page.locator(".node-circle")).to_have_count(4)
                 page.locator("#layout-mode").select_option("hierarchy")
                 expect(page.locator(".node-circle")).to_have_count(4)
+                expect(page.locator("path.edge-line")).to_have_count(2)
                 page.screenshot(path=str(evidence / "03-hierarchy.png"),
                                 full_page=True)
 
