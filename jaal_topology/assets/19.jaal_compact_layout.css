@@ -1088,3 +1088,55 @@ body:has(.jaal-focus-mode) {
   text-overflow: ellipsis;
   padding: 7px 12px;
 }
+
+/* Dash 4 dcc.Dropdown renders a button + Radix portal, not a Select menu.
+   Scope portal styling to the OPEN root dropdown so other popovers and
+   the Gallery case picker remain independent. */
+.jaal-local-root-field > .dash-dropdown,
+.jaal-local-root-picker.dash-dropdown {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+.jaal-local-root-picker.dash-dropdown .dash-dropdown-grid-container {
+  width: 100%;
+  min-width: 0;
+}
+body:has(#jaal-local-root[data-state="open"])
+  [data-radix-popper-content-wrapper] {
+  box-sizing: border-box;
+  min-width: min(500px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  z-index: 450 !important;
+}
+body:has(#jaal-local-root[data-state="open"]) [role="listbox"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: min(500px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: min(55vh, 385px);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+body:has(#jaal-local-root[data-state="open"]) [role="option"] {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  min-height: 35px;
+}
+.jaal-case-selector .dash-dropdown {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.jaal-case-selector .dash-dropdown-value {
+  max-width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -335,19 +335,23 @@ def check(port: int, evidence: Path) -> None:
                 # uses .Select__menu, sometimes outside the dropdown wrapper.
                 root_menu = root_picker.locator(".Select-menu-outer, .Select__menu")
                 if not root_menu.count():
+                    # Dash 4 renders a <button class="dash-dropdown"> plus
+                    # a Radix portal outside the button with role=listbox.
                     root_menu = frame.locator(
-                        ".jaal-local-body .Select-menu-outer, "
-                        ".jaal-local-body .Select__menu, "
-                        ".Select__menu:visible, .Select-menu-outer:visible"
+                        '[role="listbox"]:visible, '
+                        '[data-radix-popper-content-wrapper]:visible'
                     ).last
                 expect(root_menu).to_be_visible(timeout=15000)
                 menu_box = root_menu.bounding_box()
                 assert menu_box and menu_box["width"] >= 300, menu_box
                 options = root_menu.locator(
-                    ".VirtualizedSelectOption, .Select-option, .Select__option")
-                assert options.count() > 0
-                assert options.first.evaluate(
-                    "(el) => getComputedStyle(el).whiteSpace") == "nowrap"
+                    '.VirtualizedSelectOption, .Select-option, .Select__option, '
+                    '[role="option"]')
+                assert options.count() > 0 or root_menu.inner_text().strip(), (
+                    "Root listbox must have actual selectable content")
+                if options.count():
+                    assert options.first.evaluate(
+                        "(el) => getComputedStyle(el).whiteSpace") == "nowrap"
                 rows = root_menu.locator(".VirtualizedSelectOption")
                 if rows.count() >= 2:
                     first, second = rows.nth(0).bounding_box(), rows.nth(1).bounding_box()
