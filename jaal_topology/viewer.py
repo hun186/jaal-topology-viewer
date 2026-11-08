@@ -486,9 +486,10 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                     value="rolling", inline=True,
                     className="jaal-temporal-modes",
                 ),
-                html.Span("時間單位"),
-                dcc.Dropdown(
-                    id="jaal-temporal-unit",
+                html.Div([
+                    html.Span("時間單位", className="jaal-temporal-field-label"),
+                    dcc.Dropdown(
+                        id="jaal-temporal-unit",
                     options=[
                         {"label": "1 分鐘", "value": 1},
                         {"label": "10 分鐘", "value": 10},
@@ -496,44 +497,53 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
                         {"label": "3 小時", "value": 180},
                         {"label": "1 天", "value": 1440},
                     ], value=1440, clearable=False, searchable=False,
-                    className="jaal-temporal-select",
-                ),
-                html.Span("區間長度"),
-                dcc.Dropdown(
-                    id="jaal-temporal-window",
+                        className="jaal-temporal-select",
+                    ),
+                ], className="jaal-temporal-field jaal-temporal-field-unit"),
+                html.Div([
+                    html.Span("區間長度", className="jaal-temporal-field-label"),
+                    dcc.Dropdown(
+                        id="jaal-temporal-window",
                     options=[{"label": f"{n} 單位", "value": n}
                              for n in (1, 2, 3, 6, 12, 24, 30)],
                     value=3, clearable=False, searchable=False,
-                    className="jaal-temporal-select",
-                ),
-                html.Span("重疊時步長"),
-                dcc.Dropdown(
-                    id="jaal-temporal-step",
+                        className="jaal-temporal-select",
+                    ),
+                ], className="jaal-temporal-field jaal-temporal-field-window"),
+                html.Div([
+                    html.Span("重疊時步長", className="jaal-temporal-field-label"),
+                    dcc.Dropdown(
+                        id="jaal-temporal-step",
                     options=[{"label": f"{n} 單位", "value": n}
                              for n in (1, 2, 3, 6, 12, 24)],
                     value=1, clearable=False, searchable=False,
-                    className="jaal-temporal-select",
-                ),
-                html.Span("速度"),
-                dcc.Dropdown(
-                    id="jaal-temporal-speed",
+                        className="jaal-temporal-select",
+                    ),
+                ], className="jaal-temporal-field jaal-temporal-field-step"),
+                html.Div([
+                    html.Span("速度", className="jaal-temporal-field-label"),
+                    dcc.Dropdown(
+                        id="jaal-temporal-speed",
                     options=[
                         {"label": "快", "value": 350},
                         {"label": "標準", "value": 700},
                         {"label": "慢", "value": 1400},
                         {"label": "極慢", "value": 2500},
                     ], value=700, clearable=False, searchable=False,
-                    className="jaal-temporal-select",
-                ),
-                html.Span("分段方式"),
-                dcc.Dropdown(
-                    id="jaal-temporal-overlap",
+                        className="jaal-temporal-select",
+                    ),
+                ], className="jaal-temporal-field jaal-temporal-field-speed"),
+                html.Div([
+                    html.Span("分段方式", className="jaal-temporal-field-label"),
+                    dcc.Dropdown(
+                        id="jaal-temporal-overlap",
                     options=[
                         {"label": "互斥（步長＝窗長）", "value": "disjoint"},
                         {"label": "重疊滑窗", "value": "overlap"},
                     ], value="disjoint", clearable=False, searchable=False,
-                    className="jaal-temporal-overlap-select",
-                ),
+                        className="jaal-temporal-overlap-select",
+                    ),
+                ], className="jaal-temporal-field jaal-temporal-field-overlap"),
                 html.Details([
                     html.Summary("進階：社群與循環"),
                     html.Div([
@@ -651,6 +661,13 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             className="jaal-browser-cases-link",
             title="在瀏覽器本機建立及保存私人圖形案例",
         ))
+        if any("/cases/scale-" in str(option["value"])
+               for option in case_options):
+            controls_children.insert(2, html.Span(
+                "⚠ 本機大型壓測案例按需載入；5,000／20,000 節點可能耗用大量記憶體或使畫面短暫無回應。",
+                className="jaal-local-scale-warning",
+                title="這些是完全虛構的圖形；不保證全展開、時間播放在每台電腦都流暢。",
+            ))
     controls = html.Div(
         controls_children, id="jaal-compact-toolbar",
         className="jaal-compact-toolbar",
