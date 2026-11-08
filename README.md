@@ -366,13 +366,16 @@ active `jaal-viewer` Conda env or an existing `jaal-viewer` env via
 environment is missing, it prints the setup commands instead of a
 misleading Flask-missing error.
 
-Or set `JAAL_ENABLE_LARGE_LOCAL=1` before executing
-`python -m flask --app app:app run --host 127.0.0.1 --port 8059 --no-reload`.
-Large cases are **opt-in, locally served, lazily constructed on first
-selection**, to keep the original 77-person Gallery responsive at startup.
-This flag must not be enabled in a public deployment; the default public
-`app.py` remains four preloaded small cases. All files are read-only;
-no actual mail data is accessed.
+Launching from the **local Flask CLI** using
+`python -m flask --app app:app run --host 127.0.0.1 --port 8059 --no-reload`
+now includes the six additional fictional scenarios by **default**.
+`start-gallery.bat` does likewise and prints a performance warning.
+Set `JAAL_ENABLE_LARGE_LOCAL=0` to hide them. Cases are still lazy:
+5,000 and 20,000 nodes are not initialized until selected and are
+marked with a load warning in the native Gallery. Vercel and non-CLI
+WSGI imports still provide only the four original bounded cases; avoid
+publishing the local Flask development server to a network. No actual
+mail data is accessed.
 
 **Performance / scope honesty:** the normal import and default Jaal
 limits (3,000 nodes / 5,000 edges) are preserved. Only the trusted

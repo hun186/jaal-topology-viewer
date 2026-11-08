@@ -146,6 +146,14 @@
           : "原始有向關係數：" + count,
         hidden: retainHidden && count === 0,
       };
+      if (retainHidden && drawn.from !== drawn.to) {
+        // Playback freezes physics. vis-network's inherited dynamic smooth
+        // curves then lose their physics support-node positions, producing
+        // stray hooks/curls after each timeline update. Pin the edge geometry
+        // to a deterministic, static directed curve in temporal community
+        // mode, without changing the original edge or its mail counts.
+        drawn.smooth = {enabled: true, type: "curvedCW", roundness: 0.09};
+      }
       edges.push(drawn);
       // The inspector identifies source relations, not invented reversals.
       edgeSources[String(drawn.id)] = (retainHidden ? active : originals)
@@ -288,6 +296,20 @@
         ? net.getPositions() : {});
     const nodePositions = state.positions || Object.create(null);
     state.clusterPositions = state.clusterPositions || Object.create(null);
+    // Once a user expands a cluster, every following time frame must keep
+    // existing original members at their ACTUAL current on-screen locations.
+    // Fresh source node x/y (or a previous hidden frame's coordinates) must
+    // not replace these drawn positions. Newly exposed nodes are still
+    // handled by the anchoredMember placement below.
+    const oldIdSet = new Set(instance.nn.getIds().map(String));
+    if (temporalActive) {
+      for (const node of view.nodes) {
+        const id = String(node.id);
+        if (!oldIdSet.has(id) || !point(oldPos[id])) continue;
+        node.x = oldPos[id].x;
+        node.y = oldPos[id].y;
+      }
+    }
     for (const clusterId of Object.keys(state.view?.clusterToGroup || {})) {
       if (point(oldPos[clusterId])) state.clusterPositions[clusterId] = oldPos[clusterId];
     }
@@ -300,7 +322,6 @@
     // Reuse cached original positions when members are exposed again;
     // new members start near the cluster they came from, without camera fit.
     if (!filtered && view.members) {
-      const oldIdSet = new Set(instance.nn.getIds().map(String));
       for (const node of view.nodes) {
         if (oldIdSet.has(String(node.id))) continue;
         const id = String(node.id);

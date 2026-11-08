@@ -62,6 +62,47 @@ def check(port):
                 help_details = page.locator("#jaal-original-help-details")
                 assert sidebar.is_visible() and panel.is_visible()
                 assert not help_details.evaluate("(el) => el.open")
+                # Regression: temporal Select popups used to inherit an 88px
+                # control width, placing each Chinese character vertically.
+                # Validate actual Dash 3.4 Chromium DOM, not just stylesheet
+                # presence or layout JSON.
+                for control_id, expected_label, min_menu_width in (
+                    ("jaal-temporal-unit", "1 分鐘", 160),
+                    ("jaal-temporal-window", "3 單位", 160),
+                    ("jaal-temporal-step", "1 單位", 160),
+                    ("jaal-temporal-speed", "標準", 160),
+                    ("jaal-temporal-overlap", "互斥（步長＝窗長）", 225),
+                ):
+                    control = page.locator("#" + control_id)
+                    expect(control).to_be_visible(timeout=15000)
+                    control.locator(".Select-control").click()
+                    menu = control.locator(".Select-menu-outer")
+                    expect(menu).to_be_visible(timeout=15000)
+                    bounds = menu.bounding_box()
+                    assert bounds and bounds["width"] >= min_menu_width, (
+                        control_id, bounds)
+                    assert bounds["x"] >= -1 and bounds["x"] + bounds["width"] <= 1441, (
+                        control_id, bounds)
+                    options = menu.locator(".VirtualizedSelectOption, .Select-option")
+                    assert options.count() > 0, control_id
+                    assert expected_label in menu.inner_text(), (control_id, menu.inner_text())
+                    rows = menu.locator(".VirtualizedSelectOption")
+                    if rows.count() >= 2:
+                        row_boxes = [rows.nth(i).bounding_box()
+                                     for i in range(min(rows.count(), 7))]
+                        for first, second in zip(row_boxes, row_boxes[1:]):
+                            assert first and second
+                            assert first["y"] + first["height"] <= second["y"] + 1, (
+                                control_id, first, second)
+                    # The full text must fit horizontally in a single item row.
+                    assert options.first.evaluate(
+                        "(el) => getComputedStyle(el).whiteSpace") == "nowrap", control_id
+                    if control_id == "jaal-temporal-overlap":
+                        proof = ROOT / "browser-evidence" / "temporal-dropdown-fixed.png"
+                        proof.parent.mkdir(exist_ok=True)
+                        page.screenshot(path=str(proof))
+                    page.keyboard.press("Escape")
+                    expect(menu).to_be_hidden(timeout=10000)
                 width_open = column.bounding_box()["width"]
                 canvas_open = page.locator(".vis-network canvas").first.bounding_box()["width"]
                 # The timeline adds a compact second control row; other
@@ -307,6 +348,82 @@ def check(port):
                     "▶ 播放", timeout=12000
                 )
                 assert backend_ticks == [], backend_ticks
+
+                # Visual regression from the reported Windows bug: manually
+                # expand a real Louvain box, then advance temporal playback.
+                # Source data, community ID, world coordinates, camera and
+                # static directed edge shape must remain stable.
+                page.evaluate("""() => {
+                    const api=window.dash_clientside?.jaal_community_collapse;
+                    if(!api || typeof api.activate !== 'function')
+                        throw Error('Native Jaal community runtime missing');
+                    const original=api.activate;
+                    api.activate=function(...args) {
+                        window.__temporalCommunityNetwork=this;
+                        return original.apply(this,args);
+                    };
+                }""")
+                page.locator("#jaal-temporal-back").click()
+                page.wait_for_function(
+                    "() => Boolean(window.__temporalCommunityNetwork?.__jaalCommunity?.view)",
+                    timeout=30000)
+                expanded = page.evaluate("""() => {
+                    const c=window.__temporalCommunityNetwork;
+                    const ids=Object.keys(c.__jaalCommunity.view.clusterToGroup);
+                    if(!ids.length)throw Error('No collapsed community to expand');
+                    const id=ids[0];
+                    c.net.body.emitter.emit('click',{nodes:[id],edges:[]});
+                    const state=c.__jaalCommunity;
+                    const group=state.view.members ? state.partition[
+                        Object.keys(state.partition)[0]] : null;
+                    const positions=c.net.getPositions();
+                    const nodes=c.nn.get().filter(n=>!n.hidden);
+                    const visible=Object.fromEntries(nodes.map(n=>
+                        [n.id,positions[n.id]]).filter(([,p])=>p));
+                    return {opened:[...state.opened],ids:nodes.map(n=>n.id).sort(),
+                        coords:visible,
+                        camera:{position:c.net.getViewPosition(),scale:c.net.getScale()},
+                        date:window.dash_clientside.jaal_temporal.lastRendered.date};
+                }""")
+                assert expanded["opened"] and expanded["coords"]
+                assert len(expanded["ids"]) >= 3, expanded
+                page.screenshot(path=str(ROOT / "browser-evidence" /
+                                         "temporal-community-expanded-before-play.png"))
+                page.locator("#jaal-temporal-play").click()
+                page.wait_for_function(
+                    "(date) => window.dash_clientside?.jaal_temporal?.lastRendered?.date !== date",
+                    arg=expanded["date"],timeout=30000)
+                page.locator("#jaal-temporal-play").click()
+                stable = page.evaluate("""() => {
+                    const c=window.__temporalCommunityNetwork;
+                    const state=c.__jaalCommunity;
+                    const pos=c.net.getPositions();
+                    const nodes=c.nn.get().filter(n=>!n.hidden);
+                    const selected=Object.fromEntries(nodes.map(n=>
+                        [n.id,pos[n.id]]).filter(([,p])=>p));
+                    const edges=c.ee.get().filter(e=>!e.hidden && e.from!==e.to);
+                    return {opened:[...state.opened],ids:nodes.map(n=>n.id).sort(),
+                        coords:selected,
+                        staticCurves:edges.every(e=>e.smooth?.type==='curvedCW'),
+                        camera:{position:c.net.getViewPosition(),scale:c.net.getScale()}};
+                }""")
+                assert stable["opened"] == expanded["opened"], stable
+                assert stable["staticCurves"], "Dynamic edges produce hooks with physics disabled"
+                # Some previously hidden nodes appear/disappear as time moves;
+                # compare persistent visible IDs rather than demanding a
+                # particular rolling window's active vertex count.
+                shared = set(expanded["coords"]) & set(stable["coords"])
+                assert len(shared) >= 2, (expanded,stable)
+                for node in shared:
+                    a,b=expanded["coords"][node],stable["coords"][node]
+                    assert abs(a["x"]-b["x"]) < 1.1, (node,a,b)
+                    assert abs(a["y"]-b["y"]) < 1.1, (node,a,b)
+                a,b=expanded["camera"],stable["camera"]
+                assert abs(a["scale"]-b["scale"]) < .02,(a,b)
+                assert abs(a["position"]["x"]-b["position"]["x"]) < 2,(a,b)
+                assert abs(a["position"]["y"]-b["position"]["y"]) < 2,(a,b)
+                page.screenshot(path=str(ROOT / "browser-evidence" /
+                                         "temporal-community-after-play.png"))
                 # A static case never receives timeline controls.
                 if errors:
                     raise AssertionError("Dash browser errors: " + repr(errors))
