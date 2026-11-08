@@ -411,15 +411,30 @@ def check(port: int, evidence: Path) -> None:
                 while time.monotonic() < deadline:
                     camera = frame.locator("body").evaluate("""(id) => {
                         const c=window.__acceptanceNetwork;
-                        const p=c.net.getPositions()[id];
+                        // vis-network can report a temporarily null
+                        // getPositions() value for an isolated 0-hop node,
+                        // even while its active internal index and DataSet
+                        // have a finite, drawable x/y world coordinate.
+                        const active=c.nn.get().filter(n=>!n.hidden).map(n=>n.id);
+                        const live=c.net.getPositions()[id];
+                        const internal=c.net.body?.nodes?.[id];
+                        const saved=c.nn.get(id);
+                        const finite=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y);
+                        const p=finite(live)?live:
+                            finite(internal)?{x:internal.x,y:internal.y}:
+                            finite(saved)?{x:saved.x,y:saved.y}:null;
                         const center=c.net.getViewPosition();
                         return {p,center,pending:
                             window.dash_clientside?.jaal_local_focus?.pendingFit,
-                            visible:c.nn.get().filter(n=>!n.hidden).map(n=>n.id),
-                            indexed:Object.keys(c.net.getPositions()).slice(0,8),
-                            activeIndices:c.net.body?.nodeIndices?.slice(0,8)};
+                            visible:active,
+                            activeIndices:c.net.body?.nodeIndices?.slice(0,8),
+                            candidate:id,
+                            source:finite(live)?"live":finite(internal)?"internal":
+                                finite(saved)?"dataset":"none"};
                     }""",candidate)
                     if (camera["p"] and camera["center"] and
+                            camera["visible"] == [candidate] and
+                            candidate in (camera["activeIndices"] or []) and
                             not camera["pending"] and
                             ((camera["p"]["x"]-camera["center"]["x"])**2 +
                              (camera["p"]["y"]-camera["center"]["y"])**2) < 900):
