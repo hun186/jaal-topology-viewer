@@ -4,24 +4,31 @@
  */
 (function (root) {
   "use strict";
-  const state = {ids: null, root: null};
+  const state = {ids: null, root: null, pendingFit: false, signature: ""};
 
   function setSelection(packet) {
+    const previous = state.signature;
     if (!packet || typeof packet.root !== "string" ||
         !Array.isArray(packet.ids) || packet.ids.length > 20000 ||
         !packet.ids.every(id => typeof id === "string")) {
       state.ids = null;
       state.root = null;
+      state.signature = "";
+      state.pendingFit = false;
       return;
     }
     const ids = new Set(packet.ids);
     if (!ids.has(packet.root)) {
       state.ids = null;
       state.root = null;
+      state.signature = "";
+      state.pendingFit = false;
       return;
     }
     state.ids = ids;
     state.root = packet.root;
+    state.signature = JSON.stringify([packet.root,packet.ids]);
+    if (previous !== state.signature) state.pendingFit = true;
   }
 
   function scoped(source) {
@@ -66,8 +73,26 @@
     }
   }
 
+  function afterProjection() {
+    if (!state.pendingFit || !state.root || !this?.net || !this?.nn) return;
+    const net = this.net;
+    if (typeof net.fit !== "function") return;
+    const all = this.nn.get?.() || [];
+    const visible = all.filter(n => !n.hidden).map(n => n.id);
+    if (!visible.length) return;
+    state.pendingFit = false;
+    // Fit the true projected visible graph, not source IDs that have been
+    // replaced by Louvain quotient groups or structure-collapse bubbles.
+    // Never repeat this on each playback tick or return to the full graph.
+    net.fit({
+      nodes: visible.length <= 2500 ? visible : visible.slice(0,2500),
+      animation: {duration:260,easingFunction:"easeInOutQuad"},
+      maxZoomLevel:1.3
+    });
+  }
+
   root.dash_clientside = root.dash_clientside || {};
-  Object.assign(state, {setSelection, scoped, apply});
+  Object.assign(state, {setSelection, scoped, apply, afterProjection});
   root.dash_clientside.jaal_local_focus = state;
   if (typeof module !== "undefined" && module.exports) {
     module.exports = state;

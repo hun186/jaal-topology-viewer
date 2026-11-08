@@ -99,6 +99,8 @@
     if (!Array.isArray(nodes) || !nodes.length) return;
     const visible = nodes.filter(n => !n.hidden);
     const focus = root.dash_clientside?.jaal_local_focus;
+    if (!focus?.root && visible.length <= 90 && !state.pinned.size &&
+        state.density === "smart") return;
     const rootId = focus?.root || null;
     const scale = typeof net.getScale === "function" ? net.getScale() : 1;
     const positions = typeof net.getPositions === "function"
@@ -125,7 +127,9 @@
            !state.remembered.has(id))) {
         state.remembered.set(id,node.label);
       }
-      const base = originalName(id, state.remembered.get(id));
+      const base = id.startsWith(ownedPrefix)
+        ? (state.remembered.get(id) || "社群")
+        : (state.remembered.get(id) || originalName(id, id));
       const text = node.hidden ? (node.label || "") :
         selected.has(id) ? base : "";
       if (String(node.label ?? "") !== text) changes.push({id:node.id,label:text});

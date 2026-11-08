@@ -74,7 +74,12 @@
     // Only a bounded integer is placed into executable JS text, never a
     // user-supplied label or ID. Different root selections must re-run vis.
     projectionRevision = (projectionRevision + 1) % 1000000;
-    return command + "\n/*focus-revision:" + projectionRevision + "*/";
+    return command +
+      "\nif(globalThis.dash_clientside?.jaal_local_focus?.afterProjection) " +
+      "globalThis.dash_clientside.jaal_local_focus.afterProjection.call(this);" +
+      "\nif(globalThis.dash_clientside?.jaal_label_intelligence?.sync) " +
+      "globalThis.dash_clientside.jaal_label_intelligence.sync.call(this);" +
+      "\n/*focus-revision:" + projectionRevision + "*/";
   }
 
   function resolve(id, preferChinese) {
@@ -130,6 +135,7 @@
         ? temporalFrame.partition : membership || {};
     state.translations = translations && typeof translations === "object" &&
       !Array.isArray(translations) ? translations : {};
+    state.preferChinese = preferChinese;
     const hierarchy = HIERARCHICAL_RUN.replace(
       "displayLabel(node.id)",
       preferChinese

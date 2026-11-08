@@ -409,6 +409,16 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             ], className="jaal-local-body"),
         ], className="jaal-local-details"),
         html.Details([
+            html.Summary("標籤／重點節點", title="智慧顯示、滑鼠懸停資訊與重要名稱釘選"),
+            html.Div([
+                html.Button("標籤：智慧顯示",
+                            id="jaal-label-density-toggle", type="button",
+                            **{"aria-pressed": "false"}),
+                html.Span("滑鼠移到節點可查看完整名稱，點浮窗或右鍵節點可釘選／取消釘選重要名稱。"
+                          "切換子圖時會自動定位一次，播放時不重新定位。"),
+            ], className="jaal-label-tools-body"),
+        ], className="jaal-label-tools-details"),
+        html.Details([
             html.Summary("調整邊長", title="調整非時間圖的彈簧長度或時間圖固定座標的間距"),
             html.Div([
                 html.Span("基礎邊長／間距（60–300 px）"),
