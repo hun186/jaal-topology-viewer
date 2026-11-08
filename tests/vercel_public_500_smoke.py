@@ -90,6 +90,60 @@ assert not any(c["value"] != ROUTE and "scale-" in c["value"]
                for c in find_id(layout_data, "jaal-case-picker")["options"])
 assert client.get(ROUTE + "assets/18.jaal_community_collapse.js").status_code == 200
 assert client.get(ROUTE + "assets/21.jaal_temporal_playback.js").status_code == 200
+
+# Exercise the *actual Vercel Dash callback HTTP response*, not only the
+# initial layout. Cumulative 3-hour windows over the full month previously
+# generated 208 frames/122004 edges and >5.9 MB of response JSON.
+from app import _public_500_case
+from jaal_topology.data import GraphInputError
+
+case = _public_500_case()
+timeline = case.temporal_timeline
+total_minutes = len(timeline.days) * 1440
+assert timeline.max_payload_bytes == 3_600_000
+try:
+    timeline.interval_frames(
+        start_minute=0, end_minute=total_minutes,
+        mode="cumulative", window_minutes=180, step_minutes=180,
+    )
+except GraphInputError as exc:
+    assert "公網回應上限" in str(exc), str(exc)
+else:
+    raise AssertionError("Unbounded cumulative 3h callback must fail closed")
+
+def temporal_update(mode, unit, length, overlap):
+    body = {
+        "output": "jaal-temporal-frames.data",
+        "outputs": {"id":"jaal-temporal-frames","property":"data"},
+        "inputs": [
+            {"id":"jaal-temporal-range","property":"value",
+             "value":[0,total_minutes]},
+            {"id":"jaal-temporal-mode","property":"value","value":mode},
+            {"id":"jaal-temporal-unit","property":"value","value":unit},
+            {"id":"jaal-temporal-window","property":"value","value":length},
+            {"id":"jaal-temporal-overlap","property":"value","value":overlap},
+            {"id":"jaal-temporal-step","property":"value","value":1},
+        ],
+        "state": [],
+        "changedPropIds": ["jaal-temporal-mode.value"],
+    }
+    response=client.post(ROUTE+"_dash-update-component",json=body)
+    assert response.status_code==200,(response.status_code,response.data[:1200])
+    assert len(response.data)<LIMIT,("Oversized callback response",len(response.data))
+    data=response.get_json()["response"]["jaal-temporal-frames"]["data"]
+    return data,len(response.data)
+
+error_packet,error_bytes=temporal_update("cumulative",180,1,"disjoint")
+assert error_packet["frames"] == [],error_packet
+assert "公網回應上限" in error_packet["error"],error_packet
+valid_packet,valid_bytes=temporal_update("rolling",1440,3,"disjoint")
+assert len(valid_packet["frames"])>=1 and not valid_packet.get("error")
+assert valid_bytes<LIMIT
+print("VERCEL_PUBLIC_500_TEMPORAL_BUDGET_PASS",
+      json.dumps({"blocked_callback_bytes":error_bytes,
+                  "safe_callback_bytes":valid_bytes,
+                  "safe_frames":len(valid_packet["frames"])},
+                 ensure_ascii=False),flush=True)
 print("VERCEL_PUBLIC_500_WSGI_PASS",
       json.dumps({"cases":len(choices),"nodes":len(network["data"]["nodes"]),
                   "edges":len(network["data"]["edges"]),

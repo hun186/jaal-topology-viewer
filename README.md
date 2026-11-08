@@ -42,8 +42,10 @@ To disable the 500-person public case in a future Vercel deployment, set
 `vercel.json` still disables Git-triggered deployments.
 
 The public fixture must also pass CI's simulated Vercel Flask WSGI smoke,
-including a conservative **4,000,000-byte uncompressed Dash layout** budget
-and rollback test; these are local CI checks, **not** proof of actual Vercel
+including a conservative **4,000,000-byte uncompressed Dash layout
+and callback response** budget, a 3,600,000-byte temporal packet guard
+(oversized cumulative short windows return an explanatory error rather than
+an HTTP oversize), and rollback test; these are local CI checks, **not** proof of actual Vercel
 production deployment. The optional browser-local workspace does not upload
 or persist private files on the server. This does not change the localhost
 CLI or the downstream `text-category-profiler` pin.
