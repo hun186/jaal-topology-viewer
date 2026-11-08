@@ -154,7 +154,9 @@ def check(port):
                 # same origin: original Search/Filter/Color callbacks, mode
                 # eligibility and translated labels must be recomputed.
                 picker = page.locator("#jaal-case-picker")
-                assert picker.is_visible()
+                # Dash can rerender this control after mode/label callbacks.
+                # Wait for genuine visibility rather than sampling mid-render.
+                expect(picker).to_be_visible(timeout=20000)
 
                 def choose_case(text, url_suffix):
                     page.locator("#jaal-case-picker").click()
@@ -182,7 +184,7 @@ def check(port):
                 expect(page.get_by_label(
                     "網狀（社群收攏・Louvain）", exact=True
                 )).to_be_checked()
-                assert page.locator("#jaal-case-picker").is_visible()
+                expect(page.locator("#jaal-case-picker")).to_be_visible(timeout=20000)
                 page.locator("#jaal-original-help-details summary").click()
                 assert "合成郵件收發量加權" in page.locator(
                     "#jaal-original-structural-hint"

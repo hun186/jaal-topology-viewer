@@ -238,6 +238,23 @@
     };
   }
 
+  // Weighted flow is calculated for the currently displayed induced graph.
+  // Self-links count once in each direction; no changes to stored case data.
+  function flowMetrics(graph) {
+    const byId = new Map(graph.nodes.map(node =>
+      [node.id, {incoming: 0, outgoing: 0, total: 0}]));
+    let maxTotal = 0;
+    for (const edge of graph.edges) {
+      byId.get(edge.from).outgoing += edge.weight;
+      byId.get(edge.to).incoming += edge.weight;
+    }
+    for (const metric of byId.values()) {
+      metric.total = metric.incoming + metric.outgoing;
+      maxTotal = Math.max(maxTotal, metric.total);
+    }
+    return {byId, maxTotal};
+  }
+
   function topology(value) {
     const graph = validateCase(value);
     const indegree = new Map(graph.nodes.map(n => [n.id, 0]));
@@ -259,6 +276,6 @@
       nodes: graph.nodes.length, edges: graph.edges.length};
   }
 
-  return {parseDelimited, importGraph, validateCase, neighborhood, topology,
+  return {parseDelimited, importGraph, validateCase, neighborhood, topology, flowMetrics,
     MAX_NODES, MAX_EDGES, MAX_CASES, MAX_FILE_CHARS};
 });

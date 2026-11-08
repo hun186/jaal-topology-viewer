@@ -349,6 +349,7 @@
     $("save-btn").disabled = !active || !state.db || Boolean(state.savedId);
     $("export-one").disabled = !active;
     if (!active) {
+      $("flow-legend").hidden = true;
       empty.hidden = false;
       $("count-nodes").textContent = "—"; $("count-edges").textContent = "—";
       $("graph-type").textContent = "—"; $("count-visible").textContent = "—";
@@ -376,6 +377,14 @@
     const radius = radiusVal === "all" ? "all" : Number(radiusVal);
     const graph = core.neighborhood(active, rootId, radius, $("direction").value);
     $("count-visible").textContent = graph.nodes.length + " / " + graph.edges.length;
+    const {byId, maxTotal} = core.flowMetrics(graph);
+    const useFlowColor = $("node-color").value === "flow";
+    $("flow-legend").hidden = !useFlowColor;
+    const useTrafficSize = $("node-size").value === "traffic";
+    // sqrt scaling keeps sparse nodes clickable without letting hubs dominate.
+    const radii = new Map(graph.nodes.map(node => [node.id,
+      useTrafficSize ? 14 + 14 * Math.sqrt(byId.get(node.id).total /
+        Math.max(1, maxTotal)) : 16]));
     const mode = $("layout-mode").value;
     $("graph-help").textContent = rootWarning || (mode === "hierarchy"
       ? "階層按有向關係排列，循環圖會選取顯示起點，不把循環誤判為上下級。點節點可做局部分析。"
@@ -389,11 +398,7 @@
       options.append(opt);
     }
     const locations = coordinates(graph, mode);
-    const degree = new Map(graph.nodes.map(n => [n.id,0]));
-    for (const edge of graph.edges) {
-      degree.set(edge.from, degree.get(edge.from)+edge.weight);
-      degree.set(edge.to, degree.get(edge.to)+edge.weight);
-    }
+    const degree = new Map([...byId].map(([id, value]) => [id, value.total]));
     const shownNames = new Set([...degree.entries()]
       .sort((a,b) => b[1]-a[1]).slice(0, 32).map(x=>x[0]));
     for (const edge of graph.edges) {
@@ -402,18 +407,20 @@
       const dx=to.x-from.x, dy=to.y-from.y;
       const distance=Math.max(1,Math.hypot(dx,dy));
       const ux=dx/distance, uy=dy/distance;
+      const fromRadius=radii.get(edge.from), toRadius=radii.get(edge.to);
+      const loopHeight=fromRadius+70, loopWidth=fromRadius+65;
       const line = edge.from === edge.to
         ? svg("path", {
-          d: "M "+(from.x-11)+" "+(from.y-12)+
-            " C "+(from.x-82)+" "+(from.y-94)+
-            " "+(from.x+82)+" "+(from.y-94)+
-            " "+(from.x+13)+" "+(from.y-11),
+          d: "M "+(from.x-fromRadius*0.7)+" "+(from.y-fromRadius*0.75)+
+            " C "+(from.x-loopWidth)+" "+(from.y-loopHeight)+
+            " "+(from.x+loopWidth)+" "+(from.y-loopHeight)+
+            " "+(from.x+fromRadius*0.8)+" "+(from.y-fromRadius*0.65),
           class: "edge-line" + (edge.weight>1 ? " weighted" : ""),
           "marker-end": "url(#arrowhead)",
         })
         : svg("line", {
-          x1: from.x+ux*17, y1: from.y+uy*17,
-          x2: to.x-ux*23, y2: to.y-uy*23,
+          x1: from.x+ux*(fromRadius+1), y1: from.y+uy*(fromRadius+1),
+          x2: to.x-ux*(toRadius+7), y2: to.y-uy*(toRadius+7),
           class: "edge-line" + (edge.weight>1 ? " weighted" : ""),
           "marker-end": "url(#arrowhead)",
         });
@@ -425,9 +432,14 @@
       const p = locations.get(node.id);
       if (!p) continue;
       const group = svg("g");
-      const circle = svg("circle", {cx:p.x, cy:p.y, r:16,
-        class:"node-circle" + (rootId===node.id ? " node-root" : ""),
-        tabindex:"0", role:"button", "aria-label":"以 "+node.label+" 為局部起點"});
+      const metric = byId.get(node.id);
+      const flowClass = metric.outgoing > metric.incoming ? " node-outgoing" :
+        (metric.incoming > metric.outgoing ? " node-incoming" : " node-balanced");
+      const circle = svg("circle", {cx:p.x, cy:p.y, r:radii.get(node.id),
+        class:"node-circle" + (useFlowColor ? flowClass : "") +
+          (rootId===node.id ? " node-root" : ""),
+        tabindex:"0", role:"button", "aria-label":"以 "+node.label+
+          " 為局部起點；流出 "+metric.outgoing+"、流入 "+metric.incoming});
       const tip = svg("title"); tip.textContent=node.id===node.label
         ? node.id : node.label+"（"+node.id+"）";
       circle.append(tip);
@@ -442,7 +454,7 @@
       group.append(circle);
       if (graph.nodes.length <= 32 || $("all-labels").checked || shownNames.has(node.id)) {
         const short=node.label.length>18 ? node.label.slice(0,17)+"…" : node.label;
-        const label=svg("text", {x:p.x,y:p.y+34,class:"node-text","text-anchor":"middle"});
+        const label=svg("text", {x:p.x,y:p.y+radii.get(node.id)+18,class:"node-text","text-anchor":"middle"});
         label.textContent=short;
         group.append(label);
       }
@@ -568,7 +580,7 @@
     $("reset-view").addEventListener("click",()=>{
       $("root-filter").value="";resetCamera();draw();
     });
-    for (const id of ["layout-mode","root-filter","radius","direction","all-labels"]) {
+    for (const id of ["layout-mode","root-filter","radius","direction","all-labels","node-color","node-size"]) {
       $(id).addEventListener("change",()=>{resetCamera();draw();});
     }
   }
