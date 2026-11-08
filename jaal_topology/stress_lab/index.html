@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="離線產生 500 至 20000 位虛構員工的企業郵件網路，測試連通分量與 Canvas 效能。">
+  <title>大型郵件網路壓測實驗室｜Jaal Topology Viewer</title>
+  <link rel="stylesheet" href="./scale.css">
+  <script src="./scale_core.js" defer></script>
+  <script src="./scale_ui.js" defer></script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">◈ JAAL <small>Topology Viewer</small></a>
+    <nav><a href="/">← Jaal 示範案例</a><a href="/my-cases/">我的案例</a><span>純合成資料・本機運算</span></nav>
+  </header>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">SCALE LAB / PERFORMANCE DEMO</p>
+      <h1>企業郵件網路｜大型規模與連通分量壓測</h1>
+      <p>新增部門、區域副總、團隊主管與多層管理線，模擬部門內協作、主管回覆及跨部門往來。所有節點與加權有向邊都是可重現的虛構資料；不連接信箱、不上傳資料。</p>
+      <div class="caveat">本頁是獨立 Canvas 大圖壓測器，不是原版 Jaal 的 Louvain／五模式／時間播放。原版 Jaal 的安全顯示硬上限仍為 3,000 節點／5,000 邊；本頁的「完整圖」會真的繪製所選規模，不是抽樣冒充。</div>
+    </section>
+    <section class="controls" aria-label="壓測設定">
+      <label>案例規模<select id="scenario">
+        <option value="500">500 節點｜中型企業</option>
+        <option value="3000">3,000 節點｜大型企業</option>
+        <option value="5000">5,000 節點｜集團</option>
+        <option value="20000">20,000 節點｜超大型集團</option>
+        <option value="islands">500 節點｜3 個獨立連通分量</option>
+      </select></label>
+      <label>圖形展示<select id="view-mode">
+        <option value="summary">管理層摘要（預設）</option>
+        <option value="full">完整節點與全部有向邊（壓測）</option>
+        <option value="local">局部關係子圖</option>
+      </select></label>
+      <label>選擇部門<select id="dept-select"></select></label>
+      <label>局部分析步數<select id="hops"><option value="1">1 步</option><option value="2" selected>2 步</option><option value="3">3 步</option></select></label>
+      <label>方向<select id="direction"><option value="both">雙向關聯</option><option value="out">寄出方向</option><option value="in">收到方向</option></select></label>
+      <label>尋找員工 ID / 名稱
+        <span class="inline"><input id="node-query" aria-label="員工 ID 或名稱" placeholder="例：C01-N00001"><button id="find-node" type="button">定位</button></span>
+      </label>
+    </section>
+    <section class="metrics" aria-label="實際資料規模">
+      <div><span>完整節點</span><strong id="stat-nodes">—</strong></div>
+      <div><span>完整有向邊</span><strong id="stat-edges">—</strong></div>
+      <div><span>部門數</span><strong id="stat-departments">—</strong></div>
+      <div><span>管理深度（邊數）</span><strong id="stat-layers">—</strong></div>
+      <div><span>弱連通分量</span><strong id="stat-components">—</strong></div>
+      <div><span>當前繪製 節點／邊</span><strong id="stat-visible">—</strong></div>
+    </section>
+    <section class="board">
+      <div class="board-head">
+        <div>
+          <h2 id="graph-title">圖形展示</h2>
+          <p id="status" role="status" aria-live="polite">正在產生固定規則合成資料…</p>
+        </div>
+        <div class="actions"><button type="button" id="fit">適合視窗</button><button type="button" id="zoom-in">＋</button><button type="button" id="zoom-out">－</button></div>
+      </div>
+      <canvas id="network" width="960" height="620" aria-label="合成郵件網路 Canvas 圖形，滑鼠拖曳平移，滾輪縮放"></canvas>
+      <div class="board-foot">
+        <span>拖曳平移 · 滾輪縮放 · 大型完整圖預設先以管理層摘要檢視，切換完整圖才執行全量繪製</span>
+        <span id="component-breakdown"></span>
+      </div>
+    </section>
+    <section class="details">
+      <h2>效能量測（目前瀏覽器）</h2>
+      <p>資料生成 <strong id="stat-build-ms">—</strong> ms；最近一次 Canvas 繪製 <strong id="stat-draw-ms">—</strong> ms。數字是真正以 <code>performance.now()</code> 量到的本機耗時，不是預設或基準分數；不同電腦、縮放比例與案例會有差異。</p>
+      <p>跨部門信件與管理層回報會讓每一個集團內部形成單一弱連通分量。選「3 個獨立連通分量」時，模擬 3 個尚未互通郵件的獨立企業：沒有跨分量的有向邊，並非單純把圖切成三個顏色。</p>
+      <p>可先看部門摘要，再切完整圖觀察節點密度，或選部門查看 1～3 步的局部誘導圖。局部顯示最多 2,000 個節點；畫面會清楚提示截斷。完整圖則不受此局部上限限制。</p>
+    </section>
+  </main>
+</body>
+</html>
