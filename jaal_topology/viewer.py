@@ -165,7 +165,8 @@ def _normalize_upstream_layout(layout):
 def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
               case_options=None, current_case_path=None,
               initial_mode="network", case_description="",
-              case_resources=(), temporal_timeline=None):
+              case_resources=(), temporal_timeline=None,
+              allow_large_demo=False, initial_positions=None):
     """Build a localhost-ready Dash Jaal app; optional isolated case navigation.
 
     Original Jaal Search/Filter/Color/Size callbacks remain intact. Each
@@ -189,10 +190,10 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             "Jaal requires at least one visible directed edge; "
             "select a parent/ancestor rather than an isolated leaf"
         )
-    if len(graph.nodes) > 3000 or len(graph.edges) > 5000:
-        raise GraphInputError(
-            "Graph must be bounded before Jaal app construction"
-        )
+    max_nodes, max_edges = ((20_000, 50_000) if allow_large_demo
+                            else (3000, 5000))
+    if len(graph.nodes) > max_nodes or len(graph.edges) > max_edges:
+        raise GraphInputError("Graph must be bounded before Jaal app construction")
 
     from dash import (
         Dash, Input, Output, State, ClientsideFunction, callback_context,
@@ -242,11 +243,20 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
         temporal_frames = temporal_timeline.interval_frames(
             mode="rolling", window_minutes=3*1440, step_minutes=3*1440,
         )
-    community_result = detect_louvain(graph)
+    community_result = detect_louvain(graph, allow_large_demo=allow_large_demo)
     community_partition = community_result.member_to_group
     edges, nodes = to_jaal_dataframes(graph, root=root)
     network = Jaal(edges, nodes)
     network._callback_search_graph = _search_english_id
+    # True precomputed distinct positions, not a sampled summary.
+    # On the 3-component case this keeps each genuinely disconnected company
+    # spatially separated without inventing a bridging relationship.
+    if initial_positions:
+        for collection in (network.data, network.filtered_data):
+            for node in collection["nodes"]:
+                coords = initial_positions.get(str(node["id"]))
+                if coords is not None:
+                    node["x"], node["y"] = float(coords[0]), float(coords[1])
     for collection in (network.data, network.filtered_data):
         for node in collection["nodes"]:
             if node.get("shape") == "dot":
@@ -277,7 +287,10 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
     original_app = network.create(directed=True, vis_opts={
         "height": "calc(100dvh - 150px)",
         "interaction": {"hover": True},
-        "physics": {"enabled": True, "stabilization": {"iterations": 100}},
+        # For very large graphs, expensive global force stabilization can
+        # make the browser unusable; all normal sized cases remain unchanged.
+        "physics": {"enabled": not allow_large_demo,
+                    "stabilization": {"iterations": 100}},
     })
     graph_network = next(
         (item for item in _descendants(original_app.layout)
@@ -637,11 +650,6 @@ def build_app(graph: Graph, *, root=None, requests_pathname_prefix="/",
             "＋ 我的案例／上傳 CSV", href="/my-cases/",
             className="jaal-browser-cases-link",
             title="在瀏覽器本機建立及保存私人圖形案例",
-        ))
-        controls_children.insert(2, html.A(
-            "⚡ 大型郵件壓測（500～20,000）", href="/stress-lab/",
-            className="jaal-browser-cases-link",
-            title="完全虛構的多部門郵件網路，含 3 個連通分量；獨立 Canvas 實驗室",
         ))
     controls = html.Div(
         controls_children, id="jaal-compact-toolbar",

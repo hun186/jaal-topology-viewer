@@ -8,7 +8,7 @@
 
   function setSelection(packet) {
     if (!packet || typeof packet.root !== "string" ||
-        !Array.isArray(packet.ids) || packet.ids.length > 3000 ||
+        !Array.isArray(packet.ids) || packet.ids.length > 20000 ||
         !packet.ids.every(id => typeof id === "string")) {
       state.ids = null;
       state.root = null;

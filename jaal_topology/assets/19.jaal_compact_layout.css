@@ -647,3 +647,60 @@ body:has(.jaal-focus-mode) {
     right: 6px;
   }
 }
+
+/* Comfortable case picker: long Chinese names, large demo count and
+   searchable options remain readable without covering toolbar controls.
+   The React-Select menu is anchored to the selector and scrolls internally. */
+.jaal-compact-toolbar { isolation: isolate; }
+.jaal-case-selector {
+  flex: 1 1 410px;
+  max-width: 560px;
+  min-width: min(100%, 300px);
+  position: relative;
+  z-index: 200;
+}
+.jaal-case-picker { flex: 1 1 auto; min-width: 0; width: 100%; }
+.jaal-case-picker .Select-control { border-radius: 7px; }
+.jaal-case-picker .Select-value-label {
+  display: block;
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.jaal-case-picker .Select-menu-outer {
+  min-width: max(100%, 360px);
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(55vh, 440px);
+  overflow-y: auto;
+  z-index: 220;
+  border-radius: 8px;
+  border: 1px solid #bfd1e4;
+  box-shadow: 0 12px 30px rgba(22,42,65,.22);
+}
+.jaal-case-picker .Select-menu { max-height: none; overflow: visible; }
+.jaal-case-picker .Select-option,
+.jaal-case-picker .VirtualizedSelectOption {
+  min-height: 40px;
+  padding: 10px 13px;
+  white-space: normal;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.jaal-case-picker .Select-option.is-focused {
+  background: #e8f3ff;
+  color: #174b75;
+}
+.jaal-case-picker .Select-option.is-selected {
+  color: #124c7d;
+  background: #d8ebff;
+  font-weight: 700;
+}
+@media (max-width: 700px) {
+  .jaal-case-selector { flex: 1 1 100%; max-width: 100%; min-width: 0; }
+  .jaal-case-picker .Select-menu-outer {
+    width: min(100%, calc(100vw - 24px));
+    min-width: 0;
+  }
+}
